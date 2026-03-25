@@ -54,6 +54,7 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
 .dash-sw-home{color:var(--t3)}
 .dash-sw-home:hover{color:var(--red)}
 @media(max-width:600px){.sw-label{display:none}}
+@media(max-width:400px){#dashSwitcher .dash-sw-btn span:first-child{font-size:14px}#dashSwitcher{gap:2px}}
 /* ── Help Tooltip System ── */
 .help-btn{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--s2);border:1.5px solid var(--bd);color:var(--t3);font-size:11px;font-weight:800;cursor:pointer;flex-shrink:0;transition:all .15s;font-family:var(--font);line-height:1}
 .help-btn:hover{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -137,9 +138,9 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
 
 /* ─── MAIN ─── */
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
-.topbar{background:var(--surface);border-bottom:1px solid var(--bd);padding:0 24px;height:56px;display:flex;align-items:center;gap:12px;flex-shrink:0}
-.topbar-title{font-size:16px;font-weight:800;letter-spacing:-.4px;flex:1}
-.topbar-actions{display:flex;align-items:center;gap:8px}
+.topbar{background:var(--surface);border-bottom:1px solid var(--bd);padding:0 24px;min-height:56px;display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;row-gap:0}
+.topbar-title{font-size:16px;font-weight:800;letter-spacing:-.4px;flex:1;min-width:80px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap}
 .content{flex:1;overflow-y:auto;overflow-x:hidden;padding:24px}
 
 /* ─── BUTTONS ─── */
@@ -213,7 +214,7 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
 .date-in:focus{outline:none;border-color:var(--accent)}
 
 /* Table */
-.table-wrap{background:var(--surface);border:1px solid var(--bd);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh)}
+.table-wrap{background:var(--surface);border:1px solid var(--bd);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh);overflow-x:auto;-webkit-overflow-scrolling:touch}
 table{width:100%;border-collapse:collapse}
 thead{background:var(--s2)}
 th{padding:10px 16px;text-align:left;font-size:11.5px;font-weight:600;color:var(--t2);border-bottom:1px solid var(--bd);white-space:nowrap}
@@ -474,7 +475,11 @@ tbody tr:hover{background:var(--s2)}
   .sidebar.open{transform:translateX(0)}
   .ham{display:flex}
   .content{padding:16px}
-  .topbar{padding:0 16px}
+  .topbar{padding:0 12px;gap:6px}
+  .topbar-title{font-size:14px}
+  .topbar-actions .btn{padding:6px 10px;font-size:12px}
+  .topbar-actions .btn svg{width:11px;height:11px}
+  .topbar-actions .help-btn{display:none}
   .proj-sections{grid-template-columns:1fr}
   .form-grid{grid-template-columns:1fr}
   .det-grid{grid-template-columns:1fr}
@@ -482,11 +487,42 @@ tbody tr:hover{background:var(--s2)}
   .phase-block:not(:last-child)::after{content:'↓';right:auto;bottom:-14px;top:auto;left:50%;transform:translateX(-50%)}
   th:nth-child(n+5),td:nth-child(n+5){display:none}
 }
+@media(max-width:768px){#inv-stock-grids{grid-template-columns:1fr!important}}
 @media(max-width:480px){
   .kpi-grid{grid-template-columns:repeat(2,1fr)}
   .kpi-val{font-size:20px}
   .proj-grid{grid-template-columns:1fr}
   th:nth-child(n+4),td:nth-child(n+4){display:none}
+  .btn-text-md{display:none}
+  .topbar-title{max-width:100px}
+  /* 모달 전체 너비 */
+  .modal-sm,.modal-md,.modal-lg{max-width:100%!important;margin:8px}
+  /* 폼 그리드 1열 강제 */
+  .form-grid{grid-template-columns:1fr!important}
+  /* 필터 바 줄바꿈 */
+  .filter-bar{flex-wrap:wrap;gap:6px}
+  .f-select,.f-input{min-width:0;flex:1}
+  /* 딜 카드 */
+  .deal-card{padding:12px}
+  /* 파이프라인 칸반 */
+  .pipeline{flex-direction:column;overflow-x:visible}
+  .pipeline-col{min-width:100%}
+  /* 테이블 스크롤 */
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  /* 멤버 그리드 */
+  .member-grid{grid-template-columns:1fr!important}
+  /* account-table */
+  .account-table-wrap{overflow-x:auto}
+}
+
+/* 태블릿 중간 (768~920px) */
+@media(min-width:481px) and (max-width:920px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .filter-bar{flex-wrap:wrap;gap:8px}
+  .member-grid{grid-template-columns:repeat(2,1fr)!important}
+  .pipeline{overflow-x:auto}
+  .pipeline-col{min-width:220px}
 }
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
@@ -1692,7 +1728,15 @@ const VIEW_ACTIONS = {
   deals:     PLUS_BTN('새 딜', 'openNewDealModal'),
   projects:  PLUS_BTN('새 프로젝트', 'openNewProjModal'),
   admin:     PLUS_BTN('계정 추가', "openAddAccountModal"),
-  'inv-overview':     `${PLUS_BTN('입출고 등록','openTxModal')} ${PLUS_BTN('발주 등록','openPoModal')}`,
+  'inv-overview': `
+    <button class="btn btn-s" onclick="openTxModal()" title="입출고 등록" style="display:flex;align-items:center;gap:5px">
+      <svg viewBox="0 0 14 14" fill="none" style="width:13px;height:13px;flex-shrink:0"><line x1="7" y1="2" x2="7" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="2" y1="7" x2="12" y2="7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span class="btn-text-md">입출고 등록</span>
+    </button>
+    <button class="btn btn-p" onclick="openPoModal()" title="발주 등록" style="display:flex;align-items:center;gap:5px">
+      <svg viewBox="0 0 14 14" fill="none" style="width:13px;height:13px;flex-shrink:0"><line x1="7" y1="2" x2="7" y2="12" stroke="white" stroke-width="1.8" stroke-linecap="round"/><line x1="2" y1="7" x2="12" y2="7" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span class="btn-text-md">발주 등록</span>
+    </button>`,
   'inv-transactions': PLUS_BTN('입출고 등록','openTxModal'),
   'inv-orders':       PLUS_BTN('발주 등록','openPoModal') + `<button class="help-btn" onclick="showHelp('purchaseOrder')" style="margin-left:4px">?</button>`,
   'inv-bom':          '',
