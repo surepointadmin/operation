@@ -1609,10 +1609,14 @@ async function doLogin() {
     // Init Supabase and load data
     const sbOk = initSupabase();
     if(sbOk){
-      await loadProductsFromDB();
-      await loadDealsFromDB();
-      loadInvData().catch(()=>{});
-      loadFinData().catch(()=>{});
+      showLoading('데이터 로드 중...');
+      await Promise.all([
+        loadProductsFromDB(),
+        loadDealsFromDB(),
+        loadInvData(),
+        loadFinData(),
+      ]).catch(e => console.error('load error:', e));
+      hideLoading();
     } else {
       showToast('로컬 모드: Supabase 키 미설정', 'warn');
       loadDemoData();
