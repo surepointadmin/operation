@@ -1640,33 +1640,56 @@ function setSP(p){sP=p;if(p!=='custom'){const r=getRange(p);sF=r[0];sT=r[1];}ren
 async function doLogin() {
   const id = document.getElementById('loginId').value.trim().toLowerCase();
   const pw = document.getElementById('loginPw').value;
-  const u = USERS[id];
-  if(u && u.pw===pw) {
-    CU = {id,...u};
-    document.getElementById('loginScreen').style.display='none';
-    document.getElementById('appRoot').style.display='flex';
-    setupSidebar();
-    initFilters();
-    // Init Supabase and load data
-    const sbOk = initSupabase();
-    if(sbOk){
-      showLoading('데이터 로드 중...');
-      await Promise.all([
-        loadRolesFromDB(),
-        loadUsersFromDB(),
-        loadProductsFromDB(),
-        loadDealsFromDB(),
-        loadInvData(),
-        loadFinData(),
-      ]).catch(e => console.error('load error:', e));
+  const errEl = document.getElementById('loginErr');
+  errEl.style.display='none';
+
+  // Supabase 초기화 후 DB에서 최신 비밀번호로 인증
+  const sbOk = initSupabase();
+  if(sbOk) {
+    showLoading('로그인 중...');
+    // DB에서 해당 계정 직접 조회
+    try {
+      const {data, error} = await sb.from('users').select('*').eq('id', id).single();
       hideLoading();
-    } else {
-      showToast('로컬 모드: Supabase 키 미설정', 'warn');
+      if(error || !data) { errEl.style.display='block'; return; }
+      if(data.pw !== pw) { errEl.style.display='block'; return; }
+      // 인증 성공 — USERS에 반영
+      USERS[id] = {name:data.name, pw:data.pw, role:data.role, idx:data.idx};
+      CU = {id, ...USERS[id]};
+    } catch(e) {
+      hideLoading();
+      // DB 연결 실패 시 하드코딩 값으로 폴백
+      const u = USERS[id];
+      if(!u || u.pw !== pw) { errEl.style.display='block'; return; }
+      CU = {id, ...u};
     }
-    renderHome();
   } else {
-    document.getElementById('loginErr').style.display='block';
+    // 로컬 모드 — 하드코딩 값으로 체크
+    const u = USERS[id];
+    if(!u || u.pw !== pw) { errEl.style.display='block'; return; }
+    CU = {id, ...u};
+    showToast('로컬 모드: Supabase 키 미설정', 'warn');
   }
+
+  // 로그인 성공
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('appRoot').style.display='flex';
+  setupSidebar();
+  initFilters();
+
+  if(sbOk) {
+    showLoading('데이터 로드 중...');
+    await Promise.all([
+      loadRolesFromDB(),
+      loadUsersFromDB(),
+      loadProductsFromDB(),
+      loadDealsFromDB(),
+      loadInvData(),
+      loadFinData(),
+    ]).catch(e => console.error('load error:', e));
+    hideLoading();
+  }
+  renderHome();
 }
 function doLogout() {
   CU=null;
