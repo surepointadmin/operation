@@ -433,7 +433,7 @@ tbody tr:hover{background:var(--s2)}
 /* Admin account table */
 .account-table-wrap{background:var(--surface);border:1px solid var(--bd);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh);margin-bottom:16px}
 .role-badge{display:inline-flex;align-items:center;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px}
-.rb-superadmin{background:#1e1b4b;color:#fff}.rb-admin{background:#f3e8ff;color:#6b21a8}
+.rb-superadmin{background:#1e1b4b;color:#fff}.rb-admin{background:#f3e8ff;color:#6b21a8}.rb-custom{background:#f1f5f9;color:#475569}
 .rb-sales{background:#eff6ff;color:#1d4ed8}
 .rb-rd{background:#f0fdf4;color:#15803d}
 .rb-install{background:#fdf4ff;color:#7e22ce}
@@ -1470,7 +1470,10 @@ let USERS = {
 };
 let userIdxCounter = 7;
 
-const ROLE_LABELS = {superadmin:'통합 관리자',admin:'관리자',sales:'영업',rd:'R&D',install:'설치/AS'};
+// 기본 역할 (삭제 불가)
+const ROLE_LABELS_DEFAULT = {superadmin:'통합 관리자',admin:'관리자',sales:'영업',rd:'R&D',install:'설치/AS'};
+let ROLE_LABELS = {...ROLE_LABELS_DEFAULT};
+const ROLE_LABELS_FIXED = new Set(['superadmin','admin','sales','rd','install']); // 삭제 불가
 
 // ── 제품 목록 (관리자가 추가/삭제 가능) ──
 let PRODUCTS = ['AI-S1','AI-S2','AI-S3','AI-S3(디젤)'];
@@ -1484,7 +1487,9 @@ const INFLOW_SOURCES = [
   { id:'dealer',    label:'대리점',           desc:'공식 대리점 영업을 통한 유입',           color:'#7c3aed', bg:'#f5f3ff' },
 ];
 const ROLE_DEPT   = {admin:'dept-admin',sales:'dept-sales',rd:'dept-rd',install:'dept-install'};
-const ROLE_CHIP   = {superadmin:'rb-superadmin',admin:'rb-admin',sales:'rb-sales',rd:'rb-rd',install:'rb-install'};
+let ROLE_CHIP = {superadmin:'rb-superadmin',admin:'rb-admin',sales:'rb-sales',rd:'rb-rd',install:'rb-install'};
+// 커스텀 역할은 자동으로 rb-custom 클래스 사용
+function getRoleChip(role){ return ROLE_CHIP[role]||'rb-custom'; }
 
 const STAGES = ['잠재 발굴','미팅·접촉','제안·견적','협상·검토','구두합의','계약 완료','실패·보류'];
 const STAGE_KEYS = ['lead','contact','proposal','nego','verbal','won','lost'];
@@ -1611,6 +1616,7 @@ async function doLogin() {
     if(sbOk){
       showLoading('데이터 로드 중...');
       await Promise.all([
+        loadRolesFromDB(),
         loadUsersFromDB(),
         loadProductsFromDB(),
         loadDealsFromDB(),
@@ -2960,7 +2966,7 @@ function renderAdmin(){
   const rows=Object.entries(USERS).map(([id,u])=>`
     <tr>
       <td><div style="font-weight:700">${u.name}</div><div style="font-size:11px;color:var(--t3);font-family:monospace">${id}</div></td>
-      <td><span class="role-badge ${ROLE_CHIP[u.role]||'rb-sales'}">${ROLE_LABELS[u.role]||u.role}</span></td>
+      <td><span class="role-badge ${getRoleChip(u.role)}">${ROLE_LABELS[u.role]||u.role}</span></td>
       <td style="color:var(--t3)">••••</td>
       <td>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
@@ -2984,6 +2990,18 @@ function renderAdmin(){
       <tbody>${rows}</tbody></table>
     </div>
     <div style="margin-top:28px">
+      <div style="font-size:15px;font-weight:800;letter-spacing:-.3px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--bd)">역할 관리</div>
+      <div style="font-size:13px;color:var(--t2);margin-bottom:12px">팀에 맞는 커스텀 역할을 추가합니다. 기본 역할(통합관리자·관리자·영업·R&D·설치AS)은 삭제할 수 없습니다.</div>
+      <div id="roleListAdmin" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px"></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input class="f-input" id="newRoleId" placeholder="역할 ID (영문, 예: qa)" style="max-width:130px;flex:none">
+        <input class="f-input" id="newRoleLabel" placeholder="표시 이름 (예: QA팀)" style="max-width:150px;flex:none">
+        <button class="btn btn-p" onclick="addRole()">추가</button>
+      </div>
+      <div id="roleMsg" style="font-size:12px;margin-top:8px;font-weight:500"></div>
+    </div>
+
+    <div style="margin-top:28px">
       <div style="font-size:15px;font-weight:800;letter-spacing:-.3px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--bd)">제품 목록 관리</div>
       <div style="font-size:13px;color:var(--t2);margin-bottom:12px">딜 추가 시 표시되는 제품 드롭다운을 관리합니다</div>
       <div id="productListAdmin" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px"></div>
@@ -2994,6 +3012,50 @@ function renderAdmin(){
       <div id="productMsg" style="font-size:12px;margin-top:8px;font-weight:500"></div>
     </div>`;
   renderProductAdmin();
+  renderRoleAdmin();
+}
+
+function renderRoleAdmin(){
+  const wrap = document.getElementById('roleListAdmin');
+  if(!wrap) return;
+  wrap.innerHTML = Object.entries(ROLE_LABELS).map(([id, label]) => {
+    const isFixed = ROLE_LABELS_FIXED.has(id);
+    return `<div style="display:inline-flex;align-items:center;gap:6px;border-radius:20px;padding:5px 10px 5px 14px;border:1px solid var(--bd);background:var(--s2)">
+      <span class="role-badge ${getRoleChip(id)}" style="margin:0">${label}</span>
+      <span style="font-size:11px;color:var(--t3);font-family:monospace">${id}</span>
+      ${!isFixed ? `<button onclick="removeRole('${id}')" style="background:none;border:none;cursor:pointer;color:var(--t3);padding:0;line-height:1;font-size:16px;margin-left:2px" title="삭제">×</button>` : '<span style="font-size:10px;color:var(--t3);margin-left:2px">🔒</span>'}
+    </div>`;
+  }).join('');
+}
+
+function addRole(){
+  const idEl = document.getElementById('newRoleId');
+  const labelEl = document.getElementById('newRoleLabel');
+  const msg = document.getElementById('roleMsg');
+  const id = idEl?.value.trim().toLowerCase();
+  const label = labelEl?.value.trim();
+  if(!id||!label){ msg.style.color='var(--red)'; msg.textContent='ID와 이름을 모두 입력해주세요.'; return; }
+  if(!/^[a-z0-9_]+$/.test(id)){ msg.style.color='var(--red)'; msg.textContent='ID는 영문 소문자, 숫자, 밑줄(_)만 가능합니다.'; return; }
+  if(ROLE_LABELS[id]){ msg.style.color='var(--red)'; msg.textContent='이미 존재하는 역할 ID입니다.'; return; }
+  ROLE_LABELS[id] = label;
+  ROLE_CHIP[id] = 'rb-custom';
+  saveRolesToDB();
+  idEl.value=''; labelEl.value='';
+  msg.style.color='var(--green)'; msg.textContent=`'${label}' 역할이 추가됐습니다.`;
+  renderRoleAdmin();
+  setTimeout(()=>{ if(msg) msg.textContent=''; }, 2000);
+}
+
+function removeRole(id){
+  if(ROLE_LABELS_FIXED.has(id)){ showToast('기본 역할은 삭제할 수 없습니다.','warn'); return; }
+  // 해당 역할 사용 중인 팀원 확인
+  const using = Object.entries(USERS).filter(([,u])=>u.role===id).map(([,u])=>u.name);
+  if(using.length){ showToast(`${using.join(', ')}이(가) 이 역할을 사용 중입니다. 먼저 역할을 변경해주세요.`,'warn'); return; }
+  if(!confirm(`'${ROLE_LABELS[id]}' 역할을 삭제할까요?`)) return;
+  delete ROLE_LABELS[id];
+  delete ROLE_CHIP[id];
+  saveRolesToDB();
+  renderRoleAdmin();
 }
 
 function renderProductAdmin(){
@@ -3041,8 +3103,8 @@ function openEditAccountModal(id) {
   const overlay = document.createElement('div');
   overlay.id = 'editAccountOverlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px';
-  const roleOpts = ['superadmin','admin','sales','rd','install'].map(r=>
-    `<option value="${r}"${u.role===r?' selected':''}>${ROLE_LABELS[r]}</option>`).join('');
+  const roleOpts = Object.entries(ROLE_LABELS).map(([id,label])=>
+    `<option value="${id}"${u.role===id?' selected':''}>${label}</option>`).join('');
   overlay.innerHTML = `<div style="background:var(--surface);border-radius:var(--r-xl);width:100%;max-width:440px;box-shadow:var(--sh-lg);animation:su .2s ease">
     <div style="padding:20px 24px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:12px">
       <div style="flex:1"><div style="font-size:17px;font-weight:800">계정 수정</div><div style="font-size:13px;color:var(--t2);margin-top:2px">${u.name} (${id})</div></div>
@@ -3408,7 +3470,13 @@ function showToast(msg, type='success'){
 }
 
 // 모달 열기 래퍼 함수 (PLUS_BTN onclick 용)
-function openAddAccountModal(){ openModal('addAccountModal'); }
+function openAddAccountModal(){
+  const sel = document.getElementById('ac-role');
+  sel.innerHTML = Object.entries(ROLE_LABELS).map(([id,label])=>
+    `<option value="${id}"${id==='sales'?' selected':''}>${label}</option>`
+  ).join('');
+  openModal('addAccountModal');
+}
 function openRecvModal(){ openModal('recvModal'); }
 function openExpModal(){
   document.getElementById('exp-date').value = new Date().toISOString().slice(0,10);
@@ -3450,6 +3518,40 @@ const PO_STATUS_CLS = {ordered:'chip-blue', partial:'chip-amber', received:'chip
 // ══════════════════════════════════════════════════════════
 // SUPABASE LOADERS — 자재/재고 & 재무
 // ══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+// SUPABASE — 역할(roles) CRUD
+// ══════════════════════════════════════════════════════════
+async function loadRolesFromDB() {
+  if(!sb) return;
+  try {
+    const {data, error} = await sb.from('roles').select('*');
+    if(error) throw error;
+    if(data && data.length > 0) {
+      data.forEach(r => {
+        if(!ROLE_LABELS_FIXED.has(r.id)) {
+          ROLE_LABELS[r.id] = r.label;
+          ROLE_CHIP[r.id] = 'rb-custom';
+        }
+      });
+    }
+  } catch(e) { console.error('loadRolesFromDB:', e); }
+}
+
+async function saveRolesToDB() {
+  if(!sb) return;
+  // 커스텀 역할만 저장 (기본 역할 제외)
+  const customRoles = Object.entries(ROLE_LABELS)
+    .filter(([id]) => !ROLE_LABELS_FIXED.has(id))
+    .map(([id, label]) => ({id, label}));
+  try {
+    // 기존 커스텀 역할 전체 삭제 후 재삽입
+    await sb.from('roles').delete().not('id', 'in', `(${[...ROLE_LABELS_FIXED].map(r=>`'${r}'`).join(',')})`);
+    if(customRoles.length > 0) {
+      await sb.from('roles').insert(customRoles);
+    }
+  } catch(e) { console.error('saveRolesToDB:', e); }
+}
+
 // ══════════════════════════════════════════════════════════
 // SUPABASE — 계정(users) CRUD
 // ══════════════════════════════════════════════════════════
