@@ -1139,7 +1139,6 @@ tbody tr:hover{background:var(--s2)}
         <div class="form-field"><label class="form-label">단위</label><input class="form-input" id="item-unit" value="개" placeholder="개, EA, kg"></div>
         <div class="form-field"><label class="form-label">현재 재고</label><input class="form-input" id="item-stock" type="number" min="0" value="0"></div>
         <div class="form-field"><label class="form-label">안전재고 기준</label><input class="form-input" id="item-safety" type="number" min="0" value="0" placeholder="이하면 경고"></div>
-        <div class="form-field"><label class="form-label">리드타임 (일)</label><input class="form-input" id="item-lead" type="number" min="0" value="14" placeholder="발주→입고 기간"></div>
         <div class="form-field"><label class="form-label">단가 (원)</label><input class="form-input" id="item-cost" type="number" min="0" value="0"></div>
         <div class="form-field"><label class="form-label">공급업체</label><input class="form-input" id="item-supplier" placeholder="예: 삼성전자 B2B"></div>
         <div class="form-field full"><label class="form-label">메모</label><textarea class="form-textarea" id="item-note" rows="2" placeholder="특이사항, 보관 방법 등"></textarea></div>
@@ -3339,7 +3338,6 @@ function openItemModal(cat) {
   ['item-name','item-code','item-supplier','item-note'].forEach(id=>document.getElementById(id).value='');
   ['item-stock','item-safety','item-cost'].forEach(id=>document.getElementById(id).value='0');
   document.getElementById('item-unit').value='대';
-  document.getElementById('item-lead').value='14';
   openModal('itemModal');
 }
 
@@ -3383,8 +3381,8 @@ function openRawItemModal(prefillFinishedId) {
             <input class="form-input" id="raw-safety" type="number" min="0" value="0">
           </div>
           <div class="form-field">
-            <label class="form-label">리드타임 (일)</label>
-            <input class="form-input" id="raw-lead" type="number" value="14">
+            <label class="form-label">발주 기간 (일) * <span style="font-weight:400;color:var(--t3);font-size:10px">발주 → 입고까지 걸리는 기간</span></label>
+            <input class="form-input" id="raw-lead" type="number" value="14" min="1" placeholder="예: 14">
           </div>
           <div class="form-field">
             <label class="form-label">단가 (원)</label>
@@ -3478,7 +3476,12 @@ function openItemModalEdit(id) {
   document.getElementById('item-unit').value=item.unit||'개';
   document.getElementById('item-stock').value=item.current_stock||0;
   document.getElementById('item-safety').value=item.safety_stock||0;
-  document.getElementById('item-lead').value=item.lead_time_days||14;
+  const leadEl = document.getElementById('item-lead');
+  if(leadEl){ leadEl.value=item.lead_time_days||14;
+    // 완제품이면 리드타임 행 숨기기
+    const leadRow = leadEl.closest('.form-field');
+    if(leadRow) leadRow.style.display = item.category==='raw' ? '' : 'none';
+  }
   document.getElementById('item-cost').value=item.unit_cost||0;
   document.getElementById('item-supplier').value=item.supplier||'';
   document.getElementById('item-note').value=item.note||'';
@@ -3493,7 +3496,7 @@ async function saveItem() {
     unit: document.getElementById('item-unit').value||'개',
     current_stock: parseInt(document.getElementById('item-stock').value)||0,
     safety_stock: parseInt(document.getElementById('item-safety').value)||0,
-    lead_time_days: parseInt(document.getElementById('item-lead').value)||14,
+    lead_time_days: document.getElementById('item-lead')?.value ? (parseInt(document.getElementById('item-lead').value)||0) : 0,
     unit_cost: parseInt(document.getElementById('item-cost').value)||0,
     supplier: document.getElementById('item-supplier').value.trim()||null,
     note: document.getElementById('item-note').value.trim()||null,
