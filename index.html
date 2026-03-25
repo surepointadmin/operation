@@ -1611,6 +1611,7 @@ async function doLogin() {
     if(sbOk){
       showLoading('데이터 로드 중...');
       await Promise.all([
+        loadUsersFromDB(),
         loadProductsFromDB(),
         loadDealsFromDB(),
         loadInvData(),
@@ -3031,7 +3032,9 @@ function changeRole(id,role){
 }
 function deleteAccount(id){
   if(!confirm(`'${USERS[id].name}' 계정을 삭제할까요?`))return;
-  delete USERS[id];renderAdmin();
+  deleteUserFromDB(id);
+  delete USERS[id];
+  renderAdmin();
 }
 function openEditAccountModal(id) {
   const u = USERS[id]; if(!u) return;
@@ -3101,6 +3104,13 @@ function saveEditAccount(oldId) {
     if(CU.id === oldId){ CU.name = newName; CU.role = newRole; CU.pw = newPw||CU.pw; }
   }
 
+  // DB 저장
+  if(newId !== oldId) {
+    deleteUserFromDB(oldId);
+    saveUserToDB(newId, USERS[newId]);
+  } else {
+    saveUserToDB(oldId, USERS[oldId]);
+  }
   document.getElementById('editAccountOverlay')?.remove();
   showToast('계정이 수정됐습니다 ✓');
   // 사이드바 본인 정보 업데이트
@@ -3111,7 +3121,7 @@ function saveEditAccount(oldId) {
   renderAdmin();
 }
 
-function addAccount(){
+async function addAccount(){
   const name=document.getElementById('ac-name').value.trim();
   const id=document.getElementById('ac-id').value.trim().toLowerCase();
   const role=document.getElementById('ac-role').value;
@@ -3120,7 +3130,9 @@ function addAccount(){
   if(!name||!id){msg.style.color='var(--red)';msg.textContent='이름과 아이디는 필수입니다.';return;}
   if(!/^[a-z0-9]+$/.test(id)){msg.style.color='var(--red)';msg.textContent='아이디는 영문 소문자/숫자만 가능합니다.';return;}
   if(USERS[id]){msg.style.color='var(--red)';msg.textContent='이미 존재하는 아이디입니다.';return;}
-  USERS[id]={name,pw,role,idx:userIdxCounter++};
+  const newUser = {name,pw,role,idx:userIdxCounter++};
+  USERS[id] = newUser;
+  await saveUserToDB(id, newUser);
   msg.style.color='var(--green)';msg.textContent=`'${name}' 계정이 추가되었습니다.`;
   ['ac-name','ac-id'].forEach(i=>document.getElementById(i).value='');
   document.getElementById('ac-pw').value='0000';
@@ -3438,6 +3450,44 @@ const PO_STATUS_CLS = {ordered:'chip-blue', partial:'chip-amber', received:'chip
 // ══════════════════════════════════════════════════════════
 // SUPABASE LOADERS — 자재/재고 & 재무
 // ══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+// SUPABASE — 계정(users) CRUD
+// ══════════════════════════════════════════════════════════
+async function loadUsersFromDB() {
+  if(!sb) return;
+  try {
+    const {data, error} = await sb.from('users').select('*').order('idx');
+    if(error) throw error;
+    if(data && data.length > 0) {
+      USERS = {};
+      data.forEach(u => {
+        USERS[u.id] = {name:u.name, pw:u.pw, role:u.role, idx:u.idx};
+      });
+      userIdxCounter = Math.max(...data.map(u=>u.idx), 0) + 1;
+    }
+  } catch(e) {
+    console.error('loadUsersFromDB:', e);
+    // 폴백: 기본값 유지
+  }
+}
+
+async function saveUserToDB(id, userData) {
+  if(!sb) return;
+  try {
+    await sb.from('users').upsert([{
+      id, name:userData.name, pw:userData.pw,
+      role:userData.role, idx:userData.idx
+    }], {onConflict:'id'});
+  } catch(e) { console.error('saveUserToDB:', e); }
+}
+
+async function deleteUserFromDB(id) {
+  if(!sb) return;
+  try {
+    await sb.from('users').delete().eq('id', id);
+  } catch(e) { console.error('deleteUserFromDB:', e); }
+}
+
 async function loadInvData() {
   if(!sb) return;
   try {
