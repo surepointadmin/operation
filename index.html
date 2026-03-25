@@ -399,7 +399,7 @@ tbody tr:hover{background:var(--s2)}
 /* Admin account table */
 .account-table-wrap{background:var(--surface);border:1px solid var(--bd);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh);margin-bottom:16px}
 .role-badge{display:inline-flex;align-items:center;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px}
-.rb-admin{background:#f3e8ff;color:#6b21a8}
+.rb-superadmin{background:#1e1b4b;color:#fff}.rb-admin{background:#f3e8ff;color:#6b21a8}
 .rb-sales{background:#eff6ff;color:#1d4ed8}
 .rb-rd{background:#f0fdf4;color:#15803d}
 .rb-install{background:#fdf4ff;color:#7e22ce}
@@ -1305,6 +1305,7 @@ tbody tr:hover{background:var(--s2)}
         <div class="form-field full"><label class="form-label">아이디 *</label><input class="form-input" id="ac-id" placeholder="예: hgd (영문 소문자)"></div>
         <div class="form-field full"><label class="form-label">역할</label>
           <select class="form-select" id="ac-role">
+            <option value="superadmin">통합 관리자</option>
             <option value="admin">관리자</option>
             <option value="sales" selected>영업</option>
             <option value="rd">R&D</option>
@@ -1327,14 +1328,14 @@ let USERS = {
   bsj:{name:'백승정',pw:'0000',role:'admin',idx:0},
   lsh:{name:'이상혁',pw:'0000',role:'admin',idx:1},
   lsj:{name:'이승재',pw:'0000',role:'sales',idx:2},
-  ljh:{name:'이재훈',pw:'0000',role:'admin',idx:3},
+  ljh:{name:'이재훈',pw:'0000',role:'superadmin',idx:3},
   lsu:{name:'이승우',pw:'0000',role:'admin',idx:4},
   pgm:{name:'박기무',pw:'0000',role:'sales',idx:5},
   aym:{name:'안영모',pw:'0000',role:'sales',idx:6},
 };
 let userIdxCounter = 7;
 
-const ROLE_LABELS = {admin:'관리자',sales:'영업',rd:'R&D',install:'설치/AS'};
+const ROLE_LABELS = {superadmin:'통합 관리자',admin:'관리자',sales:'영업',rd:'R&D',install:'설치/AS'};
 
 // ── 제품 목록 (관리자가 추가/삭제 가능) ──
 let PRODUCTS = ['AI-S1','AI-S2','AI-S3','AI-S3(디젤)'];
@@ -1348,7 +1349,7 @@ const INFLOW_SOURCES = [
   { id:'dealer',    label:'대리점',           desc:'공식 대리점 영업을 통한 유입',           color:'#7c3aed', bg:'#f5f3ff' },
 ];
 const ROLE_DEPT   = {admin:'dept-admin',sales:'dept-sales',rd:'dept-rd',install:'dept-install'};
-const ROLE_CHIP   = {admin:'rb-admin',sales:'rb-sales',rd:'rb-rd',install:'rb-install'};
+const ROLE_CHIP   = {superadmin:'rb-superadmin',admin:'rb-admin',sales:'rb-sales',rd:'rb-rd',install:'rb-install'};
 
 const STAGES = ['잠재 발굴','미팅·접촉','제안·견적','협상·검토','구두합의','계약 완료','실패·보류'];
 const STAGE_KEYS = ['lead','contact','proposal','nego','verbal','won','lost'];
@@ -1394,7 +1395,7 @@ const fmtD = d => { if(!d) return '-'; const dt = new Date(d); return `${dt.getF
 const isThisMonth = d => { if(!d) return false; const dt = new Date(d); return dt.getFullYear()===today.getFullYear()&&dt.getMonth()===today.getMonth(); };
 const isUrgent = d => { if(!d) return false; const dt = new Date(d); const diff=(dt-today)/(864e5); return diff>=0&&diff<=7; };
 
-const salesMembers = () => Object.entries(USERS).filter(([,u])=>['sales','admin'].includes(u.role)).map(([id,u])=>({id,...u}));
+const salesMembers = () => Object.entries(USERS).filter(([,u])=>['superadmin','admin','sales'].includes(u.role)).map(([id,u])=>({id,...u}));
 const allMembers = () => Object.entries(USERS).map(([id,u])=>({id,...u}));
 const memberByName = name => Object.values(USERS).find(u=>u.name===name);
 const avEl = (name, size='22px', fs='9px') => {
@@ -1509,16 +1510,14 @@ function setupSidebar() {
   av.className=`av av${CU.idx%12}`;av.textContent=CU.name.slice(0,2);
   document.getElementById('sbName').textContent=CU.name;
   document.getElementById('sbRole').textContent=ROLE_LABELS[CU.role]||'팀원';
-  const isAdmin = CU.role==='admin';
-  // Hide admin-only items in each context
-  ['ni-team'].forEach(id=>{
-    const el=document.getElementById(id);if(el)el.style.display=isAdmin?'':'none';
-  });
-  ['ni-admin'].forEach(id=>{
-    const el=document.getElementById(id);if(el)el.style.display=isAdmin?'':'none';
-  });
-  // Sales context: show/hide pipeline etc.
-  const isSales = ['admin','sales'].includes(CU.role);
+  const isSuperAdmin = CU.role==='superadmin';
+  const isAdmin = ['superadmin','admin'].includes(CU.role);
+  // 팀 현황 — 관리자 이상
+  ['ni-team'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=isAdmin?'':'none';});
+  // 팀 관리 — 통합 관리자만
+  ['ni-admin'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=isSuperAdmin?'':'none';});
+  // 영업 메뉴 — 영업/관리자 이상
+  const isSales = ['superadmin','admin','sales'].includes(CU.role);
   ['ni-pipeline','ni-deals','ni-customers'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.style.display=isSales?'':'none';
   });
@@ -1906,9 +1905,11 @@ function openProjectDetail(id) {
 
 function renderProjectDetail(p) {
   const si=phaseInfo(p.sales.status),ri=phaseInfo(p.rd.status),ii=phaseInfo(p.install.status);
-  const canSales = ['admin','sales'].includes(CU?.role);
-  const canRD    = ['admin','rd'].includes(CU?.role);
-  const canInst  = ['admin','install'].includes(CU?.role);
+  const canSales = ['superadmin','sales'].includes(CU?.role);
+  const canRD    = ['superadmin','rd'].includes(CU?.role);
+  const canInst  = ['superadmin','install'].includes(CU?.role);
+  // 관리자는 모든 섹션 열람만 (수정 버튼 비활성)
+  const isReadOnly = CU?.role === 'admin';
 
   const phaseTrack = `
     <div class="phase-track">
@@ -2441,7 +2442,7 @@ function createProject(){
 // ══════════════════════════════════════════════
 function renderTeam(){
   const c=document.getElementById('teamContent');
-  if(!CU||CU.role!=='admin'){
+  if(!CU||!['superadmin','admin'].includes(CU.role)){
     c.innerHTML=`<div class="lock-screen"><svg viewBox="0 0 40 40" fill="none"><rect x="8" y="18" width="24" height="16" rx="3" stroke="currentColor" stroke-width="2"/><path d="M13 18v-5a7 7 0 0114 0v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><p>팀 현황은 관리자만 조회할 수 있습니다.</p></div>`;
     return;
   }
@@ -2469,21 +2470,18 @@ function renderTeam(){
 // ══════════════════════════════════════════════
 function renderAdmin(){
   const c=document.getElementById('adminContent');
-  if(!CU||CU.role!=='admin'){
-    c.innerHTML=`<div class="lock-screen"><svg viewBox="0 0 40 40" fill="none"><rect x="8" y="18" width="24" height="16" rx="3" stroke="currentColor" stroke-width="2"/><path d="M13 18v-5a7 7 0 0114 0v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><p>관리자만 접근할 수 있습니다.</p></div>`;
+  if(!CU||CU.role!=='superadmin'){
+    c.innerHTML=`<div class="lock-screen"><svg viewBox="0 0 40 40" fill="none"><rect x="8" y="18" width="24" height="16" rx="3" stroke="currentColor" stroke-width="2"/><path d="M13 18v-5a7 7 0 0114 0v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><p>팀 관리는 통합 관리자만 접근할 수 있습니다.</p></div>`;
     return;
   }
   const rows=Object.entries(USERS).map(([id,u])=>`
     <tr>
-      <td><div style="font-weight:600">${u.name}</div></td>
-      <td style="color:var(--t2);font-family:monospace">${id}</td>
+      <td><div style="font-weight:700">${u.name}</div><div style="font-size:11px;color:var(--t3);font-family:monospace">${id}</div></td>
       <td><span class="role-badge ${ROLE_CHIP[u.role]||'rb-sales'}">${ROLE_LABELS[u.role]||u.role}</span></td>
       <td style="color:var(--t3)">••••</td>
       <td>
-        <div style="display:flex;gap:6px;align-items:center">
-          <select class="f-select" style="font-size:11px;padding:4px 8px" onchange="changeRole('${id}',this.value)">
-            ${['admin','sales','rd','install'].map(r=>`<option value="${r}"${u.role===r?' selected':''}>${ROLE_LABELS[r]}</option>`).join('')}
-          </select>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-s btn-sm" onclick="openEditAccountModal('${id}')">수정</button>
           ${id!==CU.id?`<button class="btn btn-danger btn-sm" onclick="deleteAccount('${id}')">삭제</button>`:'<span style="font-size:11px;color:var(--t3)">본인</span>'}
         </div>
       </td>
@@ -2499,7 +2497,7 @@ function renderAdmin(){
       </div>
     </div>
     <div class="account-table-wrap">
-      <table><thead><tr><th>이름</th><th>아이디</th><th>역할</th><th>비밀번호</th><th>관리</th></tr></thead>
+      <table><thead><tr><th>이름 / 아이디</th><th>역할</th><th>비밀번호</th><th>관리</th></tr></thead>
       <tbody>${rows}</tbody></table>
     </div>
     <div style="margin-top:28px">
@@ -2553,6 +2551,84 @@ function deleteAccount(id){
   if(!confirm(`'${USERS[id].name}' 계정을 삭제할까요?`))return;
   delete USERS[id];renderAdmin();
 }
+function openEditAccountModal(id) {
+  const u = USERS[id]; if(!u) return;
+  const overlay = document.createElement('div');
+  overlay.id = 'editAccountOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px';
+  const roleOpts = ['superadmin','admin','sales','rd','install'].map(r=>
+    `<option value="${r}"${u.role===r?' selected':''}>${ROLE_LABELS[r]}</option>`).join('');
+  overlay.innerHTML = `<div style="background:var(--surface);border-radius:var(--r-xl);width:100%;max-width:440px;box-shadow:var(--sh-lg);animation:su .2s ease">
+    <div style="padding:20px 24px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:12px">
+      <div style="flex:1"><div style="font-size:17px;font-weight:800">계정 수정</div><div style="font-size:13px;color:var(--t2);margin-top:2px">${u.name} (${id})</div></div>
+      <button onclick="document.getElementById('editAccountOverlay').remove()" style="width:32px;height:32px;border-radius:50%;background:var(--s2);border:none;cursor:pointer;font-size:18px;color:var(--t2)">×</button>
+    </div>
+    <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px">
+      <div class="form-field">
+        <label class="form-label">이름</label>
+        <input class="form-input" id="ea-name" value="${u.name}" style="margin-top:4px">
+      </div>
+      <div class="form-field">
+        <label class="form-label">아이디</label>
+        <input class="form-input" id="ea-id" value="${id}" style="margin-top:4px"${id===CU.id?' disabled':''}>
+        ${id===CU.id?'<div style="font-size:11px;color:var(--t3);margin-top:4px">본인 아이디는 변경할 수 없습니다</div>':''}
+      </div>
+      <div class="form-field">
+        <label class="form-label">새 비밀번호 <span style="font-weight:400;color:var(--t3)">(비워두면 변경 안 됨)</span></label>
+        <input class="form-input" id="ea-pw" type="password" placeholder="새 비밀번호 입력" style="margin-top:4px">
+      </div>
+      <div class="form-field">
+        <label class="form-label">역할</label>
+        <select class="form-select" id="ea-role" style="margin-top:4px"${id===CU.id?' disabled':''}>${roleOpts}</select>
+        ${id===CU.id?'<div style="font-size:11px;color:var(--t3);margin-top:4px">본인 역할은 변경할 수 없습니다</div>':''}
+      </div>
+      <div id="ea-msg" style="font-size:12px;font-weight:500"></div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn btn-p" style="flex:1;justify-content:center;padding:11px" onclick="saveEditAccount('${id}')">저장</button>
+        <button class="btn btn-s" style="flex:1;justify-content:center;padding:11px" onclick="document.getElementById('editAccountOverlay').remove()">취소</button>
+      </div>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+function saveEditAccount(oldId) {
+  const msg = document.getElementById('ea-msg');
+  const newName = document.getElementById('ea-name')?.value.trim();
+  const newId   = document.getElementById('ea-id')?.value.trim().toLowerCase() || oldId;
+  const newPw   = document.getElementById('ea-pw')?.value;
+  const newRole = document.getElementById('ea-role')?.value || USERS[oldId]?.role;
+
+  if(!newName){ msg.style.color='var(--red)'; msg.textContent='이름을 입력해주세요.'; return; }
+  if(!/^[a-z0-9]+$/.test(newId)){ msg.style.color='var(--red)'; msg.textContent='아이디는 영문 소문자/숫자만 가능합니다.'; return; }
+  if(newId !== oldId && USERS[newId]){ msg.style.color='var(--red)'; msg.textContent='이미 사용 중인 아이디입니다.'; return; }
+  if(newPw && newPw.length < 4){ msg.style.color='var(--red)'; msg.textContent='비밀번호는 4자 이상이어야 합니다.'; return; }
+
+  const u = USERS[oldId];
+  // 아이디가 바뀌면 새 키로 이동
+  if(newId !== oldId) {
+    USERS[newId] = {...u, name:newName, role:newRole};
+    if(newPw) USERS[newId].pw = newPw;
+    delete USERS[oldId];
+    // 현재 로그인 유저가 본인이면 CU도 업데이트
+    if(CU.id === oldId){ CU.id = newId; CU.name = newName; }
+  } else {
+    u.name = newName;
+    u.role = newRole;
+    if(newPw) u.pw = newPw;
+    if(CU.id === oldId){ CU.name = newName; CU.role = newRole; CU.pw = newPw||CU.pw; }
+  }
+
+  document.getElementById('editAccountOverlay')?.remove();
+  showToast('계정이 수정됐습니다 ✓');
+  // 사이드바 본인 정보 업데이트
+  if(CU.id === newId || CU.id === oldId){
+    document.getElementById('sbName').textContent = CU.name;
+    document.getElementById('sbRole').textContent = ROLE_LABELS[CU.role]||'팀원';
+  }
+  renderAdmin();
+}
+
 function addAccount(){
   const name=document.getElementById('ac-name').value.trim();
   const id=document.getElementById('ac-id').value.trim().toLowerCase();
