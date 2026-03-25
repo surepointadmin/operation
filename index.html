@@ -1684,14 +1684,14 @@ const VIEW_ACTIONS = {
   pipeline:  PLUS_BTN('새 딜', 'openNewDealModal'),
   deals:     PLUS_BTN('새 딜', 'openNewDealModal'),
   projects:  PLUS_BTN('새 프로젝트', 'openNewProjModal'),
-  admin:     PLUS_BTN('계정 추가', "()=>openModal('addAccountModal')"),
+  admin:     PLUS_BTN('계정 추가', "openAddAccountModal"),
   'inv-overview':     `${PLUS_BTN('입출고 등록','openTxModal')} ${PLUS_BTN('발주 등록','openPoModal')}`,
   'inv-transactions': PLUS_BTN('입출고 등록','openTxModal'),
   'inv-orders':       PLUS_BTN('발주 등록','openPoModal') + `<button class="help-btn" onclick="showHelp('purchaseOrder')" style="margin-left:4px">?</button>`,
   'inv-bom':          '',
-  'fin-cashflow':     PLUS_BTN('수금 등록', "()=>openModal('recvModal')"),
-  'fin-receivables':  PLUS_BTN('수금 등록', "()=>openModal('recvModal')") + `<button class="help-btn" onclick="showHelp('finReceivables')" style="margin-left:4px">?</button>`,
-  'fin-expenses':     PLUS_BTN('지출 등록', "()=>openModal('expModal')") + `<button class="help-btn" onclick="showHelp('finExpenses')" style="margin-left:4px">?</button>`,
+  'fin-cashflow':     PLUS_BTN('수금 등록', "openRecvModal"),
+  'fin-receivables':  PLUS_BTN('수금 등록', "openRecvModal") + `<button class="help-btn" onclick="showHelp('finReceivables')" style="margin-left:4px">?</button>`,
+  'fin-expenses':     PLUS_BTN('지출 등록', "openExpModal") + `<button class="help-btn" onclick="showHelp('finExpenses')" style="margin-left:4px">?</button>`,
   'fin-terms':        PLUS_BTN('조건 추가', 'openTermsModal'),
 };
 
@@ -3393,6 +3393,14 @@ function showToast(msg, type='success'){
   t.textContent=msg;
   document.body.appendChild(t);
   setTimeout(()=>t.remove(), 3000);
+}
+
+// 모달 열기 래퍼 함수 (PLUS_BTN onclick 용)
+function openAddAccountModal(){ openModal('addAccountModal'); }
+function openRecvModal(){ openModal('recvModal'); }
+function openExpModal(){
+  document.getElementById('exp-date').value = new Date().toISOString().slice(0,10);
+  openModal('expModal');
 }
 
 function initFilters(){
