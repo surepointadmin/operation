@@ -1676,14 +1676,16 @@ function doLogout() {
   document.getElementById('loginPw').value='';
   document.getElementById('loginErr').style.display='none';
 }
-function changePw() {
+async function changePw() {
   const cur=document.getElementById('pwCur').value,nw=document.getElementById('pwNew').value,cf=document.getElementById('pwCfm').value;
   const msg=document.getElementById('pwMsg');
   if(cur!==CU.pw){msg.style.color='var(--red)';msg.textContent='현재 비밀번호가 맞지 않습니다.';return;}
   if(nw.length<4){msg.style.color='var(--red)';msg.textContent='4자 이상 입력해주세요.';return;}
   if(nw!==cf){msg.style.color='var(--red)';msg.textContent='비밀번호가 일치하지 않습니다.';return;}
-  USERS[CU.id].pw=nw;CU.pw=nw;
-  msg.style.color='var(--green)';msg.textContent='비밀번호가 변경되었습니다.';
+  USERS[CU.id].pw=nw;
+  CU.pw=nw;
+  await saveUserToDB(CU.id, USERS[CU.id]);
+  msg.style.color='var(--green)';msg.textContent='비밀번호가 변경되었습니다. ✓';
   ['pwCur','pwNew','pwCfm'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
 }
 function setupSidebar() {
