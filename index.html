@@ -54,6 +54,40 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
 .dash-sw-home{color:var(--t3)}
 .dash-sw-home:hover{color:var(--red)}
 @media(max-width:600px){.sw-label{display:none}}
+/* ── Help Tooltip System ── */
+.help-btn{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--s2);border:1.5px solid var(--bd);color:var(--t3);font-size:11px;font-weight:800;cursor:pointer;flex-shrink:0;transition:all .15s;font-family:var(--font);line-height:1}
+.help-btn:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+.help-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:4000;display:flex;align-items:center;justify-content:center;padding:16px;animation:fadeIn .15s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.help-modal{background:var(--surface);border-radius:var(--r-xl);width:100%;max-width:520px;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.2)}
+.help-modal-hd{padding:20px 24px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:flex-start;gap:12px;position:sticky;top:0;background:var(--surface);z-index:1}
+.help-modal-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.help-modal-body{padding:20px 24px}
+.help-section{margin-bottom:20px}
+.help-section:last-child{margin-bottom:0}
+.help-section-title{font-size:12px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
+.help-field{display:flex;gap:10px;margin-bottom:10px;padding:10px 12px;background:var(--s2);border-radius:var(--r-sm)}
+.help-field-name{font-size:12px;font-weight:700;color:var(--t1);width:90px;flex-shrink:0;padding-top:1px}
+.help-field-desc{font-size:12px;color:var(--t2);line-height:1.6;flex:1}
+.help-example{background:var(--al);border-radius:var(--r-sm);padding:10px 14px;font-size:12px;color:var(--at);line-height:1.7}
+.help-example strong{font-weight:700;color:var(--t1)}
+.help-tip{display:flex;gap:8px;font-size:12px;color:var(--t2);margin-top:8px;line-height:1.6}
+/* ── Cashflow Tab ── */
+.cf-tab-btn{padding:4px 10px;border-radius:var(--r-sm);border:1px solid var(--bd);background:none;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--t2);transition:all .15s}
+.cf-tab-btn:hover{border-color:var(--accent);color:var(--accent)}
+.cf-tab-btn.active{background:var(--t1);border-color:var(--t1);color:var(--surface)}
+.cf-period-view table{width:100%;border-collapse:collapse}
+.cf-period-view th{font-size:11px;color:var(--t3);font-weight:700;text-align:left;padding:6px 8px;border-bottom:2px solid var(--bd)}
+.cf-period-view td{font-size:12px;padding:8px 8px;border-bottom:1px solid var(--bd)}
+.cf-period-view tr:last-child td{border-bottom:none}
+/* ── SuperAdmin KPI 대시보드 ── */
+@media(max-width:1100px){
+  #home-superadmin > div:nth-child(3){grid-template-columns:1fr!important}
+  #home-superadmin > div:nth-child(4){grid-template-columns:1fr!important}
+}
+@media(max-width:700px){
+  #home-superadmin > div:nth-child(2){grid-template-columns:1fr 1fr!important}
+}
 /* ── Home dashboard cards ── */
 .home-dash-card{border:2px solid var(--bd);border-radius:var(--r-xl);padding:24px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
 .home-dash-card:hover{transform:translateY(-3px);box-shadow:var(--sh-md)}
@@ -475,9 +509,7 @@ tbody tr:hover{background:var(--s2)}
     <div class="login-err" id="loginErr">아이디 또는 비밀번호가 올바르지 않습니다.</div>
     <button class="login-btn" onclick="doLogin()">로그인</button>
     <div class="login-hint">
-      <strong>초기 계정 (비밀번호: 0000)</strong><br>
-      영업: bsj · lsh · lsj · ljh · lsu · pgm · aym<br>
-      계정 추가는 관리자 로그인 후 팀 관리에서 가능합니다
+      아이디는 이름 이니셜 (예: 이재훈 → ljh), 초기 비밀번호는 0000
     </div>
   </div>
 </div>
@@ -649,56 +681,157 @@ tbody tr:hover{background:var(--s2)}
 
       <!-- HOME — 대시보드 선택 -->
       <div class="view active" id="view-home">
-        <div style="max-width:800px;margin:0 auto;padding:20px 0">
-          <div style="margin-bottom:32px">
-            <div style="font-size:24px;font-weight:800;letter-spacing:-.6px;margin-bottom:6px" id="homeGreeting">안녕하세요 👋</div>
-            <div style="font-size:14px;color:var(--t2)">어떤 대시보드로 이동할까요?</div>
+        <!-- 통합관리자 전용 KPI 대시보드 -->
+        <div id="home-superadmin" style="display:none">
+          <!-- 헤더 배너 -->
+          <div id="kpi-header-banner" style="background:linear-gradient(135deg,#1e1b4b 0%,#312e81 100%);border-radius:var(--r-lg);padding:20px 24px;margin-bottom:16px;color:#fff">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px">
+              <div>
+                <div style="font-size:20px;font-weight:800;letter-spacing:-.4px;margin-bottom:4px" id="saGreeting">안녕하세요 👋</div>
+                <div style="font-size:13px;opacity:.75" id="saDate"></div>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap" id="saAlertSummary"></div>
+            </div>
+            <!-- 대시보드 빠른 이동 -->
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button onclick="enterDashboard('sales')" style="display:flex;align-items:center;gap:7px;padding:8px 16px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:var(--r-sm);color:#fff;cursor:pointer;font-size:13px;font-weight:600;font-family:var(--font);transition:all .15s" onmouseenter="this.style.background='rgba(255,255,255,.22)'" onmouseleave="this.style.background='rgba(255,255,255,.12)'">
+                <span>📊</span> 영업 대시보드
+              </button>
+              <button onclick="enterDashboard('inv')" style="display:flex;align-items:center;gap:7px;padding:8px 16px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:var(--r-sm);color:#fff;cursor:pointer;font-size:13px;font-weight:600;font-family:var(--font);transition:all .15s" onmouseenter="this.style.background='rgba(255,255,255,.22)'" onmouseleave="this.style.background='rgba(255,255,255,.12)'">
+                <span>📦</span> 자재/재고
+              </button>
+              <button onclick="enterDashboard('fin')" style="display:flex;align-items:center;gap:7px;padding:8px 16px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:var(--r-sm);color:#fff;cursor:pointer;font-size:13px;font-weight:600;font-family:var(--font);transition:all .15s" onmouseenter="this.style.background='rgba(255,255,255,.22)'" onmouseleave="this.style.background='rgba(255,255,255,.12)'">
+                <span>💰</span> 재무
+              </button>
+            </div>
           </div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:40px" class="home-dash-grid">
-            <!-- 영업 대시보드 -->
-            <div class="home-dash-card" onclick="enterDashboard('sales')" style="border-color:#bfdbfe;background:linear-gradient(135deg,#eff6ff 0%,#fff 60%)">
-              <div class="hdc-icon" style="background:#2563eb">📊</div>
-              <div class="hdc-title">영업 대시보드</div>
-              <div class="hdc-desc">파이프라인, 딜 관리, 고객사, 프로젝트 협업</div>
-              <div class="hdc-stats" id="home-sales-stats">
-                <span class="chip chip-blue" id="hs-deals">딜 0건</span>
-                <span class="chip chip-green" id="hs-won">완료 ₩0</span>
-              </div>
-              <div class="hdc-arrow">→</div>
+          <!-- KPI 상단 4개 -->
+          <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px">
+            <div class="kpi-card" style="border-left:3px solid var(--accent)">
+              <div class="kpi-label">수주 잔고</div>
+              <div class="kpi-val" id="sa-backlog">₩0</div>
+              <span class="chip chip-blue" id="sa-backlog-c">0건 진행</span>
             </div>
-            <!-- 자재/재고 대시보드 -->
-            <div class="home-dash-card" onclick="enterDashboard('inv')" style="border-color:#bbf7d0;background:linear-gradient(135deg,#f0fdf4 0%,#fff 60%)">
-              <div class="hdc-icon" style="background:#16a34a">📦</div>
-              <div class="hdc-title">자재/재고 대시보드</div>
-              <div class="hdc-desc">재고 현황, 입출고, BOM 관리, 발주</div>
-              <div class="hdc-stats" id="home-inv-stats">
-                <span class="chip chip-green" id="hs-items">품목 0개</span>
-                <span class="chip chip-red" id="hs-warn" style="display:none">경고 0</span>
-              </div>
-              <div class="hdc-arrow">→</div>
+            <div class="kpi-card" style="border-left:3px solid var(--green)">
+              <div class="kpi-label">이달 수금 예정</div>
+              <div class="kpi-val" id="sa-recv-month">₩0</div>
+              <span class="chip chip-green" id="sa-recv-month-c">0건</span>
             </div>
-            <!-- 재무 대시보드 -->
-            <div class="home-dash-card" onclick="enterDashboard('fin')" style="border-color:#ddd6fe;background:linear-gradient(135deg,#f5f3ff 0%,#fff 60%)">
-              <div class="hdc-icon" style="background:#7c3aed">💰</div>
-              <div class="hdc-title">재무 대시보드</div>
-              <div class="hdc-desc">캐시플로우, 수금 관리, 지출 기록</div>
-              <div class="hdc-stats" id="home-fin-stats">
-                <span class="chip chip-purple" id="hs-recv">수금예정 ₩0</span>
-                <span class="chip chip-red" id="hs-overdue" style="display:none">연체 0건</span>
-              </div>
-              <div class="hdc-arrow">→</div>
+            <div class="kpi-card" style="border-left:3px solid var(--purple)">
+              <div class="kpi-label">3개월 순현금 예측</div>
+              <div class="kpi-val" id="sa-net-cash">₩0</div>
+              <span class="chip" id="sa-net-cash-c">수금 - 예상지출</span>
+            </div>
+            <div class="kpi-card" style="border-left:3px solid var(--amber)">
+              <div class="kpi-label">파이프라인 전환율</div>
+              <div class="kpi-val" id="sa-conv-rate">0%</div>
+              <span class="chip chip-amber">잠재→계약</span>
             </div>
           </div>
 
-          <!-- 빠른 요약 -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px" id="homeSummaryGrid">
+          <!-- 메인 그리드 -->
+          <div style="display:grid;grid-template-columns:minmax(280px,340px) 1fr;gap:14px;margin-bottom:14px">
+            <!-- 왼쪽: 액션 리스트 -->
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <div class="card">
+                <div class="card-hd">
+                  <div class="card-title">📋 오늘의 액션</div>
+                  <span style="font-size:11px;color:var(--t3)" id="sa-action-date"></span>
+                </div>
+                <div id="sa-action-list" style="padding:0"></div>
+              </div>
+              <div class="card">
+                <div class="card-hd"><div class="card-title">🏭 생산 가능 수량</div><button class="btn btn-s btn-sm" onclick="enterDashboard('inv')">재고 보기 →</button></div>
+                <div id="sa-production" style="padding:0"></div>
+              </div>
+            </div>
+            <!-- 오른쪽: 현금흐름 + 발주알람 -->
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <div class="card">
+                <div class="card-hd">
+                  <div class="card-title">💰 현금흐름 전망</div>
+                  <div style="display:flex;gap:6px">
+                    <button class="cf-tab-btn active" id="cf-tab-6m" onclick="setCfTab('6m',this)">6개월</button>
+                    <button class="cf-tab-btn" id="cf-tab-q" onclick="setCfTab('q',this)">분기</button>
+                    <button class="cf-tab-btn" id="cf-tab-h" onclick="setCfTab('h',this)">반기</button>
+                    <button class="cf-tab-btn" id="cf-tab-y" onclick="setCfTab('y',this)">연도별</button>
+                  </div>
+                </div>
+                <div class="card-body" style="padding-bottom:8px">
+                  <!-- 6개월 뷰 -->
+                  <div id="cf-view-6m">
+                    <div style="display:flex;gap:16px;align-items:flex-start">
+                      <div style="flex:1;min-width:0">
+                        <div style="display:flex;gap:10px;font-size:11px;font-weight:600;margin-bottom:8px">
+                          <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:2px;background:var(--green);display:inline-block"></span>수금</span>
+                          <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:2px;background:var(--red);display:inline-block"></span>지출</span>
+                        </div>
+                        <div id="sa-cashflow-chart" style="width:100%"></div>
+                      </div>
+                      <div style="width:150px;flex-shrink:0;border-left:1px solid var(--bd);padding-left:16px" id="cf-summary-6m"></div>
+                    </div>
+                  </div>
+                  <!-- 분기 뷰 -->
+                  <div id="cf-view-q" style="display:none" class="cf-period-view"></div>
+                  <!-- 반기 뷰 -->
+                  <div id="cf-view-h" style="display:none" class="cf-period-view"></div>
+                  <!-- 연도별 뷰 -->
+                  <div id="cf-view-y" style="display:none" class="cf-period-view"></div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-hd"><div class="card-title">🚨 선제적 발주 알람</div><button class="btn btn-s btn-sm" onclick="enterDashboard('inv')">발주 관리 →</button></div>
+                <div id="sa-order-alerts" style="padding:0"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 하단: 영업 건강도 + 담당자별 -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
             <div class="card">
-              <div class="card-hd"><div class="card-title">🔥 이번 달 마감 임박</div></div>
-              <div class="recent-list" id="home-urgent-deals"></div>
+              <div class="card-hd"><div class="card-title">📊 영업 건강도</div><button class="btn btn-s btn-sm" onclick="enterDashboard('sales')">영업 보기 →</button></div>
+              <div class="card-body" id="sa-sales-health"></div>
             </div>
             <div class="card">
-              <div class="card-hd"><div class="card-title">💸 수금 예정</div></div>
-              <div class="recent-list" id="home-recv-preview"></div>
+              <div class="card-hd"><div class="card-title">👤 담당자별 파이프라인</div></div>
+              <div class="card-body"><div class="team-rows" id="sa-person-pipeline"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 일반 유저 홈 -->
+        <div id="home-normal">
+          <div style="max-width:800px;margin:0 auto;padding:20px 0">
+            <div style="margin-bottom:32px">
+              <div style="font-size:24px;font-weight:800;letter-spacing:-.6px;margin-bottom:6px" id="homeGreeting">안녕하세요 👋</div>
+              <div style="font-size:14px;color:var(--t2)">어떤 대시보드로 이동할까요?</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:40px" class="home-dash-grid">
+              <div class="home-dash-card" onclick="enterDashboard('sales')" style="border-color:#bfdbfe;background:linear-gradient(135deg,#eff6ff 0%,#fff 60%)">
+                <div class="hdc-icon" style="background:#2563eb">📊</div>
+                <div class="hdc-title">영업 대시보드</div>
+                <div class="hdc-desc">파이프라인, 딜 관리, 고객사, 프로젝트 협업</div>
+                <div class="hdc-stats"><span class="chip chip-blue" id="hs-deals">딜 0건</span><span class="chip chip-green" id="hs-won">완료 ₩0</span></div>
+                <div class="hdc-arrow">→</div>
+              </div>
+              <div class="home-dash-card" onclick="enterDashboard('inv')" style="border-color:#bbf7d0;background:linear-gradient(135deg,#f0fdf4 0%,#fff 60%)">
+                <div class="hdc-icon" style="background:#16a34a">📦</div>
+                <div class="hdc-title">자재/재고 대시보드</div>
+                <div class="hdc-desc">재고 현황, 입출고, BOM 관리, 발주</div>
+                <div class="hdc-stats"><span class="chip chip-green" id="hs-items">품목 0개</span><span class="chip chip-red" id="hs-warn" style="display:none">경고 0</span></div>
+                <div class="hdc-arrow">→</div>
+              </div>
+              <div class="home-dash-card" onclick="enterDashboard('fin')" style="border-color:#ddd6fe;background:linear-gradient(135deg,#f5f3ff 0%,#fff 60%)">
+                <div class="hdc-icon" style="background:#7c3aed">💰</div>
+                <div class="hdc-title">재무 대시보드</div>
+                <div class="hdc-desc">캐시플로우, 수금 관리, 지출 기록</div>
+                <div class="hdc-stats"><span class="chip chip-purple" id="hs-recv">수금예정 ₩0</span><span class="chip chip-red" id="hs-overdue" style="display:none">연체 0건</span></div>
+                <div class="hdc-arrow">→</div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px" id="homeSummaryGrid">
+              <div class="card"><div class="card-hd"><div class="card-title">🔥 이번 달 마감 임박</div></div><div class="recent-list" id="home-urgent-deals"></div></div>
+              <div class="card"><div class="card-hd"><div class="card-title">💸 수금 예정</div></div><div class="recent-list" id="home-recv-preview"></div></div>
             </div>
           </div>
         </div>
@@ -854,11 +987,11 @@ tbody tr:hover{background:var(--s2)}
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px" id="inv-stock-grids">
           <div class="card">
-            <div class="card-hd"><div class="card-title">📦 완제품 재고</div><button class="btn btn-p btn-sm" onclick="openItemModal('finished')">+ 품목 추가</button></div>
+            <div class="card-hd"><div class="card-title" style="display:flex;align-items:center;gap:7px">📦 완제품 재고 <button class="help-btn" onclick="showHelp('invOverview')">?</button></div><button class="btn btn-p btn-sm" onclick="openItemModal('finished')">+ 품목 추가</button></div>
             <div class="card-body" style="padding:0"><div id="inv-finished-list"></div></div>
           </div>
           <div class="card">
-            <div class="card-hd"><div class="card-title">🔩 원재료 재고</div><button class="btn btn-p btn-sm" onclick="openItemModal('raw')">+ 품목 추가</button></div>
+            <div class="card-hd"><div class="card-title" style="display:flex;align-items:center;gap:7px">🔩 원재료 재고 <button class="help-btn" onclick="showHelp('invOverview')">?</button></div><button class="btn btn-p btn-sm" onclick="openItemModal('raw')">+ 품목 추가</button></div>
             <div class="card-body" style="padding:0"><div id="inv-raw-list"></div></div>
           </div>
         </div>
@@ -885,8 +1018,9 @@ tbody tr:hover{background:var(--s2)}
 
       <!-- INV: BOM 관리 -->
       <div class="view" id="view-inv-bom">
-        <div style="margin-bottom:14px;font-size:13px;color:var(--t2);background:var(--al);border-radius:var(--r);padding:10px 14px">
-          💡 완제품 1개를 만드는 데 필요한 원재료 구성을 등록합니다. 영업에서 계약이 완료되면 이 BOM을 기준으로 원재료 소요량이 자동 계산됩니다.
+        <div style="margin-bottom:14px;font-size:13px;color:var(--t2);background:var(--al);border-radius:var(--r);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <span>💡 완제품 1개를 만드는 데 필요한 원재료 구성을 등록합니다. 영업에서 계약이 완료되면 이 BOM을 기준으로 원재료 소요량이 자동 계산됩니다.</span>
+          <button class="help-btn" onclick="showHelp('bom')" style="flex-shrink:0">?</button>
         </div>
         <div id="bom-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px"></div>
       </div>
@@ -966,8 +1100,9 @@ tbody tr:hover{background:var(--s2)}
 
       <!-- FIN: 수금 조건 -->
       <div class="view" id="view-fin-terms">
-        <div style="margin-bottom:14px;font-size:13px;color:var(--t2);background:var(--al);border-radius:var(--r);padding:10px 14px">
-          💡 고객사별 수금 조건을 등록하면, 딜이 계약 완료될 때 수금 예정일이 자동으로 계산됩니다.
+        <div style="margin-bottom:14px;font-size:13px;color:var(--t2);background:var(--al);border-radius:var(--r);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <span>💡 고객사별 수금 조건을 등록하면, 딜이 계약 완료될 때 수금 예정일이 자동으로 계산됩니다.</span>
+          <button class="help-btn" onclick="showHelp('finTerms')" style="flex-shrink:0">?</button>
         </div>
         <div class="table-wrap">
           <table><thead><tr><th>고객사</th><th>수금 기준</th><th>지급 기한</th><th>세금계산서 발행일</th><th>메모</th><th>관리</th></tr></thead>
@@ -1041,7 +1176,7 @@ tbody tr:hover{background:var(--s2)}
 <div class="overlay" id="newDealModal">
   <div class="modal modal-sm">
     <div class="modal-hd">
-      <div class="modal-hd-info"><div class="modal-title">새 딜 추가</div><div class="modal-sub">고객사·제품명 입력 시 딜명이 자동 생성됩니다</div></div>
+      <div class="modal-hd-info"><div class="modal-title" style="display:flex;align-items:center;gap:8px">새 딜 추가 <button class="help-btn" onclick="showHelp('newDeal')">?</button></div><div class="modal-sub">고객사·제품명 입력 시 딜명이 자동 생성됩니다</div></div>
       <button class="modal-close" onclick="closeModal('newDealModal')"><svg viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
     </div>
     <div class="modal-body">
@@ -1329,7 +1464,7 @@ let USERS = {
   lsh:{name:'이상혁',pw:'0000',role:'admin',idx:1},
   lsj:{name:'이승재',pw:'0000',role:'sales',idx:2},
   ljh:{name:'이재훈',pw:'0000',role:'superadmin',idx:3},
-  lsu:{name:'이승우',pw:'0000',role:'admin',idx:4},
+  lsw:{name:'이승우',pw:'0000',role:'admin',idx:4},
   pgm:{name:'박기무',pw:'0000',role:'sales',idx:5},
   aym:{name:'안영모',pw:'0000',role:'sales',idx:6},
 };
@@ -1476,11 +1611,11 @@ async function doLogin() {
     if(sbOk){
       await loadProductsFromDB();
       await loadDealsFromDB();
-      // Pre-load inventory and finance data in background
       loadInvData().catch(()=>{});
       loadFinData().catch(()=>{});
     } else {
       showToast('로컬 모드: Supabase 키 미설정', 'warn');
+      loadDemoData();
     }
     renderHome();
   } else {
@@ -1541,6 +1676,7 @@ const VIEW_TITLES = {
 };
 const PLUS_BTN = (label, fn) => `<button class="btn btn-p" onclick="${fn}()"><svg viewBox="0 0 14 14" fill="none"><line x1="7" y1="2" x2="7" y2="12" stroke="white" stroke-width="1.8" stroke-linecap="round"/><line x1="2" y1="7" x2="12" y2="7" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>${label}</button>`;
 const VIEW_ACTIONS = {
+  home: '',
   dashboard: '',
   pipeline:  PLUS_BTN('새 딜', 'openNewDealModal'),
   deals:     PLUS_BTN('새 딜', 'openNewDealModal'),
@@ -1548,11 +1684,11 @@ const VIEW_ACTIONS = {
   admin:     PLUS_BTN('계정 추가', "()=>openModal('addAccountModal')"),
   'inv-overview':     `${PLUS_BTN('입출고 등록','openTxModal')} ${PLUS_BTN('발주 등록','openPoModal')}`,
   'inv-transactions': PLUS_BTN('입출고 등록','openTxModal'),
-  'inv-orders':       PLUS_BTN('발주 등록','openPoModal'),
+  'inv-orders':       PLUS_BTN('발주 등록','openPoModal') + `<button class="help-btn" onclick="showHelp('purchaseOrder')" style="margin-left:4px">?</button>`,
   'inv-bom':          '',
   'fin-cashflow':     PLUS_BTN('수금 등록', "()=>openModal('recvModal')"),
-  'fin-receivables':  PLUS_BTN('수금 등록', "()=>openModal('recvModal')"),
-  'fin-expenses':     PLUS_BTN('지출 등록', "()=>openModal('expModal')"),
+  'fin-receivables':  PLUS_BTN('수금 등록', "()=>openModal('recvModal')") + `<button class="help-btn" onclick="showHelp('finReceivables')" style="margin-left:4px">?</button>`,
+  'fin-expenses':     PLUS_BTN('지출 등록', "()=>openModal('expModal')") + `<button class="help-btn" onclick="showHelp('finExpenses')" style="margin-left:4px">?</button>`,
   'fin-terms':        PLUS_BTN('조건 추가', 'openTermsModal'),
 };
 
@@ -1647,52 +1783,395 @@ function closeSidebar(){document.getElementById('sidebar').classList.remove('ope
 // DASHBOARD
 // ══════════════════════════════════════════════
 function renderHome() {
-  // Greeting
-  const hour = new Date().getHours();
-  const greet = hour<12?'좋은 아침이에요 ☀️':hour<18?'안녕하세요 👋':'수고 많으셨어요 🌙';
-  const el = document.getElementById('homeGreeting');
-  if(el) el.textContent = `${greet}, ${CU?.name||''}님`;
+  const isSA = CU?.role === 'superadmin';
+  document.getElementById('home-superadmin').style.display = isSA ? '' : 'none';
+  document.getElementById('home-normal').style.display     = isSA ? 'none' : '';
 
-  // Sales stats
+  if(isSA) {
+    renderSuperAdminKPI();
+  } else {
+    // 일반 유저 홈
+    const hour = new Date().getHours();
+    const greet = hour<12?'좋은 아침이에요 ☀️':hour<18?'안녕하세요 👋':'수고 많으셨어요 🌙';
+    const el = document.getElementById('homeGreeting');
+    if(el) el.textContent = `${greet}, ${CU?.name||''}님`;
+
+    const active = deals.filter(d=>d.stage!=='실패·보류');
+    const won = deals.filter(d=>d.stage==='계약 완료');
+    const el1=document.getElementById('hs-deals'),el2=document.getElementById('hs-won');
+    if(el1)el1.textContent=`딜 ${active.length}건`;
+    if(el2)el2.textContent=`완료 ${fmt(won.reduce((s,d)=>s+d.amt,0))}`;
+    const warnItems=invItems.filter(i=>i.current_stock<=i.safety_stock&&i.safety_stock>0);
+    const hi1=document.getElementById('hs-items'),hi2=document.getElementById('hs-warn');
+    if(hi1)hi1.textContent=`품목 ${invItems.length}개`;
+    if(hi2){hi2.textContent=`경고 ${warnItems.length}`;hi2.style.display=warnItems.length>0?'':'none';}
+    const nextRecv=recvList.filter(r=>r.status!=='received');
+    const overdueR=recvList.filter(r=>r.status==='overdue');
+    const hf1=document.getElementById('hs-recv'),hf2=document.getElementById('hs-overdue');
+    if(hf1)hf1.textContent=`수금예정 ${fmt(nextRecv.reduce((s,r)=>s+r.amount,0))}`;
+    if(hf2){hf2.textContent=`연체 ${overdueR.length}건`;hf2.style.display=overdueR.length>0?'':'none';}
+    const urgent=deals.filter(d=>!['계약 완료','실패·보류'].includes(d.stage)&&isUrgent(d.closeDate)).slice(0,4);
+    const ud=document.getElementById('home-urgent-deals');
+    if(ud)ud.innerHTML=urgent.length?urgent.map(d=>`
+      <div class="recent-row" onclick="enterDashboard('sales');setTimeout(()=>openDeal(${d.id}),200)">
+        <div style="flex:1;min-width:0"><div class="recent-name">${d.name}</div><div class="recent-meta">${d.co} · 마감 ${d.closeDate}</div></div>
+        <span class="chip chip-red">임박</span>
+      </div>`).join(''):`<div style="padding:20px;text-align:center;color:var(--t3);font-size:13px">임박 딜 없음</div>`;
+    const rp=document.getElementById('home-recv-preview');
+    const upcoming=recvList.filter(r=>r.status!=='received').sort((a,b)=>(a.expected_date||'').localeCompare(b.expected_date||'')).slice(0,4);
+    if(rp)rp.innerHTML=upcoming.length?upcoming.map(r=>`
+      <div class="recent-row" onclick="enterDashboard('fin')">
+        <div style="flex:1;min-width:0"><div class="recent-name">${r.company_name}</div><div class="recent-meta">예정 ${r.expected_date||'–'}</div></div>
+        <span class="chip ${RECV_STATUS_CLS[r.status]||'chip-gray'}">${RECV_STATUS[r.status]||r.status}</span>
+        <div class="recent-amt">${fmt(r.amount)}</div>
+      </div>`).join(''):`<div style="padding:20px;text-align:center;color:var(--t3);font-size:13px">수금 예정 없음</div>`;
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// 통합관리자 KPI 대시보드
+// ════════════════════════════════════════════════════════════
+
+// ── 발주 예측 엔진 ──
+function calcOrderForecast(item) {
+  // 레이어1: 가중 월 평균 출고량 (최근 3개월, 최신 우선 가중)
+  const now = new Date();
+  const monthlyOut = [0,1,2].map(offset => {
+    const d = new Date(now.getFullYear(), now.getMonth()-offset, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const monthTx = stockTx.filter(t=>t.item_id===item.id && t.qty<0 && (t.created_at||'').startsWith(key));
+    return Math.abs(monthTx.reduce((s,t)=>s+t.qty,0));
+  });
+  const weights = [0.5, 0.3, 0.2]; // 최근 달에 더 높은 가중치
+  const historyMonths = monthlyOut.filter(v=>v>0).length;
+  const weightedAvg = monthlyOut.reduce((s,v,i)=>s+v*weights[i],0);
+
+  // 레이어2: 파이프라인 수요 예측 (BOM 기반)
+  const stageProbability = {'구두합의':0.9,'협상·검토':0.6,'제안·견적':0.3,'미팅·접촉':0.1};
+  let pipelineDemandPerMonth = 0;
+  const myBom = bomData.filter(b=>b.raw_item_id===item.id);
+  myBom.forEach(b=>{
+    const finItem = invItems.find(i=>i.id===b.finished_item_id);
+    if(!finItem) return;
+    Object.entries(stageProbability).forEach(([stage, prob])=>{
+      const stageDeals = deals.filter(d=>d.stage===stage && (d.prod===finItem.name||d.name.includes(finItem.name)));
+      const expectedQty = stageDeals.reduce((s,d)=>(s+(d.qty||1)*prob),0);
+      pipelineDemandPerMonth += expectedQty * (b.qty_required||1) / 2; // 평균 2개월 내 납품 가정
+    });
+  });
+  // 완제품 직접 연동
+  if(item.category==='finished') {
+    Object.entries(stageProbability).forEach(([stage,prob])=>{
+      const stageDeals=deals.filter(d=>d.stage===stage&&(d.prod===item.name||d.name.includes(item.name)));
+      pipelineDemandPerMonth+=stageDeals.reduce((s,d)=>(s+(d.qty||1)*prob),0)/2;
+    });
+  }
+
+  // 데이터 가용성에 따라 가중치 조절
+  const histWeight = Math.min(historyMonths/3, 0.5); // 최대 50%
+  const pipeWeight = 1 - histWeight;
+  const blendedMonthlyDemand = (weightedAvg*histWeight) + (pipelineDemandPerMonth*pipeWeight);
+
+  // 레이어3: 버퍼 계수 (기본 20%)
+  const BUFFER = 0.2;
+  const adjustedDemand = blendedMonthlyDemand * (1+BUFFER);
+
+  if(adjustedDemand <= 0) return null; // 수요 예측 불가
+
+  const daysToExhaust = Math.round((item.current_stock / adjustedDemand) * 30);
+  const daysToOrder   = daysToExhaust - (item.lead_time_days||14);
+  const confidence    = historyMonths >= 3 ? 'high' : historyMonths >= 1 ? 'mid' : 'low';
+  const range         = Math.round(daysToOrder * 0.2); // ±20% 범위
+
+  return { daysToExhaust, daysToOrder, adjustedDemand: Math.round(adjustedDemand*10)/10, confidence, range, historyMonths };
+}
+
+function renderSuperAdminKPI() {
+  const now = new Date();
+  const hour = now.getHours();
+  const days = ['일','월','화','수','목','금','토'];
+  const greet = hour<6?'새벽에도 수고하세요 🌙':hour<12?'좋은 아침이에요 ☀️':hour<18?'안녕하세요 👋':'수고 많으셨어요 🌙';
+
+  // 날짜/인사
+  const greetEl = document.getElementById('saGreeting');
+  if(greetEl) greetEl.textContent = `${greet}, ${CU?.name||''}님`;
+  const dateEl = document.getElementById('saDate');
+  if(dateEl) dateEl.textContent = `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 ${days[now.getDay()]}요일`;
+  const actionDateEl = document.getElementById('sa-action-date');
+  if(actionDateEl) actionDateEl.textContent = `${now.getMonth()+1}/${now.getDate()}`;
+
+  // ── KPI 계산 ──
   const active = deals.filter(d=>d.stage!=='실패·보류');
-  const won = deals.filter(d=>d.stage==='계약 완료');
-  const hs1 = document.getElementById('hs-deals');
-  const hs2 = document.getElementById('hs-won');
-  if(hs1) hs1.textContent = `딜 ${active.length}건`;
-  if(hs2) hs2.textContent = `완료 ${fmt(won.reduce((s,d)=>s+d.amt,0))}`;
+  const backlog = active.reduce((s,d)=>s+d.amt,0);
+  const thisMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const nextM1 = new Date(now.getFullYear(),now.getMonth()+1,1);
+  const nextM2 = new Date(now.getFullYear(),now.getMonth()+2,1);
+  const nm1 = `${nextM1.getFullYear()}-${String(nextM1.getMonth()+1).padStart(2,'0')}`;
+  const nm2 = `${nextM2.getFullYear()}-${String(nextM2.getMonth()+1).padStart(2,'0')}`;
 
-  // Inv stats
-  const warnItems = invItems.filter(i=>i.current_stock<=i.safety_stock&&i.safety_stock>0);
-  const hi1=document.getElementById('hs-items'); const hi2=document.getElementById('hs-warn');
-  if(hi1) hi1.textContent=`품목 ${invItems.length}개`;
-  if(hi2){ hi2.textContent=`경고 ${warnItems.length}`; hi2.style.display=warnItems.length>0?'':'none'; }
+  const recvThisMonth = recvList.filter(r=>r.expected_date?.startsWith(thisMonth)&&r.status!=='received').reduce((s,r)=>s+r.amount,0);
+  const recv3M = recvList.filter(r=>{
+    const m=r.expected_date?.slice(0,7)||'';
+    return m>=thisMonth && m<=nm2 && r.status!=='received';
+  }).reduce((s,r)=>s+r.amount,0);
+  const exp3M = expList.filter(e=>{
+    const m=e.expense_date?.slice(0,7)||'';
+    return m>=thisMonth && m<=nm2;
+  }).reduce((s,e)=>s+e.amount,0);
+  const netCash3M = recv3M - exp3M;
 
-  // Finance stats
-  const today = new Date().toISOString().slice(0,10);
-  const nextRecv = recvList.filter(r=>r.status!=='received');
-  const overdueR = recvList.filter(r=>r.status==='overdue');
-  const hf1=document.getElementById('hs-recv'); const hf2=document.getElementById('hs-overdue');
-  if(hf1) hf1.textContent=`수금예정 ${fmt(nextRecv.reduce((s,r)=>s+r.amount,0))}`;
-  if(hf2){ hf2.textContent=`연체 ${overdueR.length}건`; hf2.style.display=overdueR.length>0?'':'none'; }
+  // 전환율: 계약완료 / 전체
+  const totalDeals = deals.length;
+  const wonDeals = deals.filter(d=>d.stage==='계약 완료').length;
+  const convRate = totalDeals>0 ? Math.round(wonDeals/totalDeals*100) : 0;
 
-  // Urgent deals
-  const urgent = deals.filter(d=>!['계약 완료','실패·보류'].includes(d.stage)&&isUrgent(d.closeDate)).slice(0,4);
-  const ud = document.getElementById('home-urgent-deals');
-  if(ud) ud.innerHTML = urgent.length ? urgent.map(d=>`
-    <div class="recent-row" onclick="enterDashboard('sales');setTimeout(()=>openDeal(${d.id}),200)">
-      <div style="flex:1;min-width:0"><div class="recent-name">${d.name}</div><div class="recent-meta">${d.co} · 마감 ${d.closeDate}</div></div>
-      <span class="chip chip-red">임박</span>
-    </div>`).join('') : `<div style="padding:20px;text-align:center;color:var(--t3);font-size:13px">임박 딜 없음</div>`;
+  // KPI 업데이트
+  const v=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  v('sa-backlog', fmt(backlog));
+  v('sa-backlog-c', `${active.length}건 진행`);
+  v('sa-recv-month', fmt(recvThisMonth));
+  v('sa-recv-month-c', `${recvList.filter(r=>r.expected_date?.startsWith(thisMonth)).length}건`);
+  const netEl=document.getElementById('sa-net-cash');
+  if(netEl){netEl.textContent=fmt(Math.abs(netCash3M));netEl.style.color=netCash3M>=0?'var(--green)':'var(--red)';}
+  const netChip=document.getElementById('sa-net-cash-c');
+  if(netChip){netChip.textContent=netCash3M>=0?`+${fmt(netCash3M)} 순유입`:`-${fmt(Math.abs(netCash3M))} 순유출`;netChip.className=`chip ${netCash3M>=0?'chip-green':'chip-red'}`;}
+  v('sa-conv-rate', `${convRate}%`);
 
-  // Receivable preview
-  const rp = document.getElementById('home-recv-preview');
-  const upcoming = recvList.filter(r=>r.status!=='received').sort((a,b)=>(a.expected_date||'').localeCompare(b.expected_date||'')).slice(0,4);
-  if(rp) rp.innerHTML = upcoming.length ? upcoming.map(r=>`
-    <div class="recent-row" onclick="enterDashboard('fin')">
-      <div style="flex:1;min-width:0"><div class="recent-name">${r.company_name}</div><div class="recent-meta">예정 ${r.expected_date||'–'}</div></div>
-      <span class="chip ${RECV_STATUS_CLS[r.status]||'chip-gray'}">${RECV_STATUS[r.status]||r.status}</span>
-      <div class="recent-amt">${fmt(r.amount)}</div>
-    </div>`).join('') : `<div style="padding:20px;text-align:center;color:var(--t3);font-size:13px">수금 예정 없음</div>`;
+  // ── 액션 리스트 자동 생성 ──
+  const actions = [];
+  const todayStr = now.toISOString().slice(0,10);
+
+  // 발주 알람
+  invItems.forEach(item=>{
+    if(item.current_stock <= 0 && item.safety_stock > 0) {
+      actions.push({level:'red',icon:'📦',category:'발주',text:`${item.name} — 재고 소진, 즉시 발주 필요`,link:()=>enterDashboard('inv')});
+    } else {
+      const f = calcOrderForecast(item);
+      if(f && f.daysToOrder <= 7 && f.daysToOrder > 0) {
+        actions.push({level:'red',icon:'📦',category:'발주',text:`${item.name} — 발주 권고일 D-${f.daysToOrder} (소진 D-${f.daysToExhaust})`,link:()=>enterDashboard('inv')});
+      } else if(f && f.daysToOrder <= 21 && f.daysToOrder > 0) {
+        actions.push({level:'amber',icon:'📦',category:'발주',text:`${item.name} — 발주 검토 D-${f.daysToOrder} (소진 D-${f.daysToExhaust})`,link:()=>enterDashboard('inv')});
+      }
+    }
+  });
+
+  // 세금계산서 발행 알람
+  recvList.filter(r=>!r.tax_invoice_issued&&r.status==='pending').forEach(r=>{
+    const term = payTerms.find(t=>t.company_name===r.company_name);
+    if(term?.tax_invoice_day) {
+      const today=now.getDate(), cutoff=term.tax_invoice_day;
+      const daysLeft=cutoff-today;
+      if(daysLeft>=0&&daysLeft<=5) actions.push({level:'red',icon:'📄',category:'세금계산서',text:`${r.company_name} — 계산서 발행 마감 D-${daysLeft} (${fmt(r.amount)})`,link:()=>enterDashboard('fin')});
+      else if(daysLeft>5&&daysLeft<=10) actions.push({level:'amber',icon:'📄',category:'세금계산서',text:`${r.company_name} — 계산서 발행 D-${daysLeft} (${fmt(r.amount)})`,link:()=>enterDashboard('fin')});
+    }
+  });
+
+  // 수금 임박
+  recvList.filter(r=>r.status!=='received'&&r.expected_date).forEach(r=>{
+    const diff=Math.round((new Date(r.expected_date)-now)/(864e5));
+    if(diff>=0&&diff<=5) actions.push({level:'red',icon:'💰',category:'수금',text:`${r.company_name} — 수금 예정 D-${diff} (${fmt(r.amount)})`,link:()=>enterDashboard('fin')});
+    else if(diff<0) actions.push({level:'red',icon:'⚠️',category:'연체',text:`${r.company_name} — 수금 ${Math.abs(diff)}일 초과 (${fmt(r.amount)})`,link:()=>enterDashboard('fin')});
+  });
+
+  // 마감 임박 딜
+  deals.filter(d=>!['계약 완료','실패·보류'].includes(d.stage)&&d.closeDate).forEach(d=>{
+    const diff=Math.round((new Date(d.closeDate)-now)/(864e5));
+    if(diff>=0&&diff<=7) actions.push({level:'amber',icon:'🤝',category:'영업',text:`${d.name} — 마감 D-${diff}`,link:()=>{enterDashboard('sales');setTimeout(()=>openDeal(d.id),200);}});
+  });
+
+  // 우선순위 정렬
+  const levelOrder = {red:0,amber:1,green:2};
+  actions.sort((a,b)=>levelOrder[a.level]-levelOrder[b.level]);
+
+  const levelColor = {red:'var(--red)',amber:'var(--amber)',green:'var(--green)'};
+  const levelBg    = {red:'#fef2f2',amber:'#fffbeb',green:'#f0fdf4'};
+  // link 함수들을 saActions 배열에 저장해서 인덱스로 호출
+  window._saActionLinks = actions.map(a=>a.link);
+  const listEl = document.getElementById('sa-action-list');
+  if(listEl) listEl.innerHTML = actions.length ? actions.slice(0,8).map((a,i)=>`
+    <div onclick="if(window._saActionLinks[${i}])window._saActionLinks[${i}]()" style="display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid var(--bd);cursor:pointer;transition:background .1s" onmouseenter="this.style.background='var(--s2)'" onmouseleave="this.style.background=''">
+      <div style="width:8px;height:8px;border-radius:50%;background:${levelColor[a.level]};flex-shrink:0"></div>
+      <div style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:20px;background:${levelBg[a.level]};color:${levelColor[a.level]};flex-shrink:0">${a.category}</div>
+      <div style="font-size:12px;flex:1;line-height:1.4">${a.icon} ${a.text}</div>
+      <div style="font-size:10px;color:var(--t3);flex-shrink:0">→</div>
+    </div>`).join('') :
+    `<div style="padding:24px;text-align:center;color:var(--t3);font-size:13px">✅ 오늘 긴급 액션 없음</div>`;
+
+  // 배너 알림 요약
+  const redCnt = actions.filter(a=>a.level==='red').length;
+  const amberCnt = actions.filter(a=>a.level==='amber').length;
+  const alertEl = document.getElementById('saAlertSummary');
+  if(alertEl) alertEl.innerHTML = [
+    redCnt>0?`<span style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:700">🔴 긴급 ${redCnt}건</span>`:'',
+    amberCnt>0?`<span style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:700">🟡 주의 ${amberCnt}건</span>`:'',
+    (redCnt+amberCnt===0)?`<span style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:700">✅ 긴급 알람 없음</span>`:'',
+  ].join('');
+
+  // ── 생산 가능 수량 ──
+  const finItems = invItems.filter(i=>i.category==='finished');
+  const prodEl = document.getElementById('sa-production');
+  if(prodEl) prodEl.innerHTML = finItems.length ? finItems.map(fi=>{
+    // 파이프라인 총 수요
+    const demand = deals.filter(d=>!['계약 완료','실패·보류'].includes(d.stage)&&(d.prod===fi.name||d.name.includes(fi.name))).reduce((s,d)=>s+(d.qty||1),0);
+    const stock = fi.current_stock;
+    const ratio = demand>0?stock/demand:2;
+    const status = stock<=0?{c:'var(--red)',t:'재고 없음',bg:'#fef2f2'}: ratio<0.5?{c:'var(--red)',t:'부족',bg:'#fef2f2'}:ratio<1?{c:'var(--amber)',t:'주의',bg:'#fffbeb'}:{c:'var(--green)',t:'충분',bg:'#f0fdf4'};
+    return `<div onclick="enterDashboard('inv');setTimeout(()=>showView('inv-overview',document.getElementById('ni-inv-overview')),300)" style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--bd);cursor:pointer;transition:background .1s" onmouseenter="this.style.background='var(--s2)'" onmouseleave="this.style.background=''">
+      <div style="flex:1;min-width:0"><div style="font-weight:700;font-size:13px">${fi.name}</div>
+      <div style="font-size:11px;color:var(--t3);margin-top:2px">현재 ${stock}대 / 수요 ${demand}대</div>
+      <div style="height:4px;background:var(--s2);border-radius:2px;margin-top:6px;overflow:hidden">
+        <div style="height:100%;border-radius:2px;background:${status.c};width:${Math.min(100,ratio*50)}%;transition:width .5s"></div>
+      </div></div>
+      <span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;background:${status.bg};color:${status.c}">${status.t}</span>
+    </div>`;
+  }).join('') : `<div style="padding:24px;text-align:center;color:var(--t3);font-size:13px">완제품을 재고 현황에서 추가해주세요</div>`;
+
+  // ── 현금흐름 6개월 차트 ──
+  const months6 = Array.from({length:6},(_,i)=>{const d=new Date(now.getFullYear(),now.getMonth()+i,1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;});
+  const r6 = months6.map(m=>recvList.filter(r=>r.expected_date?.startsWith(m)).reduce((s,r)=>s+r.amount,0));
+  const e6 = months6.map(m=>expList.filter(e=>e.expense_date?.startsWith(m)).reduce((s,e)=>s+e.amount,0));
+  const maxV = Math.max(...r6,...e6,1);
+  const chartEl = document.getElementById('sa-cashflow-chart');
+  const BAR_H = 96; // 막대 영역 고정 높이(px)
+  const fmtM = v => v>=10000?`${Math.round(v/10000)}억`:v>=1000?`${(v/1000).toFixed(1)}천`:v>0?`${v}만`:'–';
+  if(chartEl) chartEl.innerHTML = `
+    <div style="display:flex;align-items:flex-end;gap:6px;width:100%">
+      ${months6.map((m,i)=>{
+        const rh = r6[i]>0 ? Math.max(4, Math.round(r6[i]/maxV*BAR_H)) : 0;
+        const eh = e6[i]>0 ? Math.max(4, Math.round(e6[i]/maxV*BAR_H)) : 0;
+        const net = r6[i]-e6[i];
+        const mo  = parseInt(m.split('-')[1]);
+        const netTxt = net!==0 ? `<div style="font-size:9px;font-weight:800;color:${net>=0?'var(--green)':'var(--red)'};white-space:nowrap;margin-bottom:3px">${net>0?'+':''}${fmtM(Math.abs(net))}</div>` : '<div style="font-size:9px;margin-bottom:3px">&nbsp;</div>';
+        return `<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center">
+          ${netTxt}
+          <div style="display:flex;align-items:flex-end;gap:2px;width:100%;height:${BAR_H}px;">
+            <div style="flex:1;height:${rh}px;background:var(--green);border-radius:3px 3px 0 0;opacity:.85;min-height:${r6[i]>0?4:0}px;transition:height .4s" title="수금 ${fmtM(r6[i])}"></div>
+            <div style="flex:1;height:${eh}px;background:var(--red);border-radius:3px 3px 0 0;opacity:.75;min-height:${e6[i]>0?4:0}px;transition:height .4s" title="지출 ${fmtM(e6[i])}"></div>
+          </div>
+          <div style="width:100%;border-top:1px solid var(--bd)"></div>
+          <div style="font-size:10px;color:var(--t3);font-weight:600;margin-top:3px">${mo}월</div>
+          <div style="font-size:9px;color:var(--green);font-weight:600;white-space:nowrap;min-height:13px">${r6[i]>0?'↑'+fmtM(r6[i]):''}</div>
+          <div style="font-size:9px;color:var(--red);font-weight:600;white-space:nowrap;min-height:13px">${e6[i]>0?'↓'+fmtM(e6[i]):''}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  // ── 현금흐름 우측 합계 수치 ──
+  const totalRecv6 = r6.reduce((s,v)=>s+v,0);
+  const totalExp6  = e6.reduce((s,v)=>s+v,0);
+  const net6 = totalRecv6 - totalExp6;
+  const fmtM2 = v => v>=10000?`${(v/10000).toFixed(1)}억`:v>=1000?`${(v/1000).toFixed(1)}천만`:`${v}만`;
+  const sumEl = document.getElementById('cf-summary-6m');
+  if(sumEl) sumEl.innerHTML = `
+    <div style="margin-bottom:12px">
+      <div style="font-size:10px;font-weight:700;color:var(--t3);margin-bottom:4px">6개월 합계</div>
+      <div style="font-size:11px;color:var(--t2);margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--bd)">
+        <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px">
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block"></span>수금</span>
+          <span style="font-weight:700;color:var(--green)">${fmtM2(totalRecv6)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;gap:8px">
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:6px;height:6px;border-radius:50%;background:var(--red);display:inline-block"></span>지출</span>
+          <span style="font-weight:700;color:var(--red)">${fmtM2(totalExp6)}</span>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;gap:8px">
+        <span style="font-size:11px;font-weight:700;color:var(--t2)">순이익</span>
+        <span style="font-size:13px;font-weight:800;color:${net6>=0?'var(--green)':'var(--red)'}">${net6>=0?'+':''}${fmtM2(Math.abs(net6))}</span>
+      </div>
+    </div>
+    ${months6.map((m,i)=>{
+      const mo=parseInt(m.split('-')[1]);
+      const net=r6[i]-e6[i];
+      return `<div style="font-size:10px;padding:3px 0;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center">
+        <span style="color:var(--t3)">${mo}월</span>
+        <span style="font-weight:700;color:${net>=0?'var(--green)':'var(--red)'}">${net>=0?'+':''}${fmtM2(Math.abs(net))}</span>
+      </div>`;
+    }).join('')}`;
+
+  // ── 탭 초기화 ──
+  window._cfData = {r6, e6, months6, recvList, expList};
+  setCfTab('6m', document.getElementById('cf-tab-6m'));
+
+  // ── 선제적 발주 알람 ──
+  const orderAlerts = [];
+  invItems.forEach(item=>{
+    const f = calcOrderForecast(item);
+    if(!f) return;
+    const confLabel = {high:'신뢰도 높음',mid:'신뢰도 중간',low:'데이터 부족'};
+    const confColor = {high:'var(--green)',mid:'var(--amber)',low:'var(--t3)'};
+    const level = f.daysToOrder<=0?'red':f.daysToOrder<=7?'red':f.daysToOrder<=21?'amber':'green';
+    orderAlerts.push({item,f,level,confLabel:confLabel[f.confidence],confColor:confColor[f.confidence]});
+  });
+  orderAlerts.sort((a,b)=>a.f.daysToOrder-b.f.daysToOrder);
+  const alertEl2 = document.getElementById('sa-order-alerts');
+  if(alertEl2) alertEl2.innerHTML = orderAlerts.length ? orderAlerts.slice(0,6).map(({item,f,level,confLabel,confColor})=>{
+    const levelColor2={red:'var(--red)',amber:'var(--amber)',green:'var(--green)'};
+    const levelBg2={red:'#fef2f2',amber:'#fffbeb',green:'#f0fdf4'};
+    const statusText = f.daysToOrder<=0?'즉시 발주':f.daysToOrder<=7?`D-${f.daysToOrder} 권고`:`D-${f.daysToOrder} 검토`;
+    return `<div onclick="enterDashboard('inv');setTimeout(()=>showView('inv-orders',document.getElementById('ni-inv-orders')),300)" style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--bd);cursor:pointer;transition:background .1s" onmouseenter="this.style.background='var(--s2)'" onmouseleave="this.style.background=''">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:13px">${item.name}</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:2px">현재 ${item.current_stock}${item.unit} · 예상 소진 D-${f.daysToExhaust} · 월수요 ~${f.adjustedDemand}${item.unit}</div>
+        <div style="font-size:10px;color:${confColor};margin-top:2px">${confLabel} (이력 ${f.historyMonths}개월)</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;background:${levelBg2[level]};color:${levelColor2[level]}">${statusText}</div>
+      </div>
+    </div>`;
+  }).join('') : `<div style="padding:24px;text-align:center;color:var(--t3);font-size:13px">품목을 재고 현황에서 추가해주세요</div>`;
+
+  // ── 영업 건강도 ──
+  const stageNames = ['잠재 발굴','미팅·접촉','제안·견적','협상·검토','구두합의'];
+  const stageDeals = stageNames.map(s=>deals.filter(d=>d.stage===s).length);
+  const totalPipe = stageDeals[0]||1;
+  const healthEl = document.getElementById('sa-sales-health');
+  if(healthEl) {
+    const avgCycle = deals.filter(d=>d.stage==='계약 완료').length > 0 ? 47 : 0; // 실제 계산은 로그 기반
+    const weightedPipe = deals.filter(d=>!['계약 완료','실패·보류'].includes(d.stage)).reduce((s,d)=>{
+      const prob={'잠재 발굴':0.1,'미팅·접촉':0.2,'제안·견적':0.35,'협상·검토':0.6,'구두합의':0.9}[d.stage]||0;
+      return s+d.amt*prob;
+    },0);
+    healthEl.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+        <div style="background:var(--s2);border-radius:var(--r);padding:12px;text-align:center">
+          <div style="font-size:20px;font-weight:800;color:var(--accent)">${convRate}%</div>
+          <div style="font-size:11px;color:var(--t3);margin-top:2px">잠재→계약 전환율</div>
+        </div>
+        <div style="background:var(--s2);border-radius:var(--r);padding:12px;text-align:center">
+          <div style="font-size:20px;font-weight:800;color:var(--purple)">${fmt(weightedPipe)}</div>
+          <div style="font-size:11px;color:var(--t3);margin-top:2px">확률 가중 수주 예측</div>
+        </div>
+      </div>
+      <div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:8px">단계별 딜 분포</div>
+      ${stageNames.map((s,i)=>{
+        const cnt=stageDeals[i];
+        const pct=totalPipe>0?Math.round(cnt/totalPipe*100):0;
+        const colors=['#9ca3af','#3b82f6','#eab308','#a855f7','#22c55e'];
+        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <div style="font-size:11px;color:var(--t2);width:60px;flex-shrink:0">${s}</div>
+          <div style="flex:1;background:var(--s2);border-radius:3px;height:6px;overflow:hidden">
+            <div style="height:100%;border-radius:3px;background:${colors[i]};width:${Math.round(cnt/Math.max(...stageDeals,1)*100)}%;transition:width .5s"></div>
+          </div>
+          <div style="font-size:11px;font-weight:700;width:20px;text-align:right">${cnt}</div>
+        </div>`;
+      }).join('')}`;
+  }
+
+  // ── 담당자별 파이프라인 ──
+  const sm = salesMembers();
+  const mxP = Math.max(...sm.map(m=>deals.filter(d=>d.person===m.name&&d.stage!=='실패·보류').reduce((s,d)=>s+d.amt,0)),1);
+  const personEl = document.getElementById('sa-person-pipeline');
+  if(personEl) personEl.innerHTML = sm.map(m=>{
+    const md=deals.filter(d=>d.person===m.name&&d.stage!=='실패·보류');
+    const tot=md.reduce((s,d)=>s+d.amt,0);
+    return`<div class="team-row">
+      <div class="av av${m.idx%12}" style="width:30px;height:30px;font-size:10px;flex-shrink:0">${m.name.slice(0,2)}</div>
+      <div class="team-info"><div class="team-nm">${m.name}</div><div class="team-deals">${md.length}건 · ${ROLE_LABELS[m.role]||''}</div>
+      <div class="bar-track" style="margin-top:4px;height:4px"><div class="bar-fill" style="width:${Math.round(tot/mxP*100)}%;background:var(--accent)"></div></div></div>
+      <div class="team-amt">${fmt(tot)}</div>
+    </div>`;
+  }).join('');
 }
 
 function renderDashboard() {
@@ -2772,7 +3251,6 @@ async function loadDealsFromDB(){
   if(!sb){ return; }
   showLoading('딜 데이터 로드 중...');
   try{
-    // Load deals
     const {data:dbDeals, error:de} = await sb.from('deals').select('*').order('created_at', {ascending:false});
     if(de) throw de;
 
@@ -2808,7 +3286,8 @@ async function loadDealsFromDB(){
     dealIdCnt = Math.max(...deals.map(d=>d.id), 0) + 1;
   } catch(e){
     console.error('loadDealsFromDB error:', e);
-    showToast('데이터 로드 실패: '+e.message, 'error');
+    showToast('DB 로드 실패 — 데모 데이터로 실행합니다', 'warn');
+    loadDemoData();
   } finally { hideLoading(); }
 }
 
@@ -3327,37 +3806,7 @@ async function markInvoiceIssued(id) {
   showToast('세금계산서 발행 완료 처리됐습니다 ✓');
   renderReceivables();
 }
-function markReceived(id) {
-  const r = recvList.find(x=>x.id===id); if(!r)return;
-  // 날짜 선택 인라인 팝업
-  const today = new Date().toISOString().slice(0,10);
-  const html = `<div style="position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px" id="recvDateOverlay">
-    <div style="background:var(--surface);border-radius:var(--r-xl);padding:28px;max-width:380px;width:100%;box-shadow:var(--sh-lg);animation:su .2s ease">
-      <div style="font-size:16px;font-weight:800;margin-bottom:4px">수금 완료 처리</div>
-      <div style="font-size:13px;color:var(--t2);margin-bottom:20px">${r.company_name} · ${fmt(r.amount)}</div>
-      <div class="form-field" style="margin-bottom:16px">
-        <label class="form-label">실제 입금일 *</label>
-        <input class="form-input" id="recv-actual-date" type="date" value="${today}" style="margin-top:5px">
-      </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-green" style="flex:1;justify-content:center;padding:11px" onclick="confirmMarkReceived(${id})">✓ 수금 완료 확정</button>
-        <button class="btn btn-s" onclick="document.getElementById('recvDateOverlay').remove()">취소</button>
-      </div>
-    </div>
-  </div>`;
-  document.body.insertAdjacentHTML('beforeend', html);
-}
-
-async function confirmMarkReceived(id) {
-  const r = recvList.find(x=>x.id===id); if(!r)return;
-  const date = document.getElementById('recv-actual-date')?.value || new Date().toISOString().slice(0,10);
-  r.received_date = date; r.status = 'received';
-  if(sb) await sb.from('receivables').update({received_date:date,status:'received'}).eq('id',id);
-  document.getElementById('recvDateOverlay')?.remove();
-  showToast('수금 완료 처리됐습니다 ✓');
-  renderReceivables();
-  if(document.getElementById('view-fin-cashflow').classList.contains('active')) renderCashflow();
-}
+// markReceived defined in script block 2
 
 // ══════════════════════════════════════════════════════════
 // 지출 기록
@@ -3849,6 +4298,396 @@ async function onDealContractComplete(deal) {
 
   showToast('✅ 계약 완료 — 수금 예정이 재무 대시보드에 자동 등록됐습니다');
 }
+
+
+// ══════════════════════════════════════════════════════════
+// 데모 더미 데이터 (Supabase 미연결 시 로컬 테스트용)
+// ══════════════════════════════════════════════════════════
+function setCfTab(tab, btnEl) {
+  // 탭 버튼 활성화
+  document.querySelectorAll('.cf-tab-btn').forEach(b=>b.classList.remove('active'));
+  if(btnEl) btnEl.classList.add('active');
+  // 뷰 전환
+  ['6m','q','h','y'].forEach(t=>{
+    const el=document.getElementById('cf-view-'+t);
+    if(el) el.style.display = t===tab ? '' : 'none';
+  });
+  const d = window._cfData;
+  if(!d) return;
+  const fmtM2 = v => v>=10000?`${(v/10000).toFixed(1)}억`:v>=1000?`${(v/1000).toFixed(1)}천만`:`${v}만`;
+
+  if(tab==='q') {
+    // 분기별 (Q1~Q4 현재연도 + 내년)
+    const now = new Date(); const yr = now.getFullYear();
+    const quarters = [
+      {label:`${yr} Q1`, months:['01','02','03']},
+      {label:`${yr} Q2`, months:['04','05','06']},
+      {label:`${yr} Q3`, months:['07','08','09']},
+      {label:`${yr} Q4`, months:['10','11','12']},
+      {label:`${yr+1} Q1`, months:['01','02','03'], y:yr+1},
+      {label:`${yr+1} Q2`, months:['04','05','06'], y:yr+1},
+    ];
+    const qRows = quarters.map(q=>{
+      const y = q.y||yr;
+      const recv = (recvList||[]).filter(r=>q.months.some(m=>r.expected_date?.startsWith(`${y}-${m}`))).reduce((s,r)=>s+r.amount,0);
+      const exp  = (expList||[]).filter(e=>q.months.some(m=>e.expense_date?.startsWith(`${y}-${m}`))).reduce((s,e)=>s+e.amount,0);
+      const net=recv-exp;
+      const isCur = q.months.some(m=>`${y}-${m}` >= `${yr}-${String(now.getMonth()+1).padStart(2,'0')}`);
+      return `<tr${isCur?' style="background:var(--al)"':''}>
+        <td style="font-weight:700">${q.label}${isCur?' <span style="font-size:9px;color:var(--at)">예측</span>':''}</td>
+        <td style="color:var(--green);font-weight:600">${recv>0?fmtM2(recv):'–'}</td>
+        <td style="color:var(--red);font-weight:600">${exp>0?fmtM2(exp):'–'}</td>
+        <td style="font-weight:800;color:${net>=0?'var(--green)':'var(--red)'}">${net!==0?(net>0?'+':'')+fmtM2(Math.abs(net)):'–'}</td>
+      </tr>`;
+    }).join('');
+    document.getElementById('cf-view-q').innerHTML = `<table><thead><tr><th>분기</th><th>수금</th><th>지출</th><th>순이익</th></tr></thead><tbody>${qRows}</tbody></table>`;
+  }
+
+  if(tab==='h') {
+    const now=new Date(); const yr=now.getFullYear();
+    const halves=[
+      {label:`${yr} 상반기`, months:['01','02','03','04','05','06']},
+      {label:`${yr} 하반기`, months:['07','08','09','10','11','12']},
+      {label:`${yr+1} 상반기`, months:['01','02','03','04','05','06'], y:yr+1},
+      {label:`${yr+1} 하반기`, months:['07','08','09','10','11','12'], y:yr+1},
+    ];
+    const hRows = halves.map(h=>{
+      const y=h.y||yr;
+      const recv=(recvList||[]).filter(r=>h.months.some(m=>r.expected_date?.startsWith(`${y}-${m}`))).reduce((s,r)=>s+r.amount,0);
+      const exp=(expList||[]).filter(e=>h.months.some(m=>e.expense_date?.startsWith(`${y}-${m}`))).reduce((s,e)=>s+e.amount,0);
+      const net=recv-exp;
+      return `<tr><td style="font-weight:700">${h.label}</td>
+        <td style="color:var(--green);font-weight:600">${recv>0?fmtM2(recv):'–'}</td>
+        <td style="color:var(--red);font-weight:600">${exp>0?fmtM2(exp):'–'}</td>
+        <td style="font-weight:800;color:${net>=0?'var(--green)':'var(--red)'}">${net!==0?(net>0?'+':'')+fmtM2(Math.abs(net)):'–'}</td>
+      </tr>`;
+    }).join('');
+    document.getElementById('cf-view-h').innerHTML = `<table><thead><tr><th>반기</th><th>수금</th><th>지출</th><th>순이익</th></tr></thead><tbody>${hRows}</tbody></table>`;
+  }
+
+  if(tab==='y') {
+    const now=new Date(); const yr=now.getFullYear();
+    const years=[yr-1, yr, yr+1];
+    const yRows = years.map(y=>{
+      const recv=(recvList||[]).filter(r=>r.expected_date?.startsWith(`${y}`)).reduce((s,r)=>s+r.amount,0);
+      const exp=(expList||[]).filter(e=>e.expense_date?.startsWith(`${y}`)).reduce((s,e)=>s+e.amount,0);
+      const net=recv-exp;
+      const isCur=y===yr;
+      return `<tr${isCur?' style="background:var(--al);font-weight:700"':''}>
+        <td style="font-weight:800">${y}년${isCur?' <span style="font-size:9px;color:var(--at)">현재</span>':''}</td>
+        <td style="color:var(--green);font-weight:600">${recv>0?fmtM2(recv):'–'}</td>
+        <td style="color:var(--red);font-weight:600">${exp>0?fmtM2(exp):'–'}</td>
+        <td style="font-weight:800;color:${net>=0?'var(--green)':'var(--red)'}">${net!==0?(net>0?'+':'')+fmtM2(Math.abs(net)):'–'}</td>
+      </tr>`;
+    }).join('');
+    document.getElementById('cf-view-y').innerHTML = `<table><thead><tr><th>연도</th><th>매출(수금)</th><th>지출</th><th>순이익</th></tr></thead><tbody>${yRows}</tbody></table>`;
+  }
+}
+
+function loadDemoData() {
+  const today = new Date();
+  const d = (offset) => {
+    const dt = new Date(today); dt.setDate(dt.getDate()+offset);
+    return dt.toISOString().slice(0,10);
+  };
+  const m = (offset) => {
+    const dt = new Date(today.getFullYear(), today.getMonth()+offset, 15);
+    return dt.toISOString().slice(0,10);
+  };
+
+  // ── 영업 딜 ──
+  deals = [
+    {id:1,name:'현대중공업 | AI-S2',co:'현대중공업',prod:'AI-S2',option:'',inflow:'b2b_self',qty:20,unit:900,amt:18000,person:'백승정',stage:'협상·검토',closeDate:d(12),priority:true,createdAt:d(-30),linkedProject:null,logs:[{type:'미팅',text:'1차 기술 미팅 완료. 요구사항 확인.',time:'2025-03-10 14:30',person:'백승정',dept:'sales'},{type:'제안',text:'제안서 제출 완료.',time:'2025-03-15 10:00',person:'백승정',dept:'sales'}]},
+    {id:2,name:'포스코DX | AI-S3',co:'포스코DX',prod:'AI-S3',option:'전방 카메라 추가',inflow:'b2b_self',qty:8,unit:4000,amt:32000,person:'이상혁',stage:'구두합의',closeDate:d(8),priority:true,createdAt:d(-45),linkedProject:null,logs:[{type:'미팅',text:'킥오프 미팅 완료.',time:'2025-03-05 15:00',person:'이상혁',dept:'sales'}]},
+    {id:3,name:'SK C&C | AI-S1',co:'SK C&C',prod:'AI-S1',option:'',inflow:'dealer',qty:45,unit:1000,amt:45000,person:'이승재',stage:'미팅·접촉',closeDate:d(45),priority:false,createdAt:d(-20),linkedProject:null,logs:[{type:'통화',text:'담당자 연결 완료.',time:'2025-03-12 11:00',person:'이승재',dept:'sales'}]},
+    {id:4,name:'CJ대한통운 | AI-S2',co:'CJ대한통운',prod:'AI-S2',option:'경보음 업그레이드',inflow:'rental',qty:12,unit:1000,amt:12000,person:'이재훈',stage:'계약 완료',closeDate:d(-15),priority:false,createdAt:d(-90),linkedProject:1,logs:[{type:'계약',text:'계약서 서명 완료.',time:'2025-02-25 09:00',person:'이재훈',dept:'sales'}]},
+    {id:5,name:'삼성SDS | AI-S3',co:'삼성SDS',prod:'AI-S3',option:'',inflow:'b2b_self',qty:4,unit:7000,amt:28000,person:'이승우',stage:'잠재 발굴',closeDate:d(60),priority:false,createdAt:d(-10),linkedProject:null,logs:[{type:'메모',text:'초기 접근 필요.',time:'2025-03-14 16:00',person:'이승우',dept:'sales'}]},
+    {id:6,name:'롯데정보통신 | AI-S1',co:'롯데정보통신',prod:'AI-S1',option:'',inflow:'b2b_ext',qty:10,unit:850,amt:8500,person:'박기무',stage:'미팅·접촉',closeDate:d(18),priority:true,createdAt:d(-25),linkedProject:null,logs:[{type:'미팅',text:'현장 미팅 완료.',time:'2025-03-08 13:00',person:'박기무',dept:'sales'}]},
+    {id:7,name:'카카오엔터프라이즈 | AI-S2',co:'카카오엔터프라이즈',prod:'AI-S2',option:'',inflow:'direct',qty:11,unit:2000,amt:22000,person:'안영모',stage:'구두합의',closeDate:d(5),priority:false,createdAt:d(-35),linkedProject:2,logs:[{type:'카톡',text:'구두합의 완료. 계약서 초안 작성 중.',time:'2025-03-13 18:00',person:'안영모',dept:'sales'}]},
+    {id:8,name:'두산에너빌리티 | AI-S1',co:'두산에너빌리티',prod:'AI-S1',option:'',inflow:'rental',qty:6,unit:1000,amt:6000,person:'백승정',stage:'제안·견적',closeDate:d(22),priority:false,createdAt:d(-28),linkedProject:null,logs:[{type:'메모',text:'제안서 준비 중.',time:'2025-03-11 10:00',person:'백승정',dept:'sales'}]},
+    {id:9,name:'삼성물산 | AI-S3',co:'삼성물산',prod:'AI-S3',option:'브라켓 세트 포함',inflow:'b2b_self',qty:5,unit:11000,amt:55000,person:'이승재',stage:'협상·검토',closeDate:d(3),priority:true,createdAt:d(-50),linkedProject:null,logs:[{type:'미팅',text:'구두 조건 합의 완료. 계약서 검토 단계.',time:'2025-03-13 10:00',person:'이승재',dept:'sales'}]},
+    {id:10,name:'LG CNS | AI-S2',co:'LG CNS',prod:'AI-S2',option:'',inflow:'dealer',qty:15,unit:1200,amt:18000,person:'이재훈',stage:'계약 완료',closeDate:d(-30),priority:false,createdAt:d(-70),linkedProject:null,logs:[{type:'미팅',text:'2차 협상 미팅 완료.',time:'2025-03-09 14:00',person:'이재훈',dept:'sales'}]},
+    {id:11,name:'현대건설 | AI-S1',co:'현대건설',prod:'AI-S1',option:'',inflow:'b2b_self',qty:30,unit:900,amt:27000,person:'이승재',stage:'제안·견적',closeDate:d(35),priority:false,createdAt:d(-15),linkedProject:null,logs:[]},
+    {id:12,name:'GS칼텍스 | AI-S3(디젤)',co:'GS칼텍스',prod:'AI-S3(디젤)',option:'방폭 케이스',inflow:'b2b_self',qty:3,unit:12000,amt:36000,person:'안영모',stage:'미팅·접촉',closeDate:d(50),priority:false,createdAt:d(-8),linkedProject:null,logs:[]},
+  ];
+  dealIdCnt = 20;
+
+  // ── 완제품 재고 ──
+  invItems = [
+    {id:101,name:'AI-S1',code:'FIN-S1',category:'finished',unit:'대',current_stock:28,safety_stock:10,lead_time_days:21,unit_cost:800000,supplier:'자체 생산',note:''},
+    {id:102,name:'AI-S2',code:'FIN-S2',category:'finished',unit:'대',current_stock:14,safety_stock:8,lead_time_days:21,unit_cost:1800000,supplier:'자체 생산',note:''},
+    {id:103,name:'AI-S3',code:'FIN-S3',category:'finished',unit:'대',current_stock:6,safety_stock:5,lead_time_days:28,unit_cost:3500000,supplier:'자체 생산',note:''},
+    {id:104,name:'AI-S3(디젤)',code:'FIN-S3D',category:'finished',unit:'대',current_stock:2,safety_stock:2,lead_time_days:28,unit_cost:4200000,supplier:'자체 생산',note:'방폭 인증 필요'},
+    // 원재료
+    {id:201,name:'후방 AI 카메라 모듈',code:'CAM-REAR-001',category:'raw',unit:'개',current_stock:45,safety_stock:20,lead_time_days:14,unit_cost:180000,supplier:'삼성전자 B2B',note:''},
+    {id:202,name:'측방 AI 카메라 모듈',code:'CAM-SIDE-001',category:'raw',unit:'개',current_stock:18,safety_stock:15,lead_time_days:14,unit_cost:190000,supplier:'삼성전자 B2B',note:''},
+    {id:203,name:'전방 AI 카메라 모듈',code:'CAM-FRONT-001',category:'raw',unit:'개',current_stock:12,safety_stock:10,lead_time_days:14,unit_cost:185000,supplier:'삼성전자 B2B',note:''},
+    {id:204,name:'MCU 메인 기판',code:'PCB-MCU-001',category:'raw',unit:'개',current_stock:8,safety_stock:15,lead_time_days:21,unit_cost:350000,supplier:'LG이노텍',note:'⚠️ 안전재고 이하'},
+    {id:205,name:'AI 추론 엔진 모듈',code:'AI-ENG-001',category:'raw',unit:'개',current_stock:25,safety_stock:10,lead_time_days:30,unit_cost:520000,supplier:'NVIDIA Korea',note:''},
+    {id:206,name:'이중 LED 경보등',code:'LED-DUAL-001',category:'raw',unit:'개',current_stock:60,safety_stock:20,lead_time_days:7,unit_cost:45000,supplier:'오스람코리아',note:''},
+    {id:207,name:'IR 적외선 카메라',code:'CAM-IR-001',category:'raw',unit:'개',current_stock:9,safety_stock:12,lead_time_days:21,unit_cost:280000,supplier:'소니코리아',note:'⚠️ 안전재고 이하'},
+    {id:208,name:'알루미늄 하우징',code:'CASE-AL-001',category:'raw',unit:'개',current_stock:35,safety_stock:10,lead_time_days:10,unit_cost:95000,supplier:'동양금속',note:''},
+    {id:209,name:'방수 커넥터 세트',code:'CONN-WP-001',category:'raw',unit:'세트',current_stock:50,safety_stock:15,lead_time_days:7,unit_cost:28000,supplier:'암페놀코리아',note:''},
+    {id:210,name:'차량용 전원 모듈',code:'PWR-CAR-001',category:'raw',unit:'개',current_stock:30,safety_stock:10,lead_time_days:14,unit_cost:65000,supplier:'LS전선',note:''},
+  ];
+
+  // ── BOM ──
+  bomData = [
+    // AI-S1: 후방카메라1, MCU기판1, AI엔진1, LED경보1, 하우징1, 커넥터1, 전원모듈1
+    {id:301,finished_item_id:101,raw_item_id:201,qty_required:1},
+    {id:302,finished_item_id:101,raw_item_id:204,qty_required:1},
+    {id:303,finished_item_id:101,raw_item_id:205,qty_required:1},
+    {id:304,finished_item_id:101,raw_item_id:206,qty_required:1},
+    {id:305,finished_item_id:101,raw_item_id:208,qty_required:1},
+    {id:306,finished_item_id:101,raw_item_id:209,qty_required:1},
+    {id:307,finished_item_id:101,raw_item_id:210,qty_required:1},
+    // AI-S2: 후방1+측방2+IR카메라1, MCU기판1, AI엔진1, LED경보2, 하우징1, 커넥터2, 전원모듈1
+    {id:308,finished_item_id:102,raw_item_id:201,qty_required:1},
+    {id:309,finished_item_id:102,raw_item_id:202,qty_required:2},
+    {id:310,finished_item_id:102,raw_item_id:207,qty_required:1},
+    {id:311,finished_item_id:102,raw_item_id:204,qty_required:1},
+    {id:312,finished_item_id:102,raw_item_id:205,qty_required:1},
+    {id:313,finished_item_id:102,raw_item_id:206,qty_required:2},
+    {id:314,finished_item_id:102,raw_item_id:208,qty_required:1},
+    {id:315,finished_item_id:102,raw_item_id:209,qty_required:2},
+    {id:316,finished_item_id:102,raw_item_id:210,qty_required:1},
+    // AI-S3: 전방1+후방1+측방2+IR2, MCU기판1, AI엔진1, LED2, 하우징1, 커넥터3, 전원1
+    {id:317,finished_item_id:103,raw_item_id:203,qty_required:1},
+    {id:318,finished_item_id:103,raw_item_id:201,qty_required:1},
+    {id:319,finished_item_id:103,raw_item_id:202,qty_required:2},
+    {id:320,finished_item_id:103,raw_item_id:207,qty_required:2},
+    {id:321,finished_item_id:103,raw_item_id:204,qty_required:1},
+    {id:322,finished_item_id:103,raw_item_id:205,qty_required:1},
+    {id:323,finished_item_id:103,raw_item_id:206,qty_required:2},
+    {id:324,finished_item_id:103,raw_item_id:208,qty_required:1},
+    {id:325,finished_item_id:103,raw_item_id:209,qty_required:3},
+    {id:326,finished_item_id:103,raw_item_id:210,qty_required:1},
+    // AI-S3(디젤) = AI-S3 + 방폭커넥터 추가
+    {id:327,finished_item_id:104,raw_item_id:203,qty_required:1},
+    {id:328,finished_item_id:104,raw_item_id:201,qty_required:1},
+    {id:329,finished_item_id:104,raw_item_id:202,qty_required:2},
+    {id:330,finished_item_id:104,raw_item_id:207,qty_required:2},
+    {id:331,finished_item_id:104,raw_item_id:204,qty_required:1},
+    {id:332,finished_item_id:104,raw_item_id:205,qty_required:1},
+    {id:333,finished_item_id:104,raw_item_id:206,qty_required:2},
+    {id:334,finished_item_id:104,raw_item_id:208,qty_required:1},
+    {id:335,finished_item_id:104,raw_item_id:209,qty_required:4},
+    {id:336,finished_item_id:104,raw_item_id:210,qty_required:1},
+  ];
+
+  // ── 입출고 이력 (최근 3개월) ──
+  const mkTx = (id,item_id,type,qty,reason,daysAgo) => ({id,item_id,type,qty,reason,person:'이재훈',note:'',created_at:d(-daysAgo)+'T09:00:00+09:00'});
+  stockTx = [
+    mkTx(401,101,'out',-5,'영업 출고 (CJ대한통운)',15),
+    mkTx(402,102,'out',-8,'영업 출고 (LG CNS)',30),
+    mkTx(403,101,'in',20,'발주 입고',45),
+    mkTx(404,103,'out',-3,'영업 출고 (현대중공업)',20),
+    mkTx(405,201,'in',50,'정기 발주 입고',40),
+    mkTx(406,204,'out',-12,'생산 출고',35),
+    mkTx(407,202,'out',-10,'생산 출고',35),
+    mkTx(408,205,'in',30,'발주 입고',50),
+    mkTx(409,101,'out',-8,'영업 출고 (LG CNS)',30),
+    mkTx(410,102,'out',-6,'영업 출고',25),
+    mkTx(411,207,'out',-8,'생산 출고',28),
+    mkTx(412,201,'out',-15,'생산 출고',28),
+    mkTx(413,204,'out',-8,'생산 출고',28),
+    mkTx(414,101,'out',-4,'영업 출고',10),
+    mkTx(415,103,'out',-2,'영업 출고',10),
+    mkTx(416,201,'out',-6,'생산 출고',10),
+    mkTx(417,202,'out',-8,'생산 출고',10),
+  ];
+
+  // ── 수금 조건 ──
+  payTerms = [
+    {id:501,company_name:'현대중공업',payment_basis:'tax_invoice',payment_days:45,tax_invoice_day:25,note:'매월 25일 마감'},
+    {id:502,company_name:'CJ대한통운',payment_basis:'contract',payment_days:60,tax_invoice_day:null,note:''},
+    {id:503,company_name:'삼성물산',payment_basis:'delivery',payment_days:90,tax_invoice_day:25,note:'출고 후 3개월'},
+    {id:504,company_name:'포스코DX',payment_basis:'contract',payment_days:75,tax_invoice_day:null,note:''},
+    {id:505,company_name:'카카오엔터프라이즈',payment_basis:'tax_invoice',payment_days:30,tax_invoice_day:15,note:'매월 15일 마감'},
+    {id:506,company_name:'LG CNS',payment_basis:'contract',payment_days:60,tax_invoice_day:25,note:''},
+    {id:507,company_name:'SK C&C',payment_basis:'tax_invoice',payment_days:45,tax_invoice_day:25,note:''},
+    {id:508,company_name:'롯데정보통신',payment_basis:'contract',payment_days:60,tax_invoice_day:null,note:''},
+  ];
+
+  // ── 수금 예정 ──
+  recvList = [
+    {id:601,deal_id:4,company_name:'CJ대한통운',amount:12000,payment_basis:'contract',basis_date:d(-75),expected_date:d(-15),tax_invoice_date:d(-20),tax_invoice_issued:true,received_date:null,status:'invoiced',note:'CJ대한통운 AI-S2 12대'},
+    {id:602,deal_id:10,company_name:'LG CNS',amount:18000,payment_basis:'contract',basis_date:d(-90),expected_date:m(0),tax_invoice_date:null,tax_invoice_issued:false,received_date:null,status:'pending',note:'LG CNS AI-S2 15대'},
+    {id:603,deal_id:null,company_name:'삼성물산',amount:55000,payment_basis:'delivery',basis_date:d(-10),expected_date:m(2),tax_invoice_date:null,tax_invoice_issued:false,received_date:null,status:'pending',note:'삼성물산 AI-S3 5대 - 출고 후 90일'},
+    {id:604,deal_id:null,company_name:'포스코DX',amount:32000,payment_basis:'contract',basis_date:d(8),expected_date:m(2)+'-15',tax_invoice_date:null,tax_invoice_issued:false,received_date:null,status:'pending',note:'포스코DX 구두합의 건'},
+    {id:605,deal_id:null,company_name:'카카오엔터프라이즈',amount:22000,payment_basis:'tax_invoice',basis_date:d(5),expected_date:m(1),tax_invoice_date:null,tax_invoice_issued:false,received_date:null,status:'pending',note:'카카오 AI-S2 11대'},
+  ];
+
+  // ── 지출 기록 ──
+  expList = [
+    {id:701,category:'raw_material',description:'삼성전자 B2B — 카메라 모듈 50개 발주',amount:9000,expense_date:d(-40),person:'이재훈',note:''},
+    {id:702,category:'raw_material',description:'LG이노텍 — MCU 기판 20개',amount:7000,expense_date:d(-35),person:'이재훈',note:''},
+    {id:703,category:'logistics',description:'CJ대한통운 납품 물류비',amount:350,expense_date:d(-15),person:'이상혁',note:''},
+    {id:704,category:'raw_material',description:'NVIDIA Korea — AI 엔진 30개',amount:15600,expense_date:d(-50),person:'이재훈',note:''},
+    {id:705,category:'labor',description:'4월 인건비',amount:8500,expense_date:d(-5),person:'이재훈',note:''},
+    {id:706,category:'other',description:'사무실 운영비 4월',amount:1200,expense_date:d(-5),person:'이재훈',note:''},
+    {id:707,category:'logistics',description:'LG CNS 납품 예정 물류비',amount:280,expense_date:m(0),person:'이상혁',note:'예정'},
+    {id:708,category:'raw_material',description:'소니코리아 — IR카메라 20개 예정 발주',amount:5600,expense_date:m(0),person:'이재훈',note:'발주 예정'},
+    {id:709,category:'raw_material',description:'LG이노텍 — MCU 기판 30개 긴급 발주',amount:10500,expense_date:m(0),person:'이재훈',note:'안전재고 이하 긴급'},
+    {id:710,category:'labor',description:'5월 인건비',amount:8500,expense_date:m(1),person:'이재훈',note:'예정'},
+    {id:711,category:'other',description:'사무실 운영비 5월',amount:1200,expense_date:m(1),person:'이재훈',note:'예정'},
+  ];
+
+  console.log('✅ 데모 데이터 로드 완료:', deals.length, '딜,', invItems.length, '품목,', recvList.length, '수금건');
+}
+
+// ══════════════════════════════════════════════════════════
+// 도움말 시스템
+// ══════════════════════════════════════════════════════════
+const HELP_CONTENT = {
+  newDeal: {
+    icon: '📊', color: '#eff6ff', title: '새 딜 추가 — 작성 방법',
+    sections: [
+      { title: '필수 항목', fields: [
+        { name: '고객사 *', desc: '계약 대상 회사명을 입력합니다. 수금 조건이 등록된 회사명과 일치하면 계약 완료 시 자동으로 수금 예정이 생성됩니다.' },
+        { name: '제품 *', desc: 'AI-S1 / AI-S2 / AI-S3 / AI-S3(디젤) 중 선택합니다. 제품 선택 시 딜명이 자동 생성됩니다.' },
+        { name: '수량 *', desc: '납품 예정 대수를 입력합니다. 계약 완료 시 재고에서 자동 차감됩니다.' },
+      ]},
+      { title: '권장 항목', fields: [
+        { name: '옵션 품목', desc: '기본 제품 외 추가 요청 사항을 자유롭게 기입합니다. 예: 전방 카메라 추가, 브라켓 세트 포함' },
+        { name: '유입 경로', desc: '이 딜이 어떤 채널로 들어왔는지 선택합니다. 통계 분석에 활용됩니다.' },
+        { name: '대당 단가', desc: '입력하면 총금액이 자동 계산됩니다.' },
+        { name: '마감 예정일', desc: '계약 목표 날짜입니다. 임박 시 KPI 대시보드에 알람이 뜹니다.' },
+      ]},
+      { title: '예시', example: '고객사: 현대중공업 / 제품: AI-S2 / 수량: 20대 / 단가: 900만원 / 옵션: 브라켓 포함 / 유입경로: B2B 직접 영업 → 딜명 자동 생성: "현대중공업 | AI-S2"' }
+    ]
+  },
+  invOverview: {
+    icon: '📦', color: '#f0fdf4', title: '재고 현황 — 사용 방법',
+    sections: [
+      { title: '완제품 등록', fields: [
+        { name: '완제품 추가', desc: 'AI-S1, AI-S2, AI-S3 등 출하 가능한 완성품을 등록합니다.' },
+        { name: '현재 재고', desc: '현재 창고에 있는 대수를 입력합니다.' },
+        { name: '안전재고', desc: '이 수량 이하로 떨어지면 KPI 대시보드에 경고가 표시됩니다. 권장: 1~2개월 평균 출하량' },
+      ]},
+      { title: '원재료 등록', fields: [
+        { name: '원재료 추가', desc: '카메라 모듈, 기판 등 부품을 등록합니다.' },
+        { name: '완제품 연결', desc: '원재료 추가 시 어느 완제품에 몇 개 들어가는지 바로 연결할 수 있습니다. 이것이 BOM(자재명세서)입니다.' },
+        { name: '발주 기간', desc: '이 원재료를 발주하면 입고까지 걸리는 일수입니다. 예: 카메라 모듈 → 14일, MCU 기판 → 21일' },
+      ]},
+      { title: '입고/출고 버튼', fields: [
+        { name: '입고', desc: '납품받은 수량을 기록합니다. 재고가 자동으로 증가합니다.' },
+        { name: '출고', desc: '창고에서 꺼낸 수량을 기록합니다. 딜 계약 완료 시 자동 처리됩니다.' },
+      ]},
+    ]
+  },
+  bom: {
+    icon: '🔗', color: '#faf5ff', title: 'BOM 관리 — 작성 방법',
+    sections: [
+      { title: 'BOM이란?', fields: [
+        { name: 'BOM', desc: 'Bill of Materials(자재명세서)입니다. 완제품 1대를 만들기 위해 필요한 원재료 목록과 수량을 정의합니다.' },
+      ]},
+      { title: '등록 방법', fields: [
+        { name: '완제품 선택', desc: 'AI-S1, AI-S2 등 완제품 카드에서 "+ 원재료 추가"를 클릭합니다.' },
+        { name: '원재료 + 수량', desc: '어느 부품이 몇 개 필요한지 입력합니다.' },
+        { name: '중복 연결', desc: '같은 원재료를 여러 완제품에 연결할 수 있습니다. 예: MCU 기판은 AI-S1, S2, S3 모두에 사용' },
+      ]},
+      { title: '예시 (AI-S2 1대 기준)', example: '후방 AI 카메라 모듈 × 1개 측방 AI 카메라 모듈 × 2개 IR 적외선 카메라 × 1개 MCU 메인 기판 × 1개 AI 추론 엔진 모듈 × 1개 이중 LED 경보등 × 2개' }
+    ]
+  },
+  purchaseOrder: {
+    icon: '🛒', color: '#fffbeb', title: '발주 관리 — 작성 방법',
+    sections: [
+      { title: '발주 등록', fields: [
+        { name: '품목', desc: '발주할 원재료 또는 완제품을 선택합니다. 품목은 재고 현황에서 먼저 등록해야 합니다.' },
+        { name: '발주 수량', desc: '주문할 수량을 입력합니다.' },
+        { name: '입고 예정일', desc: '공급업체로부터 입고될 예상 날짜입니다. 발주 기간(리드타임)을 고려해 설정하세요.' },
+      ]},
+      { title: '입고 완료 처리', fields: [
+        { name: '입고완료 버튼', desc: '실제로 물건이 도착하면 클릭합니다. 재고가 자동으로 증가하고 입출고 이력에 기록됩니다.' },
+      ]},
+      { title: '팁', example: 'KPI 대시보드의 "선제적 발주 알람"이 뜨면 해당 품목을 바로 발주 등록하세요. 발주 등록 → 입고 예정일 설정 → 입고 완료 처리 순서로 진행됩니다.' }
+    ]
+  },
+  finTerms: {
+    icon: '📋', color: '#f0fdf4', title: '수금 조건 — 작성 방법',
+    sections: [
+      { title: '수금 조건이란?', fields: [
+        { name: '개념', desc: '고객사마다 돈을 언제 주는지 조건이 다릅니다. 여기서 등록하면 딜 계약 완료 시 수금 예정일이 자동으로 계산됩니다.' },
+      ]},
+      { title: '항목 설명', fields: [
+        { name: '수금 기준', desc: '언제부터 일수를 계산할지 선택합니다. • 계약 완료일 기준: 계약서 서명일 + N일 • 세금계산서 발행일 기준: 계산서 발행일 + N일 • 출고 완료일 기준: 납품일 + N일' },
+        { name: '지급 기한', desc: '기준일로부터 몇 일 후에 입금되는지 입력합니다.' },
+        { name: '계산서 마감일', desc: '매월 며칠까지 발행분을 처리하는지입니다. 예: 25 → 매월 25일 이전 발행분만 당월 처리' },
+      ]},
+      { title: '예시', example: '현대중공업: 세금계산서 발행일 기준 + 45일 / 마감 25일 → 25일 이전에 계산서 발행 필수. 발행 후 45일째 입금.  CJ대한통운: 계약 완료일 기준 + 60일 → 계약서 서명 후 60일째 입금.' }
+    ]
+  },
+  finReceivables: {
+    icon: '💰', color: '#eff6ff', title: '수금 관리 — 작성 방법',
+    sections: [
+      { title: '자동 생성', fields: [
+        { name: '자동 등록', desc: '영업 대시보드에서 딜을 "계약 완료"로 변경하면 수금 조건에 맞춰 자동으로 등록됩니다. 별도 입력 불필요.' },
+      ]},
+      { title: '수동 등록', fields: [
+        { name: '직접 등록', desc: '수금 조건이 미등록된 고객사 또는 별도 수금 건은 수금 등록 버튼으로 직접 추가합니다.' },
+        { name: '기준일', desc: '수금 기준이 되는 날짜입니다 (계약일, 계산서 발행일, 납품일 등).' },
+        { name: '지급 기한', desc: '기준일로부터 몇 일 후 입금인지 입력하면 예상 수금일이 자동 계산됩니다.' },
+      ]},
+      { title: '상태 관리', fields: [
+        { name: '세금계산서 발행', desc: '계산서를 발행했으면 "발행 처리" 버튼을 클릭합니다. KPI 알람에서 제외됩니다.' },
+        { name: '수금 완료', desc: '실제 입금 확인 후 "수금완료" 버튼을 클릭하고 실제 입금일을 입력합니다.' },
+      ]},
+    ]
+  },
+  finExpenses: {
+    icon: '💸', color: '#faf5ff', title: '지출 기록 — 작성 방법',
+    sections: [
+      { title: '카테고리 안내', fields: [
+        { name: '원자재 발주비', desc: '부품 구매 비용입니다. 발주 관리와 연계해서 기록하세요.' },
+        { name: '운송비/물류비', desc: '납품 배송비, 창고 물류비 등입니다.' },
+        { name: '인건비', desc: '월급, 외주비 등 인력 관련 비용입니다.' },
+        { name: '기타 운영비용', desc: '사무실 임대료, 소모품비 등입니다.' },
+      ]},
+      { title: '팁', example: '• 발주 시 예상 금액을 미리 등록해두면 캐시플로우 예측이 정확해집니다. • 정기 비용(인건비, 운영비)은 매월 초에 한 번에 등록하세요. • KPI 대시보드의 "3개월 순현금 예측" = 수금 예정 - 지출 기록 합산입니다.' }
+    ]
+  },
+};
+
+function showHelp(key) {
+  const h = HELP_CONTENT[key]; if(!h) return;
+  const overlay = document.createElement('div');
+  overlay.className = 'help-overlay';
+  overlay.id = 'helpOverlay';
+
+  let body = '';
+  h.sections.forEach(sec => {
+    body += `<div class="help-section">`;
+    if(sec.title) body += `<div class="help-section-title">${sec.title}</div>`;
+    if(sec.fields) sec.fields.forEach(f => {
+      body += `<div class="help-field">
+        <div class="help-field-name">${f.name}</div>
+        <div class="help-field-desc">${f.desc.replace(/\n/g,'<br>')}</div>
+      </div>`;
+    });
+    if(sec.example) body += `<div class="help-example"><strong>📌 예시</strong><br>${sec.example.replace(/\n/g,'<br>')}</div>`;
+    body += `</div>`;
+  });
+
+  overlay.innerHTML = `<div class="help-modal">
+    <div class="help-modal-hd">
+      <div class="help-modal-icon" style="background:${h.color}">${h.icon}</div>
+      <div style="flex:1">
+        <div style="font-size:16px;font-weight:800;letter-spacing:-.3px">${h.title}</div>
+        <div style="font-size:12px;color:var(--t3);margin-top:2px">클릭하여 닫기</div>
+      </div>
+      <button onclick="closeHelp()" style="width:32px;height:32px;border-radius:50%;background:var(--s2);border:none;cursor:pointer;font-size:18px;color:var(--t2);flex-shrink:0">×</button>
+    </div>
+    <div class="help-modal-body">${body}</div>
+  </div>`;
+  overlay.addEventListener('click', e => { if(e.target===overlay) closeHelp(); });
+  document.body.appendChild(overlay);
+}
+
+function closeHelp() {
+  document.getElementById('helpOverlay')?.remove();
+}
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeHelp(); });
 
 // ── 계약 완료 단계 변경 시 트리거 (changeDealStage 훅) ──
 const _origChangeDealStage = changeDealStage;
