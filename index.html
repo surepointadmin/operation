@@ -370,7 +370,12 @@ tbody tr:hover{background:var(--s2)}
 /* ════════════════════════════════════════
    PIPELINE KANBAN
 ════════════════════════════════════════ */
-.kanban-wrap{overflow-x:auto;padding-bottom:8px}
+.kanban-wrap{overflow-x:auto;padding-bottom:8px;cursor:grab;user-select:none;scroll-behavior:smooth}
+.kanban-wrap:active{cursor:grabbing}
+.kanban-wrap::-webkit-scrollbar{height:6px}
+.kanban-wrap::-webkit-scrollbar-track{background:var(--s2);border-radius:3px}
+.kanban-wrap::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:3px}
+.kanban-wrap::-webkit-scrollbar-thumb:hover{background:var(--t3)}
 .kanban-board{display:flex;gap:12px;min-width:max-content;align-items:flex-start;padding-bottom:4px}
 .kanban-col{width:280px;background:var(--s2);border-radius:var(--r-lg);border:1px solid var(--bd);flex-shrink:0}
 .col-hd{padding:14px 14px 12px;display:flex;align-items:flex-start;gap:8px}
@@ -659,6 +664,60 @@ tbody tr:hover{background:var(--s2)}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:3px}
+
+/* ════ 인쇄 (조직도 전용) ════ */
+@media print {
+  /* ① CRM 크롬 완전 숨기기 */
+  .sidebar, .topbar, #dashSwitcher, .overlay, #loadingBar { display: none !important; }
+
+  /* ② 조직도 편집 UI 숨기기 */
+  .org-sb, .org-topbar, .org-add-ceo-btn,
+  .org-dacts, .org-ico, .org-del-ico,
+  .org-add-mb, .org-add-db, .org-add-dcol { display: none !important; }
+
+  /* ③ 레이아웃 초기화 */
+  html, body { background: #fff !important; height: auto !important; overflow: visible !important; margin: 0 !important; }
+  .app { display: block !important; height: auto !important; overflow: visible !important; }
+  .main { display: block !important; height: auto !important; overflow: visible !important; margin: 0 !important; padding: 0 !important; }
+
+  /* ④ 조직도 뷰만 표시 */
+  .view:not(#view-orgchart) { display: none !important; }
+  #view-orgchart { display: block !important; height: auto !important; overflow: visible !important; padding: 0 !important; }
+  .org-app { display: block !important; height: auto !important; }
+  .org-main { display: block !important; width: 100% !important; }
+  .org-canvas-wrap { display: block !important; overflow: visible !important; height: auto !important; }
+
+  /* ⑤ 캔버스 — 줄바꿈 없이 한 페이지에 맞게 자동 스케일 */
+  .org-canvas {
+    padding: 0 !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    /* 내용이 넘칠 경우 브라우저 자체 축소 허용 (Chrome: fit-to-page) */
+    overflow: visible !important;
+  }
+
+  /* ⑥ 트리 — 줄바꿈 금지, 한 줄 유지 */
+  .org-tree {
+    flex-wrap: nowrap !important;   /* 줄바꿈 없이 한 줄 */
+    justify-content: center !important;
+    align-items: flex-start !important;
+    overflow: visible !important;
+  }
+  /* 부서 열 — 최소 너비 고정 해제, 균등 분배 */
+  .org-dcol {
+    min-width: 0 !important;
+    flex: 1 1 0 !important;
+    max-width: none !important;
+  }
+
+  /* ⑦ CEO */
+  #orgCeoWrap { display: flex !important; justify-content: center !important; flex-wrap: wrap !important; }
+  .org-ceo-sec { display: flex !important; flex-direction: column !important; }
+  .org-ceo-sec::after { display: block !important; }
+}
+
+/* 인쇄 여백 — 브라우저가 자동 스케일(fit to page) 하도록 여백 최소화 */
+@page { margin: 6mm; size: auto; }
 </style>
 </head>
 <body>
@@ -1096,7 +1155,7 @@ tbody tr:hover{background:var(--s2)}
 
       <!-- PIPELINE -->
       <div class="view" id="view-pipeline">
-        <div class="kanban-wrap"><div class="kanban-board" id="kanbanBoard"></div></div>
+        <div class="kanban-wrap" id="kanbanWrap"><div class="kanban-board" id="kanbanBoard"></div></div>
       </div>
 
       <!-- DEALS -->
@@ -1366,12 +1425,7 @@ tbody tr:hover{background:var(--s2)}
             <div id="orgChartWrap" style="display:none" class="org-canvas-wrap">
               <div class="org-canvas">
                 <div class="org-ceo-sec">
-                  <div class="org-ceo-card" onclick="orgOpenCeoModal()">
-                    <button class="org-ico" onclick="event.stopPropagation();orgOpenCeoModal()">✏️</button>
-                    <div class="org-ceo-name" id="orgCeoName"></div>
-                    <div class="org-ceo-ttl"  id="orgCeoTtl"></div>
-                    <div class="org-ceo-info" id="orgCeoInfo"></div>
-                  </div>
+                  <div id="orgCeoWrap" style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px"></div>
                 </div>
                 <div class="org-h-area" id="orgHArea"><div class="org-h-line" id="orgHLine"></div></div>
                 <div class="org-tree" id="orgTree2"></div>
@@ -1810,6 +1864,70 @@ tbody tr:hover{background:var(--s2)}
   </div>
 </div>
 
+<!-- Contract Complete Modal — 수금 기일 필수 입력 -->
+<div class="overlay" id="contractModal">
+  <div class="modal modal-sm">
+    <div class="modal-hd">
+      <div class="modal-hd-info">
+        <div class="modal-title">✅ 계약 완료 확정</div>
+        <div class="modal-sub">수금 정보를 입력해야 계약 완료로 이동합니다</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('contractModal')"><svg viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="contract-deal-id">
+      <!-- 딜 요약 -->
+      <div style="background:var(--s2);border-radius:var(--r);padding:12px 14px;margin-bottom:16px">
+        <div style="font-size:14px;font-weight:700" id="contract-deal-name"></div>
+        <div style="font-size:12px;color:var(--t2);margin-top:2px" id="contract-deal-info"></div>
+      </div>
+      <!-- 수금 기준 -->
+      <div class="form-field full" style="margin-bottom:12px">
+        <label class="form-label">수금 기준 *</label>
+        <select class="form-select" id="contract-basis" onchange="calcContractExpected()">
+          <option value="contract">계약 완료일 기준</option>
+          <option value="tax_invoice">세금계산서 발행일 기준</option>
+          <option value="delivery">출고 완료일 기준</option>
+        </select>
+      </div>
+      <!-- 기준일 -->
+      <div class="form-grid">
+        <div class="form-field">
+          <label class="form-label">기준일 *</label>
+          <input class="form-input" id="contract-basis-date" type="date" onchange="calcContractExpected()">
+        </div>
+        <div class="form-field">
+          <label class="form-label">지급 기한 (일) *</label>
+          <input class="form-input" id="contract-days" type="number" value="60" min="1" onchange="calcContractExpected()">
+        </div>
+      </div>
+      <!-- 예상 수금일 자동계산 -->
+      <div class="form-field full" style="margin-bottom:12px">
+        <label class="form-label">예상 수금일 — 자동계산</label>
+        <input class="form-input auto" id="contract-expected" type="date" readonly>
+      </div>
+      <!-- 수금 금액 -->
+      <div class="form-field full" style="margin-bottom:12px">
+        <label class="form-label">수금 금액 (원) *</label>
+        <input class="form-input" id="contract-amount" type="number" placeholder="계약 금액을 입력하세요">
+        <div style="font-size:11px;color:var(--accent);margin-top:3px" id="contract-amount-preview"></div>
+      </div>
+      <!-- 메모 -->
+      <div class="form-field full">
+        <label class="form-label">메모</label>
+        <textarea class="form-textarea" id="contract-note" rows="2" placeholder="특이사항, 세금계산서 마감일 등"></textarea>
+      </div>
+      <div style="background:var(--gl);border-radius:var(--r);padding:10px 14px;margin-top:12px;font-size:12px;color:var(--gt)">
+        💡 입력한 수금 정보는 <strong>재무 &gt; 수금 관리</strong>에 자동으로 등록됩니다.
+      </div>
+    </div>
+    <div style="padding:0 24px 20px;display:flex;gap:8px">
+      <button class="btn btn-s" onclick="closeModal('contractModal')">취소</button>
+      <button class="btn btn-p" style="flex:1;justify-content:center;padding:11px" onclick="confirmContractComplete()">계약 완료 확정 →</button>
+    </div>
+  </div>
+</div>
+
 <!-- Add Account Modal -->
 <div class="overlay" id="addAccountModal">
   <div class="modal modal-sm">
@@ -1967,18 +2085,19 @@ let CU = null; // current user
 // HELPERS
 // ══════════════════════════════════════════════
 const fmt = v => {
-  // 입력 단위: 만원
+  // 단위: 원(₩)
   if(!v || v === 0) return '₩0';
   const a = Math.abs(v);
-  if(a >= 1000000) {
-    // 100억 이상: ₩1,280억
-    return `₩${Math.round(a/10000).toLocaleString()}억`;
-  } else if(a >= 10000) {
-    // 1억 이상 ~ 100억 미만: ₩12.8억 / ₩1.3억
-    return `₩${(a/10000).toFixed(1)}억`;
+  if(a >= 100000000000) {               // 1,000억 이상 → X,XXX억
+    return '₩' + Math.round(a/100000000).toLocaleString() + '억';
+  } else if(a >= 100000000) {           // 1억 이상 → X.X억
+    return '₩' + (a/100000000).toFixed(1) + '억';
+  } else if(a >= 10000000) {            // 1,000만 이상 → XX,000만
+    return '₩' + Math.round(a/10000).toLocaleString() + '만';
+  } else if(a >= 10000) {               // 1만 이상 → X,XXX만
+    return '₩' + Math.round(a/10000).toLocaleString() + '만';
   } else {
-    // 1억 미만: ₩9,999만 / ₩275만
-    return `₩${a.toLocaleString()}만`;
+    return '₩' + a.toLocaleString() + '원';
   }
 };
 const sk = s => STAGE_KEYS[STAGES.indexOf(s)] || 'lead';
@@ -2076,6 +2195,15 @@ function orgAmtToWon(v) {
   if(!v) return 0;
   return v <= 100000 ? v * 10000 : v;
 }
+// 만원 단위 값을 표시 (수금/지출용)
+const fmtMW = v => {
+  if(!v || v===0) return '₩0';
+  const a = Math.abs(v);
+  if(a >= 10000000) return '₩' + Math.round(a/10000).toLocaleString() + '억';
+  if(a >= 10000)    return '₩' + (a/10000).toFixed(1) + '억';
+  if(a >= 1000)     return '₩' + a.toLocaleString() + '만';
+  return '₩' + a.toLocaleString() + '만';
+};
 function fmtWon(v) {
   // 원 단위 숫자를 읽기 좋게 표시
   if(!v || v===0) return '';
@@ -2110,6 +2238,65 @@ function updateAmtPreview(inputId, previewId) {
   const v = parseInt(el.value)||0;
   prev.textContent = v > 0 ? fmtWon(v) : '';
 }
+// ── 계약 완료 수금 기일 팝업 ──
+let _contractDeal = null;
+let _contractFromEdit = false;
+
+function openContractModal(deal) {
+  _contractDeal = deal;
+  document.getElementById('contract-deal-id').value = deal.id;
+  document.getElementById('contract-deal-name').textContent = deal.name;
+  document.getElementById('contract-deal-info').textContent = `${deal.co} · ${deal.person} · ${fmt(deal.amt)}`;
+  // 기준일 오늘로 초기화
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('contract-basis-date').value = today;
+  document.getElementById('contract-days').value = '60';
+  // 수금 조건 있으면 자동 채우기
+  const term = payTerms.find(t=>t.company_name===deal.co);
+  if(term){
+    document.getElementById('contract-basis').value = term.payment_basis||'contract';
+    document.getElementById('contract-days').value = term.payment_days||60;
+  }
+  // 금액 자동 채우기 (원 단위 그대로)
+  document.getElementById('contract-amount').value = deal.amt||'';
+  updateAmtPreview('contract-amount','contract-amount-preview');
+  calcContractExpected();
+  openModal('contractModal');
+  setTimeout(()=>document.getElementById('contract-basis-date').focus(), 100);
+}
+
+function calcContractExpected(){
+  const basis = document.getElementById('contract-basis-date').value;
+  const days  = parseInt(document.getElementById('contract-days').value)||0;
+  if(basis && days){
+    const d = new Date(basis); d.setDate(d.getDate()+days);
+    document.getElementById('contract-expected').value = d.toISOString().slice(0,10);
+  }
+  updateAmtPreview('contract-amount','contract-amount-preview');
+}
+
+async function confirmContractComplete(){
+  const deal = _contractDeal; if(!deal) return;
+  const basisDate = document.getElementById('contract-basis-date').value;
+  const days      = parseInt(document.getElementById('contract-days').value)||0;
+  const expected  = document.getElementById('contract-expected').value;
+  const amount    = parseInt(document.getElementById('contract-amount').value)||0;
+  // 필수 검증
+  if(!basisDate){ showToast('기준일을 입력해주세요','warn'); return; }
+  if(!days)     { showToast('지급 기한을 입력해주세요','warn'); return; }
+  if(!amount)   { showToast('수금 금액을 입력해주세요','warn'); return; }
+  closeModal('contractModal');
+  // 계약 완료 단계 변경 실행
+  const os = deal.stage;
+  _doChangeDealStage(deal, os, '계약 완료');
+  // 수금 예정 자동 등록 (onDealContractComplete가 호출되기 전에 기일 정보 주입)
+  deal._contractRecv = {
+    basis: document.getElementById('contract-basis').value,
+    basisDate, days, expected, amount,
+    note: document.getElementById('contract-note').value.trim()
+  };
+}
+
 async function doLogin() {
   const id = document.getElementById('loginId').value.trim().toLowerCase();
   const pw = document.getElementById('loginPw').value;
@@ -2314,7 +2501,7 @@ function showView(name, navEl) {
   document.getElementById('topActions').innerHTML = VIEW_ACTIONS[name]||'';
   closeSidebar();
   if(name==='dashboard') renderDashboard();
-  if(name==='pipeline') renderPipeline();
+  if(name==='pipeline'){ renderPipeline(); initKanbanDrag(); }
   if(name==='deals') renderDeals();
   if(name==='customers') renderCustomers();
   if(name==='projects') renderProjects();
@@ -2378,7 +2565,7 @@ function renderHome() {
       <div class="recent-row" onclick="enterDashboard('fin')">
         <div style="flex:1;min-width:0"><div class="recent-name">${r.company_name}</div><div class="recent-meta">예정 ${r.expected_date||'–'}</div></div>
         <span class="chip ${RECV_STATUS_CLS[r.status]||'chip-gray'}">${RECV_STATUS[r.status]||r.status}</span>
-        <div class="recent-amt">${fmt(r.amount)}</div>
+        <div class="recent-amt">${fmtMW(r.amount)}</div>
       </div>`).join(''):`<div style="padding:20px;text-align:center;color:var(--t3);font-size:13px">수금 예정 없음</div>`;
   }
 }
@@ -2496,8 +2683,8 @@ function renderSuperAdminKPI() {
   const actions = [];
   const todayStr = now.toISOString().slice(0,10);
 
-  // 발주 알람
-  invItems.forEach(item=>{
+  // 발주 알람 — 원재료(raw)만
+  invItems.filter(i=>i.category==='raw').forEach(item=>{
     if(item.current_stock <= 0 && item.safety_stock > 0) {
       actions.push({level:'red',icon:'📦',category:'발주',text:`${item.name} — 재고 소진, 즉시 발주 필요`,link:()=>enterDashboard('inv')});
     } else {
@@ -2516,16 +2703,16 @@ function renderSuperAdminKPI() {
     if(term?.tax_invoice_day) {
       const today=now.getDate(), cutoff=term.tax_invoice_day;
       const daysLeft=cutoff-today;
-      if(daysLeft>=0&&daysLeft<=5) actions.push({level:'red',icon:'📄',category:'세금계산서',text:`${r.company_name} — 계산서 발행 마감 D-${daysLeft} (${fmt(r.amount)})`,link:()=>enterDashboard('fin')});
-      else if(daysLeft>5&&daysLeft<=10) actions.push({level:'amber',icon:'📄',category:'세금계산서',text:`${r.company_name} — 계산서 발행 D-${daysLeft} (${fmt(r.amount)})`,link:()=>enterDashboard('fin')});
+      if(daysLeft>=0&&daysLeft<=5) actions.push({level:'red',icon:'📄',category:'세금계산서',text:`${r.company_name} — 계산서 발행 마감 D-${daysLeft} (${fmtMW(r.amount)})`,link:()=>enterDashboard('fin')});
+      else if(daysLeft>5&&daysLeft<=10) actions.push({level:'amber',icon:'📄',category:'세금계산서',text:`${r.company_name} — 계산서 발행 D-${daysLeft} (${fmtMW(r.amount)})`,link:()=>enterDashboard('fin')});
     }
   });
 
   // 수금 임박
   recvList.filter(r=>r.status!=='received'&&r.expected_date).forEach(r=>{
     const diff=Math.round((new Date(r.expected_date)-now)/(864e5));
-    if(diff>=0&&diff<=5) actions.push({level:'red',icon:'💰',category:'수금',text:`${r.company_name} — 수금 예정 D-${diff} (${fmt(r.amount)})`,link:()=>enterDashboard('fin')});
-    else if(diff<0) actions.push({level:'red',icon:'⚠️',category:'연체',text:`${r.company_name} — 수금 ${Math.abs(diff)}일 초과 (${fmt(r.amount)})`,link:()=>enterDashboard('fin')});
+    if(diff>=0&&diff<=5) actions.push({level:'red',icon:'💰',category:'수금',text:`${r.company_name} — 수금 예정 D-${diff} (${fmtMW(r.amount)})`,link:()=>enterDashboard('fin')});
+    else if(diff<0) actions.push({level:'red',icon:'⚠️',category:'연체',text:`${r.company_name} — 수금 ${Math.abs(diff)}일 초과 (${fmtMW(r.amount)})`,link:()=>enterDashboard('fin')});
   });
 
   // 마감 임박 딜
@@ -2588,7 +2775,7 @@ function renderSuperAdminKPI() {
   const maxV = Math.max(...r6,...e6,1);
   const chartEl = document.getElementById('sa-cashflow-chart');
   const BAR_H = 96; // 막대 영역 고정 높이(px)
-  const fmtM = v => { if(!v||v===0) return '–'; const a=Math.abs(v); if(a>=1000000) return `${Math.round(a/10000).toLocaleString()}억`; if(a>=10000) return `${(a/10000).toFixed(1)}억`; return `${a.toLocaleString()}만`; };
+  const fmtM = v => { if(!v||v===0) return '–'; const a=Math.abs(v); if(a>=100000000000) return Math.round(a/100000000).toLocaleString()+'억'; if(a>=100000000) return (a/100000000).toFixed(1)+'억'; if(a>=10000000) return Math.round(a/10000).toLocaleString()+'만'; if(a>=10000) return Math.round(a/10000).toLocaleString()+'만'; return a.toLocaleString()+'원'; };
   if(chartEl) chartEl.innerHTML = `
     <div style="display:flex;align-items:flex-end;gap:6px;width:100%">
       ${months6.map((m,i)=>{
@@ -2615,7 +2802,7 @@ function renderSuperAdminKPI() {
   const totalRecv6 = r6.reduce((s,v)=>s+v,0);
   const totalExp6  = e6.reduce((s,v)=>s+v,0);
   const net6 = totalRecv6 - totalExp6;
-  const fmtM2 = v => { if(!v||v===0) return '₩0'; const a=Math.abs(v); if(a>=1000000) return `₩${Math.round(a/10000).toLocaleString()}억`; if(a>=10000) return `₩${(a/10000).toFixed(1)}억`; return `₩${a.toLocaleString()}만`; };
+  const fmtM2 = v => { if(!v||v===0) return '₩0'; const a=Math.abs(v); if(a>=100000000000) return '₩'+Math.round(a/100000000).toLocaleString()+'억'; if(a>=100000000) return '₩'+(a/100000000).toFixed(1)+'억'; if(a>=10000) return '₩'+Math.round(a/10000).toLocaleString()+'만'; return '₩'+a.toLocaleString()+'원'; };
   const sumEl = document.getElementById('cf-summary-6m');
   if(sumEl) sumEl.innerHTML = `
     <div style="margin-bottom:12px">
@@ -2648,9 +2835,9 @@ function renderSuperAdminKPI() {
   window._cfData = {r6, e6, months6, recvList, expList};
   setCfTab('6m', document.getElementById('cf-tab-6m'));
 
-  // ── 선제적 발주 알람 ──
+  // ── 선제적 발주 알람 — 원재료(raw)만 ──
   const orderAlerts = [];
-  invItems.forEach(item=>{
+  invItems.filter(i=>i.category==='raw').forEach(item=>{
     const f = calcOrderForecast(item);
     if(!f) return;
     const confLabel = {high:'신뢰도 높음',mid:'신뢰도 중간',low:'데이터 부족'};
@@ -3233,8 +3420,8 @@ function buildDealEdit(id){
     <div class="form-field">
       <label class="form-label">대당 단가 (원)</label>
       <div class="amt-wrap">
-        <input class="form-input" id="de-unit" type="number" value="${orgUnitToWon(d.unit||0)}" oninput="calcDeAmt();updateAmtPreview('de-unit','de-unit-preview')" placeholder="예: 75,000,000">
-        <div class="amt-preview" id="de-unit-preview">${d.unit?'현재: '+fmtWon(orgUnitToWon(d.unit||0)):''}</div>
+        <input class="form-input" id="de-unit" type="number" value="${d.unit||0}" oninput="calcDeAmt();updateAmtPreview('de-unit','de-unit-preview')" placeholder="예: 75,000,000">
+        <div class="amt-preview" id="de-unit-preview">${d.unit?fmtWon(d.unit):''}</div>
         <div class="amt-btns">
           <button type="button" class="amt-btn" onclick="addAmt('de-unit',100000000)">+1억</button>
           <button type="button" class="amt-btn" onclick="addAmt('de-unit',10000000)">+1천만</button>
@@ -3247,8 +3434,8 @@ function buildDealEdit(id){
     <div class="form-field full">
       <label class="form-label">예상 총금액 (원)</label>
       <div class="amt-wrap">
-        <input class="form-input auto" id="de-amt" type="number" value="${orgAmtToWon(d.amt||0)}" oninput="updateAmtPreview('de-amt','de-amt-preview')">
-        <div class="amt-preview" id="de-amt-preview">${d.amt?'현재: '+fmtWon(orgAmtToWon(d.amt||0)):''}</div>
+        <input class="form-input auto" id="de-amt" type="number" value="${d.amt||0}" oninput="updateAmtPreview('de-amt','de-amt-preview')">
+        <div class="amt-preview" id="de-amt-preview">${d.amt?fmtWon(d.amt):''}</div>
         <div class="amt-btns">
           <button type="button" class="amt-btn" onclick="addAmt('de-amt',100000000)">+1억</button>
           <button type="button" class="amt-btn" onclick="addAmt('de-amt',10000000)">+1천만</button>
@@ -3289,17 +3476,24 @@ async function saveDealEdit(){
   d.prod=document.getElementById('de-prod').value;
   d.option=document.getElementById('de-option')?.value.trim()||'';
   d.qty=parseInt(document.getElementById('de-qty').value)||1;
-  // de-unit, de-amt는 원 단위 입력 → 만원으로 변환해서 저장
-  const deUnitRaw=parseInt(document.getElementById('de-unit').value)||0;
-  const deAmtRaw=parseInt(document.getElementById('de-amt').value)||0;
-  d.unit=Math.round(deUnitRaw/10000);
-  d.amt=deAmtRaw>0?Math.round(deAmtRaw/10000):d.amt;
+  // 원 단위 그대로 저장
+  d.unit=parseInt(document.getElementById('de-unit').value)||0;
+  d.amt=parseInt(document.getElementById('de-amt').value)||d.amt;
   d.person=document.getElementById('de-person').value;
   d.stage=document.getElementById('de-stage').value;
   d.closeDate=document.getElementById('de-date').value;
   d.priority=document.getElementById('de-pri').value==='1';
   d.inflow=document.getElementById('de-inflow')?.value||d.inflow||'direct';
-  if(os!==d.stage)d.logs.push({type:'단계변경',text:`${os} → ${d.stage}`,time:nowStr(),person:CU?.name||'',dept:CU?.role||'sales'});
+  if(os!==d.stage){
+    if(d.stage==='계약 완료'){
+      // 수정 탭에서 계약완료로 변경 시에도 수금기일 팝업
+      d.stage=os; // 일단 복구하고 팝업으로
+      closeModal('dealModal');
+      openContractModal(d);
+      return;
+    }
+    d.logs.push({type:'단계변경',text:`${os} → ${d.stage}`,time:nowStr(),person:CU?.name||'',dept:CU?.role||'sales'});
+  }
   d.logs.push({type:'수정',text:'딜 정보 수정됨',time:nowStr(),person:CU?.name||'',dept:CU?.role||'sales'});
   document.getElementById('mdTitle').textContent=d.name;
   document.getElementById('mdSub').textContent=`${d.co} · ${d.person} · ${fmt(d.amt)}`;
@@ -3315,18 +3509,27 @@ async function saveDealEdit(){
 
 function changeDealStage(id,stage){
   const d=deals.find(x=>x.id===id); if(!d) return;
-  const os=d.stage; d.stage=stage;
+  const os=d.stage;
+  // 계약 완료로 넘길 때: 수금 기일 필수 입력 팝업
+  if(stage==='계약 완료' && os!=='계약 완료'){
+    openContractModal(d);
+    return; // 팝업에서 확인 후 실제 저장
+  }
+  _doChangeDealStage(d, os, stage);
+}
+function _doChangeDealStage(d, os, stage){
+  d.stage=stage;
   const stageLog = {type:'단계변경',text:`${os} → ${stage}`,time:nowStr(),person:CU?.name||'',dept:CU?.role||'sales'};
   d.logs.push(stageLog);
   updateDealInDB(d);
   addLogToDB(d.id, stageLog);
   showToast(`단계 변경: ${stage}`);
-  // 계약 완료 시 재무/재고 자동 연동
-  if(stage==='계약 완료' && os!=='계약 완료'){
+  if(stage==='계약 완료'){
     setTimeout(()=>onDealContractComplete(d), 500);
   }
   buildDealInfo(d);
-  document.getElementById('mdSub').textContent=`${d.co} · ${d.person} · ${fmt(d.amt)}`;
+  const subEl=document.getElementById('mdSub');
+  if(subEl) subEl.textContent=`${d.co} · ${d.person} · ${fmt(d.amt)}`;
   renderDashboard();
   if(document.getElementById('view-pipeline').classList.contains('active'))renderPipeline();
 }
@@ -3449,10 +3652,8 @@ async function createDeal(){
   if(!co){alert('고객사는 필수입니다.');return;}
   const name=document.getElementById('nd-name').value.trim()||(co&&prod?`${co} | ${prod}`:co);
   const qty=parseInt(document.getElementById('nd-qty').value)||1;
-  const unitRaw=parseInt(document.getElementById('nd-unit').value)||0;
-  const unit=Math.round(unitRaw/10000); // 원→만원 변환
-  const amtRaw=parseInt(document.getElementById('nd-amt').value)||0;
-  const amt=Math.round(amtRaw/10000); // 원→만원 변환
+  const unit=parseInt(document.getElementById('nd-unit').value)||0; // 원 단위 그대로
+  const amt=parseInt(document.getElementById('nd-amt').value)||0;  // 원 단위 그대로
   const memo=document.getElementById('nd-memo').value.trim();
   const option=document.getElementById('nd-option').value.trim();
   const inflow=document.getElementById('nd-inflow')?.value||'direct';
@@ -3931,12 +4132,7 @@ async function loadDealsFromDB(){
     const {data:dbLogs, error:le} = await sb.from('deal_logs').select('*').order('created_at', {ascending:true});
     if(le) throw le;
 
-    // Map to local format
-    const fixAmt = v => {
-      // 비정상적으로 큰 값(100억만원=1조원 이상) → 원 단위로 저장된 것 → /10000 자동 보정
-      if(!v) return 0;
-      return v > 100000000 ? Math.round(v / 10000) : v;
-    };
+    // Map to local format — DB 저장 단위: 원(₩)
     deals = dbDeals.map(d => ({
       id: d.id,
       name: d.name,
@@ -3945,8 +4141,8 @@ async function loadDealsFromDB(){
       option: d.option_items||'',
       inflow: d.inflow||'direct',
       qty: d.qty||1,
-      unit: fixAmt(d.unit_price||0),
-      amt: fixAmt(d.amount||0),
+      unit: d.unit_price||0,
+      amt: d.amount||0,
       person: d.person||'',
       stage: d.stage||'잠재 발굴',
       closeDate: d.close_date||'',
@@ -3985,12 +4181,10 @@ async function loadProductsFromDB(){
 async function saveDealToDB(deal){
   if(!sb){ return deal; }
   try{
-    const saveAmt = deal.amt > 100000000 ? Math.round(deal.amt/10000) : deal.amt;
-    const saveUnit = deal.unit > 100000000 ? Math.round(deal.unit/10000) : deal.unit;
     const {data, error} = await sb.from('deals').insert([{
       name: deal.name, co: deal.co, prod: deal.prod,
       option_items: deal.option, inflow: deal.inflow,
-      qty: deal.qty, unit_price: saveUnit, amount: saveAmt,
+      qty: deal.qty, unit_price: deal.unit, amount: deal.amt,
       person: deal.person, stage: deal.stage,
       close_date: deal.closeDate||null,
       priority: deal.priority,
@@ -4017,13 +4211,10 @@ async function saveDealToDB(deal){
 async function updateDealInDB(deal){
   if(!sb){ return; }
   try{
-    // deal.amt는 항상 만원 단위로 저장 (100억만원 이상이면 잘못된 값이므로 /10000)
-    const safeAmt = deal.amt > 100000000 ? Math.round(deal.amt/10000) : deal.amt;
-    const safeUnit = deal.unit > 100000000 ? Math.round(deal.unit/10000) : deal.unit;
     const {error} = await sb.from('deals').update({
       name: deal.name, co: deal.co, prod: deal.prod,
       option_items: deal.option, inflow: deal.inflow,
-      qty: deal.qty, unit_price: safeUnit, amount: safeAmt,
+      qty: deal.qty, unit_price: deal.unit, amount: deal.amt,
       person: deal.person, stage: deal.stage,
       close_date: deal.closeDate||null,
       priority: deal.priority,
@@ -4093,6 +4284,40 @@ function initFilters(){
   const pf=document.getElementById('dealPersonF');
   pf.innerHTML='<option value="">전체 담당자</option>';
   salesMembers().forEach(m=>{const o=document.createElement('option');o.value=m.name;o.textContent=m.name;pf.appendChild(o);});
+}
+// ── 칸반 보드 드래그 스크롤 ──
+function initKanbanDrag(){
+  const wrap = document.getElementById('kanbanWrap');
+  if(!wrap || wrap._dragInited) return;
+  wrap._dragInited = true;
+  let isDown=false, startX, scrollLeft;
+  wrap.addEventListener('mousedown', e=>{
+    // 딜 카드 클릭이면 드래그 시작 안 함
+    if(e.target.closest('.deal-card')||e.target.closest('.add-btn')) return;
+    isDown=true; wrap.style.cursor='grabbing';
+    startX = e.pageX - wrap.offsetLeft;
+    scrollLeft = wrap.scrollLeft;
+    e.preventDefault();
+  });
+  wrap.addEventListener('mouseleave', ()=>{ isDown=false; wrap.style.cursor='grab'; });
+  wrap.addEventListener('mouseup', ()=>{ isDown=false; wrap.style.cursor='grab'; });
+  wrap.addEventListener('mousemove', e=>{
+    if(!isDown) return;
+    e.preventDefault();
+    const x = e.pageX - wrap.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    wrap.scrollLeft = scrollLeft - walk;
+  });
+  // 터치 지원 (모바일)
+  let touchStartX=0, touchScrollLeft=0;
+  wrap.addEventListener('touchstart', e=>{
+    touchStartX = e.touches[0].pageX;
+    touchScrollLeft = wrap.scrollLeft;
+  }, {passive:true});
+  wrap.addEventListener('touchmove', e=>{
+    const x = e.touches[0].pageX;
+    wrap.scrollLeft = touchScrollLeft - (x - touchStartX);
+  }, {passive:true});
 }
 document.getElementById('loginPw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 document.getElementById('loginId').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('loginPw').focus();});
@@ -4229,7 +4454,7 @@ function buildAutoEvents() {
   const auto = [];
   // 수금 예정
   recvList.filter(r=>r.expected_date&&r.status!=='received').forEach(r=>{
-    auto.push({id:'recv_'+r.id,title:`${r.company_name} 수금`,event_date:r.expected_date,category:'auto_payment',source:'auto',company_name:r.company_name,description:`${fmt(r.amount)}`,linked_id:r.id});
+    auto.push({id:'recv_'+r.id,title:`${r.company_name} 수금`,event_date:r.expected_date,category:'auto_payment',source:'auto',company_name:r.company_name,description:`${fmtMW(r.amount)}`,linked_id:r.id});
   });
   // 세금계산서 마감
   payTerms.filter(t=>t.tax_invoice_day).forEach(t=>{
@@ -5064,7 +5289,7 @@ async function renderCashflow() {
         <div class="recent-meta">${r.expected_date||'–'} 예상</div>
       </div>
       <span class="chip ${RECV_STATUS_CLS[r.status]||'chip-gray'}">${RECV_STATUS[r.status]||r.status}</span>
-      <div class="recent-amt">${fmt(r.amount)}</div>
+      <div class="recent-amt">${fmtMW(r.amount)}</div>
     </div>`).join('') :
     `<div style="padding:24px;text-align:center;color:var(--t3);font-size:13px">수금 예정 건이 없습니다</div>`;
 
@@ -5096,7 +5321,7 @@ async function renderReceivables() {
     data.map(r=>`<tr>
       <td style="font-weight:600">${r.company_name}</td>
       <td style="color:var(--t2)">${r.deal_id?`딜 #${r.deal_id}`:'직접 등록'}</td>
-      <td style="font-weight:700">${fmt(r.amount)}</td>
+      <td style="font-weight:700">${fmtMW(r.amount)}</td>
       <td>${PAY_BASIS[r.payment_basis]||r.payment_basis||'–'}</td>
       <td>${r.basis_date||'–'}</td>
       <td style="${r.status==='overdue'?'color:var(--red);font-weight:700':''}">${r.expected_date||'–'}</td>
@@ -5149,7 +5374,7 @@ async function renderExpenses() {
       <td style="white-space:nowrap">${e.expense_date||'–'}</td>
       <td><span class="chip ${EXP_CAT_CHIP[e.category]||'chip-gray'}">${EXP_CAT[e.category]||e.category}</span></td>
       <td style="font-weight:600">${e.description}</td>
-      <td style="font-weight:700">${fmt(e.amount)}</td>
+      <td style="font-weight:700">${fmtMW(e.amount)}</td>
       <td>${e.person||'–'}</td>
       <td style="color:var(--t3)">${e.note||'–'}</td>
     </tr>`).join('') :
@@ -5585,21 +5810,20 @@ async function deleteTerm(id) {
 // 영업 딜 계약 완료 → 재무 자동 연동
 // ══════════════════════════════════════════════════════════
 async function onDealContractComplete(deal) {
-  // 1. 고객사 수금 조건 조회
+  // 계약완료 팝업에서 입력한 수금 정보 우선 사용
+  const cr = deal._contractRecv;
   const term = payTerms.find(t=>t.company_name===deal.co);
-  if(!term) { showToast(`${deal.co} 수금 조건이 없습니다. 재무 > 수금 조건에서 추가해주세요`, 'warn'); }
 
-  // 2. 수금 예정 자동 생성
+  // 수금 예정 자동 생성
   const today = new Date().toISOString().slice(0,10);
-  const days = term?.payment_days || 60;
-  const basis = term?.payment_basis || 'contract';
-  const expectedDate = new Date(); expectedDate.setDate(expectedDate.getDate()+days);
   const recvData = {
-    deal_id: deal.id, company_name: deal.co, amount: deal.amt,
-    payment_basis: basis, basis_date: today,
-    expected_date: expectedDate.toISOString().slice(0,10),
+    deal_id: deal.id, company_name: deal.co,
+    amount: cr ? Math.round(cr.amount/10000) : deal.amt,  // 원→만원 변환
+    payment_basis: cr?.basis || term?.payment_basis || 'contract',
+    basis_date: cr?.basisDate || today,
+    expected_date: cr?.expected || today,
     status: 'pending',
-    note: `${deal.name} 계약 완료 자동 생성`
+    note: cr?.note || `${deal.name} 계약 완료 자동 생성`
   };
   if(sb) { const {data}=await sb.from('receivables').insert([recvData]).select().single(); if(data)recvList.push(data); }
   else { recvList.push({id:Date.now(),...recvData}); }
@@ -5632,7 +5856,7 @@ function setCfTab(tab, btnEl) {
   });
   const d = window._cfData;
   if(!d) return;
-  const fmtM2 = v => { if(!v||v===0) return '₩0'; const a=Math.abs(v); if(a>=1000000) return `₩${Math.round(a/10000).toLocaleString()}억`; if(a>=10000) return `₩${(a/10000).toFixed(1)}억`; return `₩${a.toLocaleString()}만`; };
+  const fmtM2 = v => { if(!v||v===0) return '₩0'; const a=Math.abs(v); if(a>=100000000000) return '₩'+Math.round(a/100000000).toLocaleString()+'억'; if(a>=100000000) return '₩'+(a/100000000).toFixed(1)+'억'; if(a>=10000) return '₩'+Math.round(a/10000).toLocaleString()+'만'; return '₩'+a.toLocaleString()+'원'; };
 
   if(tab==='q') {
     // 분기별 (Q1~Q4 현재연도 + 내년)
@@ -5755,7 +5979,7 @@ function markReceived(id) {
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px';
   overlay.innerHTML = `<div style="background:var(--surface);border-radius:var(--r-xl);padding:28px;max-width:380px;width:100%;box-shadow:var(--sh-lg);animation:su .2s ease">
     <div style="font-size:16px;font-weight:800;margin-bottom:4px">수금 완료 처리</div>
-    <div style="font-size:13px;color:var(--t2);margin-bottom:20px">${r.company_name} · ${fmt(r.amount)}</div>
+    <div style="font-size:13px;color:var(--t2);margin-bottom:20px">${r.company_name} · ${fmtMW(r.amount)}</div>
     <div class="form-field" style="margin-bottom:16px">
       <label class="form-label">실제 입금일 *</label>
       <input class="form-input" id="recv-actual-date-inp" type="date" value="${today}" style="margin-top:5px;width:100%">
@@ -5907,11 +6131,22 @@ function orgRenderChart() {
   const actsEl=document.getElementById('orgTbActs');
   if(actsEl) actsEl.innerHTML=`<button class="btn btn-s btn-sm" onclick="orgOpenVerSetting('${orgActiveVer.id}')">⚙️ 설정</button><button class="btn btn-s btn-sm" onclick="orgDupVer('${orgActiveVer.id}')">⧉ 복제</button>`;
 
-  // CEO
-  const ceo=orgActiveVer.ceo_data||{};
-  const n=document.getElementById('orgCeoName'); if(n) n.textContent=ceo.name||'';
-  const t=document.getElementById('orgCeoTtl');  if(t) t.textContent=ceo.title||'';
-  const i=document.getElementById('orgCeoInfo'); if(i) i.innerHTML=`${ceo.phone||''}<br>${ceo.email||''}`;
+  // CEO — 배열 기반 (공동대표 지원)
+  const ceoArr = Array.isArray(orgActiveVer.ceo_data)
+    ? orgActiveVer.ceo_data
+    : (orgActiveVer.ceo_data ? [orgActiveVer.ceo_data] : [{}]);
+  const ceoWrap = document.getElementById('orgCeoWrap');
+  if(ceoWrap){
+    ceoWrap.innerHTML = ceoArr.map((ceo,ci) => `
+      <div class="org-ceo-card" onclick="orgOpenCeoModal(${ci})" style="position:relative;min-width:200px">
+        <button class="org-ico" onclick="event.stopPropagation();orgOpenCeoModal(${ci})" title="수정">✏️</button>
+        ${ceoArr.length > 1 ? `<button style="position:absolute;top:5px;left:5px;width:20px;height:20px;border-radius:3px;background:var(--rl);border:1px solid #fecaca;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--red)" onclick="event.stopPropagation();orgDelCeo(${ci})">✕</button>` : ''}
+        <div class="org-ceo-name">${ceo.name || ''}</div>
+        <div class="org-ceo-ttl">${ceo.title || ''}</div>
+        <div class="org-ceo-info">${ceo.phone || ''}<br>${ceo.email || ''}</div>
+      </div>`).join('') +
+      `<button class="org-add-ceo-btn" onclick="orgAddCeo()">+ 공동대표 추가</button>`;
+  }
 
   // 부서 트리
   const depts=orgActiveVer.depts_data||[];
@@ -5947,6 +6182,20 @@ function orgRenderChart() {
     부서 추가
   </button></div>`;
   setTimeout(orgDrawLines,60);
+  orgSetPrintOrientation();
+}
+
+// ── 인쇄 방향 자동 설정 (부서 수 기준) ──
+function orgSetPrintOrientation(){
+  const deptCount = orgActiveVer?.depts_data?.length || 0;
+  const old = document.getElementById('org-print-style');
+  if(old) old.remove();
+  const style = document.createElement('style');
+  style.id = 'org-print-style';
+  style.textContent = deptCount >= 6
+    ? '@page{size:A4 landscape;margin:6mm}'
+    : '@page{size:A4 portrait;margin:6mm}';
+  document.head.appendChild(style);
 }
 
 function orgDrawLines() {
@@ -6025,17 +6274,41 @@ async function orgDupVer(id) {
   if(newVer){orgRenderSidebar();orgSelectVer(newVer.id);showToast('복제됐습니다 ✓');}
 }
 
-// ── CEO 편집 ──
-function orgOpenCeoModal() {
+// ── CEO 편집 (공동대표 지원) ──
+let _orgCeoEditIdx = 0;
+function orgOpenCeoModal(idx) {
   if(!orgActiveVer) return;
-  const c=orgActiveVer.ceo_data||{};
-  ['ci-name','ci-title','ci-phone','ci-email'].forEach((k,i)=>{const el=document.getElementById('org-'+k);if(el)el.value=[c.name,c.title,c.phone,c.email][i]||'';});
+  _orgCeoEditIdx = idx ?? 0;
+  const ceoArr = Array.isArray(orgActiveVer.ceo_data) ? orgActiveVer.ceo_data : [orgActiveVer.ceo_data||{}];
+  const c = ceoArr[_orgCeoEditIdx] || {};
+  document.getElementById('org-ci-name').value  = c.name||'';
+  document.getElementById('org-ci-title').value = c.title||'';
+  document.getElementById('org-ci-phone').value = c.phone||'';
+  document.getElementById('org-ci-email').value = c.email||'';
   openModal('orgCeoModal'); setTimeout(()=>document.getElementById('org-ci-name').focus(),100);
 }
 async function orgSaveCeo() {
   if(!orgActiveVer) return;
-  orgActiveVer.ceo_data={name:document.getElementById('org-ci-name').value.trim(),title:document.getElementById('org-ci-title').value.trim(),phone:document.getElementById('org-ci-phone').value.trim(),email:document.getElementById('org-ci-email').value.trim()};
+  const ceoArr = Array.isArray(orgActiveVer.ceo_data) ? [...orgActiveVer.ceo_data] : [orgActiveVer.ceo_data||{}];
+  ceoArr[_orgCeoEditIdx] = {name:document.getElementById('org-ci-name').value.trim(),title:document.getElementById('org-ci-title').value.trim(),phone:document.getElementById('org-ci-phone').value.trim(),email:document.getElementById('org-ci-email').value.trim()};
+  orgActiveVer.ceo_data = ceoArr;
   await orgSaveActiveData(); closeModal('orgCeoModal'); orgRenderChart(); orgRenderSidebar(); showToast('저장됐습니다 ✓');
+}
+async function orgAddCeo() {
+  if(!orgActiveVer) return;
+  const ceoArr = Array.isArray(orgActiveVer.ceo_data) ? [...orgActiveVer.ceo_data] : [orgActiveVer.ceo_data||{}];
+  ceoArr.push({name:'이름',title:'공동대표',phone:'',email:''});
+  orgActiveVer.ceo_data = ceoArr;
+  await orgSaveActiveData(); orgRenderChart(); orgOpenCeoModal(ceoArr.length-1);
+}
+async function orgDelCeo(idx) {
+  if(!orgActiveVer) return;
+  const ceoArr = Array.isArray(orgActiveVer.ceo_data) ? [...orgActiveVer.ceo_data] : [orgActiveVer.ceo_data||{}];
+  if(ceoArr.length<=1){showToast('대표자는 최소 1명이어야 합니다','warn');return;}
+  if(!confirm('삭제할까요?')) return;
+  ceoArr.splice(idx,1);
+  orgActiveVer.ceo_data = ceoArr;
+  await orgSaveActiveData(); orgRenderChart(); orgRenderSidebar(); showToast('삭제됐습니다');
 }
 
 // ── 부서 CRUD ──
