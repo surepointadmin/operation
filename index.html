@@ -98,6 +98,14 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
   .cal-day-num{font-size:11px}
   .cal-month-label{font-size:15px}
 }
+/* ── 금액 빠른입력 버튼 ── */
+.amt-wrap{position:relative}
+.amt-preview{font-size:11px;font-weight:600;color:var(--accent);margin-top:4px;min-height:16px;letter-spacing:-.2px}
+.amt-btns{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+.amt-btn{padding:4px 9px;border-radius:5px;border:1px solid var(--bd2);background:var(--surface);color:var(--t2);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .12s;line-height:1.4}
+.amt-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.amt-btn.minus{color:var(--red);border-color:#fecaca;background:var(--rl)}
+.amt-btn.minus:hover{background:var(--red);color:#fff;border-color:var(--red)}
 /* ── Help Tooltip System ── */
 .help-btn{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--s2);border:1.5px solid var(--bd);color:var(--t3);font-size:11px;font-weight:800;cursor:pointer;flex-shrink:0;transition:all .15s;font-family:var(--font);line-height:1}
 .help-btn:hover{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -512,6 +520,85 @@ tbody tr:hover{background:var(--s2)}
 .sidebar-overlay.open{display:block}
 @media(max-width:1100px){.proj-sections{grid-template-columns:1fr 1fr}}
 @media(max-width:920px){.dash-grid{grid-template-columns:1fr}.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+
+/* ════ 조직도 뷰 ════ */
+#view-orgchart{height:calc(100vh - 56px);overflow:hidden;display:none;padding:0}
+#view-orgchart.active{display:flex}
+.org-app{display:flex;width:100%;height:100%;overflow:hidden}
+/* 조직도 내부 사이드바 */
+.org-sb{width:240px;background:var(--surface);border-right:1px solid var(--bd);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
+.org-sb-hd{padding:14px 12px 8px;border-bottom:1px solid var(--bd);flex-shrink:0}
+.org-sb-brand{font-size:13px;font-weight:800;letter-spacing:-.3px;color:var(--t1)}
+.org-sb-sub{font-size:11px;color:var(--t3);margin-top:1px}
+.org-sb-new{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:8px;margin-top:8px;border:1.5px dashed var(--bd2);border-radius:var(--r-sm);background:none;color:var(--t2);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;font-family:var(--font)}
+.org-sb-new:hover{border-color:var(--accent);color:var(--accent);background:var(--al)}
+.org-sb-list{flex:1;overflow-y:auto;padding:6px}
+.org-sb-list::-webkit-scrollbar{width:4px}.org-sb-list::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px}
+.org-cat-lbl{font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;padding:8px 8px 3px}
+.org-ver-card{border-radius:var(--r-sm);padding:9px 10px;cursor:pointer;transition:all .15s;margin-bottom:3px;border:1.5px solid transparent}
+.org-ver-card:hover{background:var(--s2)}.org-ver-card.org-active{background:var(--al);border-color:var(--bd)}
+.org-ver-top{display:flex;align-items:center;gap:5px;margin-bottom:2px}
+.org-ver-name{font-size:12px;font-weight:700;color:var(--t1);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.org-ver-card.org-active .org-ver-name{color:var(--at)}
+.org-ver-acts{display:flex;gap:2px;opacity:0;transition:opacity .15s}
+.org-ver-card:hover .org-ver-acts,.org-ver-card.org-active .org-ver-acts{opacity:1}
+.org-ver-meta{font-size:10px;color:var(--t3)}
+.org-ver-desc{font-size:10px;color:var(--t3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.org-sb-ft{padding:8px;border-top:1px solid var(--bd);flex-shrink:0}
+/* 조직도 캔버스 영역 */
+.org-main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.org-topbar{background:var(--surface);border-bottom:1px solid var(--bd);padding:0 16px;height:46px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.org-tb-title{font-size:14px;font-weight:800;letter-spacing:-.3px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.org-tb-tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0}
+.org-canvas-wrap{flex:1;overflow:auto}
+.org-canvas{padding:40px 32px 60px;min-width:600px}
+/* CEO 카드 */
+.org-ceo-sec{display:flex;justify-content:center;position:relative;margin-bottom:0}
+.org-ceo-sec::after{content:'';position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);width:1px;height:26px;background:var(--bd)}
+.org-ceo-card{border:2px solid var(--t1);border-radius:4px;padding:15px 26px;text-align:center;background:var(--surface);min-width:200px;position:relative;cursor:pointer;transition:box-shadow .2s}
+.org-ceo-card:hover{box-shadow:var(--sh-md)}.org-ceo-card:hover .org-ico{opacity:1}
+.org-ico{position:absolute;top:5px;right:5px;width:22px;height:22px;border-radius:4px;background:var(--s2);border:1px solid var(--bd);cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s;font-size:10px}
+.org-ceo-name{font-size:16px;font-weight:800;letter-spacing:-.4px;margin-bottom:3px}
+.org-ceo-ttl{font-size:12px;color:var(--t2);margin-bottom:6px}
+.org-ceo-info{font-size:10px;color:var(--t3);line-height:1.9}
+.org-h-area{height:26px;position:relative}
+.org-h-line{position:absolute;top:0;height:1px;background:var(--bd)}
+.org-tree{display:flex;justify-content:center;align-items:flex-start}
+/* 부서 */
+.org-dcol{display:flex;flex-direction:column;align-items:center;flex:1;min-width:168px;max-width:198px;padding:0 3px}
+.org-dcol::before{content:'';display:block;width:1px;height:26px;background:var(--bd);margin:0 auto}
+.org-dhw{position:relative;display:flex;justify-content:center;width:100%}
+.org-dhw:hover .org-dacts{opacity:1}
+.org-dhd{border:1px solid var(--t1);border-radius:3px;padding:7px 14px;background:var(--surface);font-size:13px;font-weight:700;text-align:center;cursor:pointer;white-space:nowrap;transition:box-shadow .15s}
+.org-dhd:hover{box-shadow:var(--sh)}
+.org-dacts{position:absolute;top:-9px;right:-4px;display:flex;gap:2px;opacity:0;transition:opacity .15s;z-index:10}
+.org-mwrap{display:flex;flex-direction:column;align-items:center;width:100%}
+.org-mitem{width:100%;display:flex;flex-direction:column;align-items:center}
+.org-mitem::before{content:'';display:block;width:1px;height:14px;background:var(--bd);margin:0 auto}
+.org-mcard{border:1px solid var(--bd);border-radius:3px;padding:9px 11px;background:var(--surface);text-align:center;width:calc(100% - 10px);max-width:168px;position:relative;cursor:pointer;transition:box-shadow .15s}
+.org-mcard:hover{box-shadow:var(--sh)}.org-mcard:hover .org-ico{opacity:1}.org-mcard:hover .org-del-ico{opacity:1}
+.org-del-ico{position:absolute;top:4px;left:4px;width:18px;height:18px;border-radius:3px;background:var(--rl);border:1px solid #fecaca;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s;font-size:9px;color:var(--red)}
+.org-mn{font-size:12px;font-weight:700;margin-bottom:2px}
+.org-mt{font-size:10px;color:var(--t2);margin-bottom:4px}
+.org-mt.org-hl{color:var(--accent);font-weight:700}
+.org-minfo{font-size:9px;color:var(--t3);line-height:1.8}
+.org-add-mb{display:flex;align-items:center;justify-content:center;gap:3px;width:calc(100% - 10px);max-width:168px;margin-top:5px;padding:5px;border:1.5px dashed var(--bd2);border-radius:3px;background:none;color:var(--t3);font-size:11px;cursor:pointer;transition:all .15s;font-family:var(--font)}
+.org-add-mb:hover{border-color:var(--accent);color:var(--accent);background:var(--al)}
+.org-add-dcol{display:flex;flex-direction:column;align-items:center;min-width:88px;padding:0 3px;padding-top:52px}
+.org-add-db{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:76px;height:58px;border:1.5px dashed var(--bd2);border-radius:4px;background:none;color:var(--t3);font-size:11px;cursor:pointer;transition:all .15s;font-family:var(--font)}
+.org-add-db:hover{border-color:var(--accent);color:var(--accent);background:var(--al)}
+/* 빈 상태 */
+.org-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--t3);text-align:center;padding:40px}
+.org-empty .org-ei{font-size:40px;margin-bottom:12px;opacity:.35}
+.org-empty h3{font-size:14px;font-weight:700;color:var(--t2);margin-bottom:6px}
+.org-empty p{font-size:12px;line-height:1.7}
+/* 태그 */
+.org-tag-internal{background:#f1f5f9;color:#475569}
+.org-tag-external{background:var(--al);color:var(--at)}
+.org-tag-client{background:var(--gl);color:var(--gt)}
+.org-tag-draft{background:var(--aml);color:var(--amt)}
+/* 조직도 모달 (기존 overlay/modal 재사용 가능하므로 ID prefix만 변경) */
+
 @media(max-width:768px){
   :root{--sw:252px}
   .sidebar{position:fixed;left:0;top:0;height:100%;transform:translateX(-100%);z-index:200}
@@ -726,6 +813,11 @@ tbody tr:hover{background:var(--s2)}
       <div class="nav-item" id="ni-calendar-sb" onclick="toggleCalendar();closeSidebar()" style="margin-bottom:2px">
         <svg viewBox="0 0 16 16" fill="none" style="width:15px;height:15px;flex-shrink:0;opacity:.65"><rect x="2" y="2" width="12" height="13" rx="2" stroke="currentColor" stroke-width="1.3"/><line x1="5" y1="1" x2="5" y2="4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="11" y1="1" x2="11" y2="4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="2" y1="7" x2="14" y2="7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
         캘린더
+      </div>
+      <!-- 조직도 버튼 (사이드바) -->
+      <div class="nav-item" id="ni-orgchart-sb" onclick="showView('orgchart',document.getElementById('ni-orgchart-sb'));closeSidebar()" style="margin-bottom:2px">
+        <svg viewBox="0 0 16 16" fill="none" style="width:15px;height:15px;flex-shrink:0;opacity:.65"><rect x="6" y="1" width="4" height="3" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="1" y="11" width="4" height="3" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="6" y="11" width="4" height="3" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="11" y="11" width="4" height="3" rx="1" stroke="currentColor" stroke-width="1.3"/><line x1="8" y1="4" x2="8" y2="9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="3" y1="9" x2="13" y2="9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="3" y1="9" x2="3" y2="11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="8" y1="9" x2="8" y2="11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="13" y1="9" x2="13" y2="11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        조직도
       </div>
       <!-- surepoint 견적서 -->
       <a href="https://surepointadmin.github.io/surepoint-quotation" target="_blank" rel="noopener"
@@ -1239,6 +1331,56 @@ tbody tr:hover{background:var(--s2)}
         </div>
       </div>
 
+      <!-- ORGCHART -->
+      <div class="view" id="view-orgchart" style="padding:0">
+        <div class="org-app">
+          <!-- 조직도 내부 사이드바 (버전 목록) -->
+          <aside class="org-sb">
+            <div class="org-sb-hd">
+              <div class="org-sb-brand">조직도</div>
+              <div class="org-sb-sub">버전 관리</div>
+              <button class="org-sb-new" onclick="orgOpenNewVerModal()">
+                <svg viewBox="0 0 12 12" fill="none" style="width:10px;height:10px"><line x1="6" y1="1" x2="6" y2="11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="1" y1="6" x2="11" y2="6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                새 버전 만들기
+              </button>
+            </div>
+            <div class="org-sb-list" id="orgSbList">
+              <div style="padding:20px;text-align:center;color:var(--t3);font-size:12px">로드 중...</div>
+            </div>
+            <div class="org-sb-ft">
+              <button class="btn btn-s btn-sm" style="width:100%;justify-content:center" onclick="window.print()">🖨 인쇄</button>
+            </div>
+          </aside>
+          <!-- 조직도 메인 -->
+          <div class="org-main">
+            <div class="org-topbar">
+              <div class="org-tb-title" id="orgTbTitle">버전을 선택하세요</div>
+              <span class="org-tb-tag" id="orgTbTag" style="display:none"></span>
+              <div style="display:flex;gap:5px;flex-shrink:0" id="orgTbActs"></div>
+            </div>
+            <div id="orgEmptyState" class="org-empty">
+              <div class="org-ei">🗂</div>
+              <h3>조직도 버전이 없습니다</h3>
+              <p>왼쪽 <strong>새 버전 만들기</strong>를 클릭하세요</p>
+            </div>
+            <div id="orgChartWrap" style="display:none" class="org-canvas-wrap">
+              <div class="org-canvas">
+                <div class="org-ceo-sec">
+                  <div class="org-ceo-card" onclick="orgOpenCeoModal()">
+                    <button class="org-ico" onclick="event.stopPropagation();orgOpenCeoModal()">✏️</button>
+                    <div class="org-ceo-name" id="orgCeoName"></div>
+                    <div class="org-ceo-ttl"  id="orgCeoTtl"></div>
+                    <div class="org-ceo-info" id="orgCeoInfo"></div>
+                  </div>
+                </div>
+                <div class="org-h-area" id="orgHArea"><div class="org-h-line" id="orgHLine"></div></div>
+                <div class="org-tree" id="orgTree2"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- SETTINGS -->
       <div class="view" id="view-settings">
         <div class="card" style="max-width:460px">
@@ -1332,10 +1474,33 @@ tbody tr:hover{background:var(--s2)}
           <input type="hidden" id="nd-inflow" value="direct">
         </div>
         <div class="form-field"><label class="form-label">수량 *</label><input class="form-input" id="nd-qty" type="number" min="1" value="1" placeholder="0" oninput="calcNdAmt()"></div>
-        <div class="form-field"><label class="form-label">대당 단가 (만원)</label><input class="form-input" id="nd-unit" type="number" min="0" placeholder="단가 입력" oninput="calcNdAmt()"></div>
+        <div class="form-field">
+          <label class="form-label">대당 단가 (원)</label>
+          <div class="amt-wrap">
+            <input class="form-input" id="nd-unit" type="number" min="0" placeholder="예: 75,000,000" oninput="calcNdAmt();updateAmtPreview('nd-unit','nd-unit-preview')">
+            <div class="amt-preview" id="nd-unit-preview"></div>
+            <div class="amt-btns">
+              <button type="button" class="amt-btn" onclick="addAmt('nd-unit',100000000)">+1억</button>
+              <button type="button" class="amt-btn" onclick="addAmt('nd-unit',10000000)">+1천만</button>
+              <button type="button" class="amt-btn" onclick="addAmt('nd-unit',1000000)">+100만</button>
+              <button type="button" class="amt-btn" onclick="addAmt('nd-unit',100000)">+10만</button>
+              <button type="button" class="amt-btn minus" onclick="addAmt('nd-unit',-1000000)">-100만</button>
+            </div>
+          </div>
+        </div>
         <div class="form-field full">
-          <label class="form-label">예상 총금액 (만원) — 수량 × 단가 자동계산</label>
-          <input class="form-input auto" id="nd-amt" type="number" placeholder="자동 입력 또는 직접 입력">
+          <label class="form-label">예상 총금액 (원) — 수량 × 단가 자동계산</label>
+          <div class="amt-wrap">
+            <input class="form-input auto" id="nd-amt" type="number" placeholder="자동 계산 또는 직접 입력" oninput="updateAmtPreview('nd-amt','nd-amt-preview')">
+            <div class="amt-preview" id="nd-amt-preview"></div>
+            <div class="amt-btns">
+              <button type="button" class="amt-btn" onclick="addAmt('nd-amt',100000000);calcNdAmtReverse()">+1억</button>
+              <button type="button" class="amt-btn" onclick="addAmt('nd-amt',10000000);calcNdAmtReverse()">+1천만</button>
+              <button type="button" class="amt-btn" onclick="addAmt('nd-amt',1000000);calcNdAmtReverse()">+100만</button>
+              <button type="button" class="amt-btn" onclick="addAmt('nd-amt',100000);calcNdAmtReverse()">+10만</button>
+              <button type="button" class="amt-btn minus" onclick="addAmt('nd-amt',-1000000);calcNdAmtReverse()">-100만</button>
+            </div>
+          </div>
         </div>
         <div class="form-field"><label class="form-label">영업 담당자</label><select class="form-select" id="nd-person"></select></div>
         <div class="form-field"><label class="form-label">현재 영업 단계</label>
@@ -1481,7 +1646,7 @@ tbody tr:hover{background:var(--s2)}
       <input type="hidden" id="recv-id">
       <div class="form-grid">
         <div class="form-field full"><label class="form-label">고객사 *</label><input class="form-input" id="recv-company" placeholder="고객사명"></div>
-        <div class="form-field full"><label class="form-label">수금 금액 (만원) *</label><input class="form-input" id="recv-amount" type="number" min="0" placeholder="0"></div>
+        <div class="form-field full"><label class="form-label">수금 금액 (만원) *</label><input class="form-input" id="recv-amount" type="number" min="0" placeholder="예: 1275 → 1,275만원"></div>
         <div class="form-field full"><label class="form-label">수금 기준</label>
           <select class="form-select" id="recv-basis" onchange="calcExpectedDate()">
             <option value="contract">계약 완료일 기준</option>
@@ -1519,7 +1684,7 @@ tbody tr:hover{background:var(--s2)}
           </select>
         </div>
         <div class="form-field full"><label class="form-label">내용 *</label><input class="form-input" id="exp-desc" placeholder="예: 카메라 모듈 100개 발주"></div>
-        <div class="form-field"><label class="form-label">금액 (만원) *</label><input class="form-input" id="exp-amount" type="number" min="0" placeholder="0"></div>
+        <div class="form-field"><label class="form-label">금액 (만원) *</label><input class="form-input" id="exp-amount" type="number" min="0" placeholder="예: 500 → 500만원"></div>
         <div class="form-field"><label class="form-label">날짜 *</label><input class="form-input" id="exp-date" type="date"></div>
         <div class="form-field full"><label class="form-label">담당자</label><input class="form-input" id="exp-person" placeholder="담당자 이름"></div>
         <div class="form-field full"><label class="form-label">메모</label><textarea class="form-textarea" id="exp-note" rows="2"></textarea></div>
@@ -1552,6 +1717,95 @@ tbody tr:hover{background:var(--s2)}
         <div class="form-field full"><label class="form-label">메모</label><textarea class="form-textarea" id="terms-note" rows="2" placeholder="예: 매월 25일 마감분 당월 처리"></textarea></div>
       </div>
       <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px;margin-top:16px" onclick="saveTerms()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 조직도 모달: 새 버전 ══ -->
+<div class="overlay" id="orgNvModal">
+  <div class="modal modal-md">
+    <div class="modal-hd"><div class="modal-hd-info"><div class="modal-title" id="orgNvTitle">새 버전 만들기</div></div><button class="modal-close" onclick="closeModal('orgNvModal')"><svg viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
+    <div class="modal-body">
+      <div class="form-field full"><label class="form-label">버전 이름 *</label><input class="form-input" id="org-nv-name" placeholder="예: 내부용, 현대중공업용, 외부 공개용"></div>
+      <div class="form-field full"><label class="form-label">분류</label><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px" id="org-nv-tag-wrap"></div><input type="hidden" id="org-nv-tag" value="internal"></div>
+      <div class="form-field full"><label class="form-label">설명</label><textarea class="form-textarea" id="org-nv-desc" rows="2" placeholder="이 버전의 용도나 특이사항"></textarea></div>
+      <div class="form-field full"><label class="form-label">기존 버전 복사</label>
+        <select class="form-select" id="org-nv-copy"><option value="">빈 버전으로 시작</option></select>
+        <div style="font-size:11px;color:var(--t3);margin-top:4px">기존 버전을 복사해서 수정하면 편해요</div>
+      </div>
+    </div>
+    <div style="padding:0 24px 20px;display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-s" onclick="closeModal('orgNvModal')">취소</button>
+      <button class="btn btn-p" onclick="orgSaveNewVer()">만들기</button>
+    </div>
+  </div>
+</div>
+<!-- ══ 조직도 모달: 버전 설정 ══ -->
+<div class="overlay" id="orgVsModal">
+  <div class="modal modal-sm">
+    <div class="modal-hd"><div class="modal-hd-info"><div class="modal-title">버전 설정</div></div><button class="modal-close" onclick="closeModal('orgVsModal')"><svg viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
+    <div class="modal-body">
+      <div class="form-field full"><label class="form-label">버전 이름</label><input class="form-input" id="org-vs-name"></div>
+      <div class="form-field full"><label class="form-label">분류</label><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px" id="org-vs-tag-wrap"></div><input type="hidden" id="org-vs-tag"></div>
+      <div class="form-field full"><label class="form-label">설명</label><textarea class="form-textarea" id="org-vs-desc" rows="2"></textarea></div>
+    </div>
+    <div style="padding:0 24px 20px;display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-danger btn-sm" onclick="orgDoDelVer()" style="margin-right:auto">버전 삭제</button>
+      <button class="btn btn-s" onclick="closeModal('orgVsModal')">취소</button>
+      <button class="btn btn-p" onclick="orgSaveVerSetting()">저장</button>
+    </div>
+  </div>
+</div>
+<!-- ══ 조직도 모달: CEO ══ -->
+<div class="overlay" id="orgCeoModal">
+  <div class="modal modal-sm">
+    <div class="modal-hd"><div class="modal-hd-info"><div class="modal-title">대표 정보 수정</div></div><button class="modal-close" onclick="closeModal('orgCeoModal')"><svg viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field full"><label class="form-label">이름</label><input class="form-input" id="org-ci-name"></div>
+        <div class="form-field full"><label class="form-label">직책</label><input class="form-input" id="org-ci-title"></div>
+        <div class="form-field"><label class="form-label">연락처</label><input class="form-input" id="org-ci-phone"></div>
+        <div class="form-field"><label class="form-label">이메일</label><input class="form-input" id="org-ci-email"></div>
+      </div>
+    </div>
+    <div style="padding:0 24px 20px;display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-s" onclick="closeModal('orgCeoModal')">취소</button>
+      <button class="btn btn-p" onclick="orgSaveCeo()">저장</button>
+    </div>
+  </div>
+</div>
+<!-- ══ 조직도 모달: 부서 ══ -->
+<div class="overlay" id="orgDeptModal">
+  <div class="modal modal-sm">
+    <div class="modal-hd"><div class="modal-hd-info"><div class="modal-title" id="orgDeptMT">부서 추가</div></div><button class="modal-close" onclick="closeModal('orgDeptModal')"><svg viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
+    <div class="modal-body"><div class="form-field full"><label class="form-label">부서명</label><input class="form-input" id="org-di-name" placeholder="예: 마케팅"></div></div>
+    <div style="padding:0 24px 20px;display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-danger btn-sm" id="orgDeptDelBtn" onclick="orgDoDelDept()" style="margin-right:auto;display:none">삭제</button>
+      <button class="btn btn-s" onclick="closeModal('orgDeptModal')">취소</button>
+      <button class="btn btn-p" id="orgDeptSaveBtn" onclick="orgSaveDept()">추가</button>
+    </div>
+  </div>
+</div>
+<!-- ══ 조직도 모달: 팀원 ══ -->
+<div class="overlay" id="orgMemModal">
+  <div class="modal modal-sm">
+    <div class="modal-hd"><div class="modal-hd-info"><div class="modal-title" id="orgMemMT">팀원 추가</div></div><button class="modal-close" onclick="closeModal('orgMemModal')"><svg viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field"><label class="form-label">이름 *</label><input class="form-input" id="org-mi-name"></div>
+        <div class="form-field"><label class="form-label">직책 *</label><input class="form-input" id="org-mi-title"></div>
+        <div class="form-field"><label class="form-label">연락처</label><input class="form-input" id="org-mi-phone"></div>
+        <div class="form-field"><label class="form-label">이메일</label><input class="form-input" id="org-mi-email"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+        <input type="checkbox" id="org-mi-hl" style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent)">
+        <label for="org-mi-hl" style="font-size:13px;cursor:pointer;color:var(--t2)">직책 강조 표시 (수석 / 이사급)</label>
+      </div>
+    </div>
+    <div style="padding:0 24px 20px;display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-danger btn-sm" id="orgMemDelBtn" onclick="orgDoDelMem()" style="margin-right:auto;display:none">삭제</button>
+      <button class="btn btn-s" onclick="closeModal('orgMemModal')">취소</button>
+      <button class="btn btn-p" id="orgMemSaveBtn" onclick="orgSaveMem()">추가</button>
     </div>
   </div>
 </div>
@@ -1619,8 +1873,17 @@ tbody tr:hover{background:var(--s2)}
           <input class="form-input" id="ev-company" placeholder="예: 현대중공업">
         </div>
         <div class="form-field">
-          <label class="form-label">담당자</label>
+          <label class="form-label">담당자 <span style="font-weight:400;color:var(--t3)">(정)</span></label>
           <select class="form-select" id="ev-person"></select>
+        </div>
+        <div class="form-field full">
+          <label class="form-label">참여자 <span style="font-weight:400;color:var(--t3)">(복수 선택 가능)</span></label>
+          <div id="ev-participants-wrap" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;padding:10px 12px;border:1px solid var(--bd2);border-radius:var(--r-sm);min-height:40px;cursor:pointer;background:var(--surface)" onclick="toggleParticipantDropdown()">
+            <div id="ev-participants-chips" style="display:flex;flex-wrap:wrap;gap:5px;flex:1"></div>
+            <span style="font-size:12px;color:var(--t3);align-self:center">클릭하여 선택</span>
+          </div>
+          <div id="ev-participant-dropdown" style="display:none;border:1px solid var(--bd2);border-radius:var(--r-sm);background:var(--surface);box-shadow:var(--sh-md);margin-top:2px;max-height:180px;overflow-y:auto;z-index:10;position:relative" id="ev-participant-dropdown"></div>
+          <input type="hidden" id="ev-participants" value="">
         </div>
         <div class="form-field full">
           <label class="form-label">메모</label>
@@ -1703,7 +1966,21 @@ let CU = null; // current user
 // ══════════════════════════════════════════════
 // HELPERS
 // ══════════════════════════════════════════════
-const fmt = v => v >= 10000 ? `₩${(v/10000).toFixed(1)}억` : `₩${v.toLocaleString()}만`;
+const fmt = v => {
+  // 입력 단위: 만원
+  if(!v || v === 0) return '₩0';
+  const a = Math.abs(v);
+  if(a >= 1000000) {
+    // 100억 이상: ₩1,280억
+    return `₩${Math.round(a/10000).toLocaleString()}억`;
+  } else if(a >= 10000) {
+    // 1억 이상 ~ 100억 미만: ₩12.8억 / ₩1.3억
+    return `₩${(a/10000).toFixed(1)}억`;
+  } else {
+    // 1억 미만: ₩9,999만 / ₩275만
+    return `₩${a.toLocaleString()}만`;
+  }
+};
 const sk = s => STAGE_KEYS[STAGES.indexOf(s)] || 'lead';
 const spCls = s => STAGE_SP[STAGES.indexOf(s)] || 'sp-lead';
 const today = new Date();
@@ -1778,6 +2055,41 @@ function setSP(p){sP=p;if(p!=='custom'){const r=getRange(p);sF=r[0];sT=r[1];}ren
 // ══════════════════════════════════════════════
 // AUTH
 // ══════════════════════════════════════════════
+// ── 금액 빠른입력 헬퍼 ──
+function fmtWon(v) {
+  // 원 단위 숫자를 읽기 좋게 표시
+  if(!v || v===0) return '';
+  const a = Math.abs(v);
+  if(a >= 100000000) {
+    const uk = Math.floor(a/100000000);
+    const rest = a % 100000000;
+    const man = Math.round(rest/10000);
+    if(man===0) return `₩${uk.toLocaleString()}억`;
+    return `₩${uk.toLocaleString()}억 ${man.toLocaleString()}만원`;
+  } else if(a >= 10000000) {
+    return `₩${(a/10000000).toFixed(1)}천만원`;
+  } else if(a >= 10000) {
+    return `₩${Math.round(a/10000).toLocaleString()}만원`;
+  } else {
+    return `₩${a.toLocaleString()}원`;
+  }
+}
+function addAmt(inputId, delta) {
+  const el = document.getElementById(inputId);
+  if(!el) return;
+  const cur = parseInt(el.value)||0;
+  const next = Math.max(0, cur + delta);
+  el.value = next;
+  // oninput 이벤트 수동 발생
+  el.dispatchEvent(new Event('input'));
+}
+function updateAmtPreview(inputId, previewId) {
+  const el = document.getElementById(inputId);
+  const prev = document.getElementById(previewId);
+  if(!el||!prev) return;
+  const v = parseInt(el.value)||0;
+  prev.textContent = v > 0 ? fmtWon(v) : '';
+}
 async function doLogin() {
   const id = document.getElementById('loginId').value.trim().toLowerCase();
   const pw = document.getElementById('loginPw').value;
@@ -1911,6 +2223,7 @@ const VIEW_ACTIONS = {
   'fin-receivables':  PLUS_BTN('수금 등록', "openRecvModal") + `<button class="help-btn" onclick="showHelp('finReceivables')" style="margin-left:4px">?</button>`,
   'fin-expenses':     PLUS_BTN('지출 등록', "openExpModal") + `<button class="help-btn" onclick="showHelp('finExpenses')" style="margin-left:4px">?</button>`,
   'fin-terms':        PLUS_BTN('조건 추가', 'openTermsModal'),
+  orgchart: `<button class="btn btn-p btn-sm" onclick="orgOpenNewVerModal()"><svg viewBox="0 0 14 14" fill="none" style="width:12px;height:12px"><line x1="7" y1="2" x2="7" y2="12" stroke="white" stroke-width="1.8" stroke-linecap="round"/><line x1="2" y1="7" x2="12" y2="7" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>새 버전</button> <button class="btn btn-s btn-sm" onclick="window.print()">🖨 인쇄</button>` ,
 };
 
 let currentDashContext = null; // 'sales' | 'inv' | 'fin'
@@ -1996,6 +2309,7 @@ function showView(name, navEl) {
   if(name==='fin-receivables') renderReceivables();
   if(name==='fin-expenses') renderExpenses();
   if(name==='fin-terms') renderTerms();
+  if(name==='orgchart') { orgInitView(); }
 }
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sbOverlay').classList.toggle('open');}
 function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sbOverlay').classList.remove('open');}
@@ -2254,7 +2568,7 @@ function renderSuperAdminKPI() {
   const maxV = Math.max(...r6,...e6,1);
   const chartEl = document.getElementById('sa-cashflow-chart');
   const BAR_H = 96; // 막대 영역 고정 높이(px)
-  const fmtM = v => v>=10000?`${Math.round(v/10000)}억`:v>=1000?`${(v/1000).toFixed(1)}천`:v>0?`${v}만`:'–';
+  const fmtM = v => { if(!v||v===0) return '–'; const a=Math.abs(v); if(a>=1000000) return `${Math.round(a/10000).toLocaleString()}억`; if(a>=10000) return `${(a/10000).toFixed(1)}억`; return `${a.toLocaleString()}만`; };
   if(chartEl) chartEl.innerHTML = `
     <div style="display:flex;align-items:flex-end;gap:6px;width:100%">
       ${months6.map((m,i)=>{
@@ -2281,7 +2595,7 @@ function renderSuperAdminKPI() {
   const totalRecv6 = r6.reduce((s,v)=>s+v,0);
   const totalExp6  = e6.reduce((s,v)=>s+v,0);
   const net6 = totalRecv6 - totalExp6;
-  const fmtM2 = v => v>=10000?`${(v/10000).toFixed(1)}억`:v>=1000?`${(v/1000).toFixed(1)}천만`:`${v}만`;
+  const fmtM2 = v => { if(!v||v===0) return '₩0'; const a=Math.abs(v); if(a>=1000000) return `₩${Math.round(a/10000).toLocaleString()}억`; if(a>=10000) return `₩${(a/10000).toFixed(1)}억`; return `₩${a.toLocaleString()}만`; };
   const sumEl = document.getElementById('cf-summary-6m');
   if(sumEl) sumEl.innerHTML = `
     <div style="margin-bottom:12px">
@@ -2893,11 +3207,37 @@ function buildDealEdit(id){
   document.getElementById('dealEditGrid').innerHTML=`
     <div class="form-field full"><label class="form-label">딜명</label><input class="form-input" id="de-name" value="${d.name}"></div>
     <div class="form-field full"><label class="form-label">고객사</label><input class="form-input" id="de-co" value="${d.co}"></div>
-    <div class="form-field full"><label class="form-label">제품</label><select class="form-select" id="de-prod">${PRODUCTS.map(p=>`<option${p===d.prod?' selected':''}>${p}</option>`).join('')}</select></div>
+    <div class="form-field full"><label class="form-label">제품</label><select class="form-select" id="de-prod">${(invItems.filter(i=>i.category==='finished').map(i=>i.name).length>0?invItems.filter(i=>i.category==='finished').map(i=>i.name):PRODUCTS).map(p=>`<option${p===d.prod?' selected':''}>${p}</option>`).join('')}</select></div>
     <div class="form-field full"><label class="form-label">옵션 품목</label><input class="form-input" id="de-option" value="${d.option||''}" placeholder="예: 전방 카메라 추가"></div>
     <div class="form-field"><label class="form-label">수량</label><input class="form-input" id="de-qty" type="number" value="${d.qty||1}" oninput="calcDeAmt()"></div>
-    <div class="form-field"><label class="form-label">단가 (만원)</label><input class="form-input" id="de-unit" type="number" value="${d.unit||''}" oninput="calcDeAmt()"></div>
-    <div class="form-field full"><label class="form-label">예상 총금액 (만원)</label><input class="form-input auto" id="de-amt" type="number" value="${d.amt}"></div>
+    <div class="form-field">
+      <label class="form-label">대당 단가 (원)</label>
+      <div class="amt-wrap">
+        <input class="form-input" id="de-unit" type="number" value="${(d.unit||0)*10000}" oninput="calcDeAmt();updateAmtPreview('de-unit','de-unit-preview')" placeholder="예: 75,000,000">
+        <div class="amt-preview" id="de-unit-preview">${d.unit?'현재: '+fmtWon((d.unit||0)*10000):''}</div>
+        <div class="amt-btns">
+          <button type="button" class="amt-btn" onclick="addAmt('de-unit',100000000)">+1억</button>
+          <button type="button" class="amt-btn" onclick="addAmt('de-unit',10000000)">+1천만</button>
+          <button type="button" class="amt-btn" onclick="addAmt('de-unit',1000000)">+100만</button>
+          <button type="button" class="amt-btn" onclick="addAmt('de-unit',100000)">+10만</button>
+          <button type="button" class="amt-btn minus" onclick="addAmt('de-unit',-1000000)">-100만</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-field full">
+      <label class="form-label">예상 총금액 (원)</label>
+      <div class="amt-wrap">
+        <input class="form-input auto" id="de-amt" type="number" value="${(d.amt||0)*10000}" oninput="updateAmtPreview('de-amt','de-amt-preview')">
+        <div class="amt-preview" id="de-amt-preview">${d.amt?'현재: '+fmtWon((d.amt||0)*10000):''}</div>
+        <div class="amt-btns">
+          <button type="button" class="amt-btn" onclick="addAmt('de-amt',100000000)">+1억</button>
+          <button type="button" class="amt-btn" onclick="addAmt('de-amt',10000000)">+1천만</button>
+          <button type="button" class="amt-btn" onclick="addAmt('de-amt',1000000)">+100만</button>
+          <button type="button" class="amt-btn" onclick="addAmt('de-amt',100000)">+10만</button>
+          <button type="button" class="amt-btn minus" onclick="addAmt('de-amt',-1000000)">-100만</button>
+        </div>
+      </div>
+    </div>
     <div class="form-field"><label class="form-label">담당자</label><select class="form-select" id="de-person">${salesMembers().map(m=>`<option${m.name===d.person?' selected':''}>${m.name}</option>`).join('')}</select></div>
     <div class="form-field"><label class="form-label">단계</label><select class="form-select" id="de-stage">${STAGES.map(s=>`<option${s===d.stage?' selected':''}>${s}</option>`).join('')}</select></div>
     <div class="form-field"><label class="form-label">마감 예정일</label><input class="form-input" id="de-date" type="date" value="${d.closeDate||''}"></div>
@@ -2912,7 +3252,13 @@ function buildDealEdit(id){
 function calcDeAmt(){
   const q=parseFloat(document.getElementById('de-qty')?.value)||0;
   const u=parseFloat(document.getElementById('de-unit')?.value)||0;
-  if(q&&u)document.getElementById('de-amt').value=Math.round(q*u);
+  // 원 단위 입력 → 총액도 원 단위로 계산
+  if(q&&u){
+    const total=Math.round(q*u);
+    document.getElementById('de-amt').value=total;
+    updateAmtPreview('de-amt','de-amt-preview');
+    updateAmtPreview('de-unit','de-unit-preview');
+  }
 }
 
 async function saveDealEdit(){
@@ -2923,8 +3269,11 @@ async function saveDealEdit(){
   d.prod=document.getElementById('de-prod').value;
   d.option=document.getElementById('de-option')?.value.trim()||'';
   d.qty=parseInt(document.getElementById('de-qty').value)||1;
-  d.unit=parseInt(document.getElementById('de-unit').value)||0;
-  d.amt=parseInt(document.getElementById('de-amt').value)||d.amt;
+  // de-unit, de-amt는 원 단위 입력 → 만원으로 변환해서 저장
+  const deUnitRaw=parseInt(document.getElementById('de-unit').value)||0;
+  const deAmtRaw=parseInt(document.getElementById('de-amt').value)||0;
+  d.unit=Math.round(deUnitRaw/10000);
+  d.amt=deAmtRaw>0?Math.round(deAmtRaw/10000):d.amt;
   d.person=document.getElementById('de-person').value;
   d.stage=document.getElementById('de-stage').value;
   d.closeDate=document.getElementById('de-date').value;
@@ -3011,12 +3360,25 @@ function autoNdName(){
 function calcNdAmt(){
   const q=parseFloat(document.getElementById('nd-qty')?.value)||0;
   const u=parseFloat(document.getElementById('nd-unit')?.value)||0;
-  if(q&&u)document.getElementById('nd-amt').value=Math.round(q*u);
+  // 원 단위 입력 → 총금액도 원 단위
+  if(q&&u){
+    const total=Math.round(q*u);
+    document.getElementById('nd-amt').value=total;
+    updateAmtPreview('nd-amt','nd-amt-preview');
+  }
+  updateAmtPreview('nd-unit','nd-unit-preview');
+}
+// 총금액 직접 입력 시 단가 역산은 안 하고 preview만 업데이트
+function calcNdAmtReverse(){
+  updateAmtPreview('nd-amt','nd-amt-preview');
 }
 function openNewDealModal(ds){
   // Populate product dropdown
   const prodSel=document.getElementById('nd-prod');
-  prodSel.innerHTML=PRODUCTS.map(p=>`<option>${p}</option>`).join('');
+  // 완제품 재고가 있으면 재고 기준, 없으면 PRODUCTS 기준
+  const finishedNames = invItems.filter(i=>i.category==='finished').map(i=>i.name);
+  const prodList = finishedNames.length > 0 ? finishedNames : PRODUCTS;
+  prodSel.innerHTML=prodList.map(p=>`<option>${p}</option>`).join('');
   // Populate person dropdown
   document.getElementById('nd-person').innerHTML=salesMembers().map(m=>`<option>${m.name}</option>`).join('');
   // Pre-select logged-in user if sales
@@ -3067,7 +3429,10 @@ async function createDeal(){
   if(!co){alert('고객사는 필수입니다.');return;}
   const name=document.getElementById('nd-name').value.trim()||(co&&prod?`${co} | ${prod}`:co);
   const qty=parseInt(document.getElementById('nd-qty').value)||1;
-  const unit=parseInt(document.getElementById('nd-unit').value)||0;
+  const unitRaw=parseInt(document.getElementById('nd-unit').value)||0;
+  const unit=Math.round(unitRaw/10000); // 원→만원 변환
+  const amtRaw=parseInt(document.getElementById('nd-amt').value)||0;
+  const amt=Math.round(amtRaw/10000); // 원→만원 변환
   const memo=document.getElementById('nd-memo').value.trim();
   const option=document.getElementById('nd-option').value.trim();
   const inflow=document.getElementById('nd-inflow')?.value||'direct';
@@ -4029,7 +4394,8 @@ function renderCalList() {
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
             <span style="font-size:13px;font-weight:700">${e.title}</span>${autoMark}
           </div>
-          <div style="font-size:11px;color:var(--t3)">${e.event_date}${e.end_date&&e.end_date!==e.event_date?' ~ '+e.end_date:''} ${e.company_name?'· '+e.company_name:''} ${e.person?'· '+e.person:''}</div>
+          <div style="font-size:11px;color:var(--t3)">${e.event_date}${e.end_date&&e.end_date!==e.event_date?' ~ '+e.end_date:''} ${e.company_name?'· '+e.company_name:''} ${e.person?'· 담당: '+e.person:''}</div>
+          ${e.participants?`<div style="font-size:11px;color:var(--t3);margin-top:2px">참여: ${e.participants.split(',').filter(Boolean).join(', ')}</div>`:''}
           ${e.description?`<div style="font-size:12px;color:var(--t2);margin-top:2px">${e.description}</div>`:''}
         </div>
         <span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;background:${c.bg};color:${c.color};flex-shrink:0">${c.emoji} ${c.label}</span>
@@ -4059,7 +4425,8 @@ function openDayPanel(dateStr) {
       <div class="cal-event-dot" style="background:${c.color}"></div>
       <div style="flex:1;min-width:0">
         <div class="cal-event-title">${c.emoji} ${e.title}${e.source==='auto'?'<span style="font-size:10px;color:var(--t3);font-weight:400"> 🔄 자동</span>':''}</div>
-        <div class="cal-event-meta">${e.company_name?e.company_name+' · ':''} ${e.person||''}</div>
+        <div class="cal-event-meta">${e.company_name?e.company_name+' · ':''} ${e.person?'담당: '+e.person:''}</div>
+        ${e.participants?`<div style="font-size:11px;color:var(--t3);margin-top:2px">참여: ${e.participants.split(',').filter(Boolean).join(', ')}</div>`:''}
         ${e.description?`<div style="font-size:12px;color:var(--t2);margin-top:3px">${e.description}</div>`:''}
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
@@ -4093,10 +4460,13 @@ function openNewEventModal(prefillDate) {
   document.getElementById('ev-desc').value='';
   document.getElementById('ev-date').value=prefillDate||new Date().toISOString().slice(0,10);
   document.getElementById('ev-end-date').value='';
+  document.getElementById('ev-participants').value='';
   // 담당자 드롭다운
   const personSel=document.getElementById('ev-person');
   personSel.innerHTML=`<option value="">담당자 선택</option>`+allMembers().map(m=>`<option>${m.name}</option>`).join('');
   if(CU) personSel.value=CU.name;
+  // 참여자 초기화
+  initParticipants([]);
   renderEvCatBtns('meeting');
   openModal('newEventModal');
 }
@@ -4112,6 +4482,9 @@ function openEditEventModal(id) {
   document.getElementById('ev-end-date').value=e.end_date||'';
   const personSel=document.getElementById('ev-person');
   personSel.innerHTML=`<option value="">담당자 선택</option>`+allMembers().map(m=>`<option${m.name===e.person?' selected':''}>${m.name}</option>`).join('');
+  // 참여자 로드
+  const savedParticipants = e.participants ? e.participants.split(',').filter(Boolean) : [];
+  initParticipants(savedParticipants);
   // 삭제 버튼 추가
   document.getElementById('ev-save-btn').textContent='수정 완료';
   renderEvCatBtns(e.category);
@@ -4159,6 +4532,7 @@ async function saveCalendarEvent() {
     source:'manual',
     company_name:document.getElementById('ev-company').value.trim()||null,
     person:document.getElementById('ev-person').value||null,
+    participants:document.getElementById('ev-participants').value||null,
     description:document.getElementById('ev-desc').value.trim()||null,
     created_by:CU?.name||null,
   };
@@ -4187,6 +4561,84 @@ async function deleteCalendarEvent(id) {
   showToast('일정이 삭제됐습니다');
   renderCalendar();
 }
+
+// ── 참여자 선택 (다중) ──
+let _selectedParticipants = new Set();
+
+function initParticipants(preSelected=[]) {
+  _selectedParticipants = new Set(preSelected);
+  renderParticipantChips();
+  renderParticipantDropdown();
+}
+
+function toggleParticipantDropdown() {
+  const dd = document.getElementById('ev-participant-dropdown');
+  if(!dd) return;
+  if(dd.style.display==='none') {
+    dd.style.display='block';
+    renderParticipantDropdown();
+  } else {
+    dd.style.display='none';
+  }
+}
+
+function renderParticipantDropdown() {
+  const dd = document.getElementById('ev-participant-dropdown');
+  if(!dd) return;
+  const mainPerson = document.getElementById('ev-person')?.value||'';
+  dd.innerHTML = allMembers().map(m => {
+    const sel = _selectedParticipants.has(m.name);
+    const isMain = m.name === mainPerson;
+    return `<div onclick="toggleParticipant('${m.name}')"
+      style="display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:pointer;transition:background .1s;${sel?'background:var(--al)':''}"
+      onmouseenter="this.style.background='var(--s2)'" onmouseleave="this.style.background='${sel?'var(--al)':''}'"
+    >
+      <div class="av av${m.idx%12}" style="width:24px;height:24px;font-size:9px;flex-shrink:0">${m.name.slice(-2)}</div>
+      <div style="flex:1;font-size:13px;font-weight:${sel?'700':'500'}">${m.name}</div>
+      <div style="font-size:11px;color:var(--t3)">${ROLE_LABELS[m.role]||''}</div>
+      ${isMain?`<span style="font-size:10px;font-weight:700;color:var(--accent);padding:1px 6px;border-radius:10px;background:var(--al)">담당자</span>`:''}
+      ${sel?`<span style="color:var(--green);font-weight:800;font-size:16px">✓</span>`:''}
+    </div>`;
+  }).join('');
+}
+
+function toggleParticipant(name) {
+  if(_selectedParticipants.has(name)) _selectedParticipants.delete(name);
+  else _selectedParticipants.add(name);
+  document.getElementById('ev-participants').value = [..._selectedParticipants].join(',');
+  renderParticipantChips();
+  renderParticipantDropdown();
+}
+
+function renderParticipantChips() {
+  const wrap = document.getElementById('ev-participants-chips');
+  const hint = document.querySelector('#ev-participants-wrap > span');
+  if(!wrap) return;
+  if(_selectedParticipants.size === 0) {
+    wrap.innerHTML = '';
+    if(hint) hint.style.display='';
+    return;
+  }
+  if(hint) hint.style.display='none';
+  wrap.innerHTML = [..._selectedParticipants].map(name => {
+    const u = Object.values(USERS).find(u=>u.name===name);
+    const idx = u ? u.idx%12 : 0;
+    return `<div style="display:inline-flex;align-items:center;gap:5px;background:var(--al);border:1px solid var(--bd2);border-radius:20px;padding:3px 10px 3px 6px">
+      <div class="av av${idx}" style="width:18px;height:18px;font-size:8px;flex-shrink:0">${name.slice(-2)}</div>
+      <span style="font-size:12px;font-weight:600;color:var(--at)">${name}</span>
+      <button type="button" onclick="toggleParticipant('${name}');event.stopPropagation()" style="background:none;border:none;cursor:pointer;color:var(--t3);padding:0;font-size:14px;line-height:1">×</button>
+    </div>`;
+  }).join('');
+}
+
+// 드롭다운 외부 클릭 시 닫기
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('ev-participants-wrap');
+  const dd = document.getElementById('ev-participant-dropdown');
+  if(dd && wrap && !wrap.contains(e.target) && !dd.contains(e.target)) {
+    dd.style.display = 'none';
+  }
+});
 
 function calPrev(){ if(calMonth===0){calYear--;calMonth=11;}else{calMonth--;} renderCalMonth(); document.getElementById('calMonthLabel').textContent=`${calYear}년 ${calMonth+1}월`; }
 function calNext(){ if(calMonth===11){calYear++;calMonth=0;}else{calMonth++;} renderCalMonth(); }
@@ -5150,7 +5602,7 @@ function setCfTab(tab, btnEl) {
   });
   const d = window._cfData;
   if(!d) return;
-  const fmtM2 = v => v>=10000?`${(v/10000).toFixed(1)}억`:v>=1000?`${(v/1000).toFixed(1)}천만`:`${v}만`;
+  const fmtM2 = v => { if(!v||v===0) return '₩0'; const a=Math.abs(v); if(a>=1000000) return `₩${Math.round(a/10000).toLocaleString()}억`; if(a>=10000) return `₩${(a/10000).toFixed(1)}억`; return `₩${a.toLocaleString()}만`; };
 
   if(tab==='q') {
     // 분기별 (Q1~Q4 현재연도 + 내년)
@@ -5298,4 +5750,349 @@ function markReceived(id) {
     if(document.getElementById('view-fin-cashflow')?.classList.contains('active')) renderCashflow();
   };
 }
+
+// ══════════════════════════════════════════════════════════
+// 조직도 (org_) — Supabase 연동, 버전 관리
+// ══════════════════════════════════════════════════════════
+const ORG_TAGS = [
+  {id:'internal', label:'내부용',    cls:'org-tag-internal'},
+  {id:'external', label:'외부 공개', cls:'org-tag-external'},
+  {id:'client',   label:'거래처용',  cls:'org-tag-client'},
+  {id:'draft',    label:'초안',      cls:'org-tag-draft'},
+];
+const ORG_DEFAULT_CEO = {name:'이상혁',title:'대표이사',phone:'010-9466-1957',email:'shlee@surepoint.kr'};
+const ORG_DEFAULT_DEPTS = [
+  {id:1,name:'경영본부',members:[{id:101,name:'이승우',title:'CSO / 이사',phone:'010-2626-4179',email:'swdp@surepoint.kr',hl:false},{id:102,name:'김유림',title:'매니저',phone:'019-8203-3812',email:'yurim@surepoint.kr',hl:false},{id:103,name:'강미숙',title:'매니저',phone:'019-3771-7173',email:'mskang@surepoint.kr',hl:false}]},
+  {id:2,name:'연구소',members:[{id:201,name:'이상혁',title:'연구소장',phone:'010-9466-1957',email:'shlee@surepoint.kr',hl:false},{id:202,name:'안영모',title:'수석연구원',phone:'010-3423-1011',email:'ynahs@surepoint.kr',hl:true},{id:203,name:'박기무',title:'책임연구원',phone:'010-9333-4662',email:'kmpark@surepoint.kr',hl:false}]},
+  {id:3,name:'영업',members:[{id:301,name:'백승정',title:'상무이사',phone:'010-9135-0153',email:'bsj@surepoint.kr',hl:false},{id:302,name:'이재훈',title:'수석매니저',phone:'010-2626-1258',email:'jh.lee@surepoint.kr',hl:true},{id:303,name:'임다비',title:'매니저',phone:'016-7270-2759',email:'ldb@surepoint.kr',hl:false}]},
+  {id:4,name:'마케팅',members:[{id:401,name:'김범석',title:'매니저',phone:'010-8085-5491',email:'kbs@surepoint.kr',hl:false},{id:402,name:'김다예',title:'매니저',phone:'010-4127-9231',email:'kdy@surepoint.kr',hl:false}]},
+  {id:5,name:'기술지원',members:[{id:501,name:'이승재',title:'책임연구원',phone:'010-5005-5491',email:'y.lee@surepoint.kr',hl:false},{id:502,name:'황병규',title:'매니저',phone:'010-9061-5450',email:'hbk@surepoint.kr',hl:false},{id:503,name:'이동희',title:'매니저',phone:'010-9700-7968',email:'ldh@surepoint.kr',hl:false}]},
+];
+
+let orgVersions = [];
+let orgActiveVer = null;
+let orgEid = Date.now() + 10000;
+let orgDeptId=null, orgMemberId=null, orgMDeptId=null, orgEditVerId=null;
+let orgLoaded = false;
+
+// ── 조직도 뷰 초기화 (처음 진입 시 1회 로드) ──
+async function orgInitView() {
+  if(!orgLoaded) { await orgLoadVersions(); orgLoaded=true; }
+  else { orgRenderSidebar(); orgRenderChart(); }
+}
+
+// ── Supabase 데이터 로드 ──
+async function orgLoadVersions() {
+  const listEl = document.getElementById('orgSbList');
+  if(listEl) listEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--t3);font-size:12px">로드 중...</div>';
+  try {
+    const {data,error} = await sb.from('org_versions').select('*').order('created_at',{ascending:true});
+    if(error) throw error;
+    orgVersions = data||[];
+    if(orgVersions.length===0) await orgCreateVersion({name:'내부용',tag:'internal',desc:'기본 내부 조직도',ceo_data:ORG_DEFAULT_CEO,depts_data:ORG_DEFAULT_DEPTS});
+  } catch(e) { showToast('조직도 로드 실패: '+e.message,'error'); }
+  orgRenderSidebar();
+  if(orgVersions.length>0 && !orgActiveVer) orgSelectVer(orgVersions[0].id);
+}
+
+async function orgCreateVersion(payload) {
+  try {
+    const id = 'v'+Date.now();
+    const row = {id,name:payload.name,tag:payload.tag||'internal',description:payload.desc||null,ceo_data:payload.ceo_data||ORG_DEFAULT_CEO,depts_data:payload.depts_data||[],created_at:new Date().toISOString(),updated_at:new Date().toISOString()};
+    const {data,error} = await sb.from('org_versions').insert([row]).select().single();
+    if(error) throw error;
+    orgVersions.push(data); return data;
+  } catch(e) { showToast('저장 실패: '+e.message,'error'); return null; }
+}
+async function orgUpdateVersion(id, patch) {
+  try {
+    patch.updated_at = new Date().toISOString();
+    const {error} = await sb.from('org_versions').update(patch).eq('id',id);
+    if(error) throw error;
+    const idx = orgVersions.findIndex(v=>v.id===id);
+    if(idx>=0) orgVersions[idx]={...orgVersions[idx],...patch};
+    if(orgActiveVer?.id===id) orgActiveVer={...orgActiveVer,...patch};
+  } catch(e) { showToast('저장 실패: '+e.message,'error'); }
+}
+async function orgDeleteVersion(id) {
+  try {
+    const {error} = await sb.from('org_versions').delete().eq('id',id);
+    if(error) throw error;
+    orgVersions = orgVersions.filter(v=>v.id!==id);
+    if(orgActiveVer?.id===id) orgActiveVer=null;
+  } catch(e) { showToast('삭제 실패: '+e.message,'error'); }
+}
+async function orgSaveActiveData() {
+  if(!orgActiveVer) return;
+  await orgUpdateVersion(orgActiveVer.id,{ceo_data:orgActiveVer.ceo_data,depts_data:orgActiveVer.depts_data});
+}
+
+// ── 사이드바 렌더 ──
+function orgRenderSidebar() {
+  const list = document.getElementById('orgSbList'); if(!list) return;
+  if(!orgVersions.length) { list.innerHTML='<div style="padding:20px;text-align:center;font-size:12px;color:var(--t3)">버전이 없습니다</div>'; return; }
+  const groups={}; ORG_TAGS.forEach(t=>{groups[t.id]=[];});
+  orgVersions.forEach(v=>{(groups[v.tag]||groups['internal']).push(v);});
+  let html='';
+  ORG_TAGS.forEach(tag=>{
+    const vs=groups[tag.id]; if(!vs.length) return;
+    html+=`<div class="org-cat-lbl">${tag.label} <span>${vs.length}</span></div>`;
+    vs.forEach(v=>{
+      const active=v.id===orgActiveVer?.id;
+      const d=new Date(v.updated_at);
+      html+=`<div class="org-ver-card${active?' org-active':''}" onclick="orgSelectVer('${v.id}')">
+        <div class="org-ver-top">
+          <div class="org-ver-name">${v.name}</div>
+          <div class="org-ver-acts">
+            <button class="btn btn-s btn-sm" style="width:22px;height:22px;padding:0;justify-content:center" onclick="event.stopPropagation();orgOpenVerSetting('${v.id}')" title="설정">⚙️</button>
+            <button class="btn btn-s btn-sm" style="width:22px;height:22px;padding:0;justify-content:center" onclick="event.stopPropagation();orgDupVer('${v.id}')" title="복제">⧉</button>
+          </div>
+        </div>
+        <div class="org-ver-meta">${d.getMonth()+1}/${d.getDate()} 수정</div>
+        ${v.description?`<div class="org-ver-desc">${v.description}</div>`:''}
+      </div>`;
+    });
+  });
+  list.innerHTML=html;
+}
+
+// ── 버전 선택 & 조직도 렌더 ──
+function orgSelectVer(id) {
+  orgActiveVer = orgVersions.find(v=>v.id===id)||null;
+  orgRenderSidebar(); orgRenderChart();
+}
+
+function orgRenderChart() {
+  const empty=document.getElementById('orgEmptyState');
+  const wrap=document.getElementById('orgChartWrap');
+  if(!empty||!wrap) return;
+  if(!orgActiveVer) { empty.style.display='flex'; wrap.style.display='none'; return; }
+  empty.style.display='none'; wrap.style.display='flex';
+
+  // 탑바
+  const tag=ORG_TAGS.find(t=>t.id===orgActiveVer.tag)||ORG_TAGS[0];
+  const titleEl=document.getElementById('orgTbTitle'); if(titleEl) titleEl.textContent=orgActiveVer.name;
+  const tagEl=document.getElementById('orgTbTag');
+  if(tagEl){tagEl.style.display='';tagEl.textContent=tag.label;tagEl.className='org-tb-tag '+tag.cls;}
+  const actsEl=document.getElementById('orgTbActs');
+  if(actsEl) actsEl.innerHTML=`<button class="btn btn-s btn-sm" onclick="orgOpenVerSetting('${orgActiveVer.id}')">⚙️ 설정</button><button class="btn btn-s btn-sm" onclick="orgDupVer('${orgActiveVer.id}')">⧉ 복제</button>`;
+
+  // CEO
+  const ceo=orgActiveVer.ceo_data||{};
+  const n=document.getElementById('orgCeoName'); if(n) n.textContent=ceo.name||'';
+  const t=document.getElementById('orgCeoTtl');  if(t) t.textContent=ceo.title||'';
+  const i=document.getElementById('orgCeoInfo'); if(i) i.innerHTML=`${ceo.phone||''}<br>${ceo.email||''}`;
+
+  // 부서 트리
+  const depts=orgActiveVer.depts_data||[];
+  const tree=document.getElementById('orgTree2'); if(!tree) return;
+  tree.innerHTML = depts.map(dept=>`
+    <div class="org-dcol">
+      <div class="org-dhw">
+        <div class="org-dhd" onclick="orgOpenDeptModal(${dept.id})">${dept.name}</div>
+        <div class="org-dacts">
+          <button class="btn btn-s btn-sm" style="width:20px;height:20px;padding:0;justify-content:center;font-size:10px" onclick="orgOpenDeptModal(${dept.id})">✏️</button>
+          <button class="btn btn-danger btn-sm" style="width:20px;height:20px;padding:0;justify-content:center;font-size:10px" onclick="orgAskDelDept(${dept.id})">✕</button>
+        </div>
+      </div>
+      <div class="org-mwrap">
+        ${(dept.members||[]).map(m=>`
+          <div class="org-mitem">
+            <div class="org-mcard" onclick="orgOpenMemModal(${dept.id},${m.id})">
+              <button class="org-ico" onclick="event.stopPropagation();orgOpenMemModal(${dept.id},${m.id})">✏️</button>
+              <button class="org-del-ico" onclick="event.stopPropagation();orgAskDelMem(${dept.id},${m.id})">✕</button>
+              <div class="org-mn">${m.name}</div>
+              <div class="org-mt${m.hl?' org-hl':''}">${m.title}</div>
+              <div class="org-minfo">${m.phone||''}<br>${m.email||''}</div>
+            </div>
+          </div>`).join('')}
+        <button class="org-add-mb" onclick="orgOpenMemModal(${dept.id},null)">
+          <svg viewBox="0 0 12 12" fill="none" style="width:9px;height:9px"><line x1="6" y1="1" x2="6" y2="11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="1" y1="6" x2="11" y2="6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          팀원 추가
+        </button>
+      </div>
+    </div>`).join('')+
+  `<div class="org-add-dcol"><button class="org-add-db" onclick="orgOpenDeptModal(null)">
+    <svg viewBox="0 0 16 16" fill="none" style="width:18px;height:18px;opacity:.35"><line x1="8" y1="2" x2="8" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="2" y1="8" x2="14" y2="8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    부서 추가
+  </button></div>`;
+  setTimeout(orgDrawLines,60);
+}
+
+function orgDrawLines() {
+  const cols=[...document.querySelectorAll('.org-dcol')]; if(!cols.length) return;
+  const hdrs=cols.map(c=>c.querySelector('.org-dhd')).filter(Boolean); if(!hdrs.length) return;
+  const aEl=document.getElementById('orgHArea'); if(!aEl) return;
+  const aRect=aEl.getBoundingClientRect();
+  const xs=hdrs.map(h=>{const r=h.getBoundingClientRect();return r.left+r.width/2-aRect.left;});
+  const minX=Math.min(...xs),maxX=Math.max(...xs);
+  const hl=document.getElementById('orgHLine'); if(!hl) return;
+  hl.style.left=minX+'px'; hl.style.width=(maxX-minX)+'px';
+  aEl.querySelectorAll('.org-vt').forEach(e=>e.remove());
+  xs.forEach(x=>{const t=document.createElement('div');t.className='org-vt';t.style.cssText=`position:absolute;top:0;left:${x}px;width:1px;height:26px;background:var(--bd)`;aEl.appendChild(t);});
+}
+
+// ── 태그 버튼 렌더 ──
+function orgRenderTagBtns(wrapId,hidId,selected) {
+  const wrap=document.getElementById(wrapId); if(!wrap) return;
+  wrap.innerHTML=ORG_TAGS.map(t=>`
+    <button type="button" onclick="orgSelTag('${wrapId}','${hidId}','${t.id}')" class="btn ${t.id===selected?'btn-p':'btn-s'} btn-sm">${t.label}</button>`).join('');
+  document.getElementById(hidId).value=selected;
+}
+function orgSelTag(wrapId,hidId,id){document.getElementById(hidId).value=id;orgRenderTagBtns(wrapId,hidId,id);}
+
+// ── 버전 CRUD ──
+function orgOpenNewVerModal() {
+  document.getElementById('orgNvTitle').textContent='새 버전 만들기';
+  document.getElementById('org-nv-name').value='';
+  document.getElementById('org-nv-desc').value='';
+  orgRenderTagBtns('org-nv-tag-wrap','org-nv-tag','internal');
+  const sel=document.getElementById('org-nv-copy');
+  sel.innerHTML='<option value="">빈 버전으로 시작</option>'+orgVersions.map(v=>`<option value="${v.id}">${v.name}</option>`).join('');
+  document.getElementById('org-nv-name').classList.remove('err');
+  openModal('orgNvModal'); setTimeout(()=>document.getElementById('org-nv-name').focus(),100);
+}
+async function orgSaveNewVer() {
+  const name=document.getElementById('org-nv-name').value.trim();
+  if(!name){document.getElementById('org-nv-name').classList.add('err');return;}
+  document.getElementById('org-nv-name').classList.remove('err');
+  const copyId=document.getElementById('org-nv-copy').value;
+  const src=copyId?orgVersions.find(v=>v.id===copyId):null;
+  closeModal('orgNvModal');
+  const newVer=await orgCreateVersion({
+    name,tag:document.getElementById('org-nv-tag').value,
+    desc:document.getElementById('org-nv-desc').value.trim(),
+    ceo_data:src?JSON.parse(JSON.stringify(src.ceo_data)):ORG_DEFAULT_CEO,
+    depts_data:src?JSON.parse(JSON.stringify(src.depts_data)):[],
+  });
+  if(newVer){orgRenderSidebar();orgSelectVer(newVer.id);showToast('버전이 생성됐습니다 ✓');}
+}
+function orgOpenVerSetting(id) {
+  orgEditVerId=id;
+  const v=orgVersions.find(x=>x.id===id); if(!v) return;
+  document.getElementById('org-vs-name').value=v.name;
+  document.getElementById('org-vs-desc').value=v.description||'';
+  orgRenderTagBtns('org-vs-tag-wrap','org-vs-tag',v.tag||'internal');
+  openModal('orgVsModal'); setTimeout(()=>document.getElementById('org-vs-name').focus(),100);
+}
+async function orgSaveVerSetting() {
+  const v=orgVersions.find(x=>x.id===orgEditVerId); if(!v) return;
+  await orgUpdateVersion(orgEditVerId,{name:document.getElementById('org-vs-name').value.trim()||v.name,tag:document.getElementById('org-vs-tag').value,description:document.getElementById('org-vs-desc').value.trim()});
+  closeModal('orgVsModal'); orgRenderSidebar(); orgRenderChart(); showToast('저장됐습니다 ✓');
+}
+async function orgDoDelVer() {
+  const v=orgVersions.find(x=>x.id===orgEditVerId); if(!v) return;
+  if(orgVersions.length<=1){showToast('마지막 버전은 삭제할 수 없습니다','warn');return;}
+  if(!confirm(`"${v.name}" 버전을 삭제할까요?`)) return;
+  await orgDeleteVersion(orgEditVerId);
+  closeModal('orgVsModal');
+  orgActiveVer=orgVersions[0]||null;
+  orgRenderSidebar(); orgRenderChart(); showToast('삭제됐습니다');
+}
+async function orgDupVer(id) {
+  const src=orgVersions.find(v=>v.id===id); if(!src) return;
+  const newVer=await orgCreateVersion({name:src.name+' (복사)',tag:src.tag,desc:src.description,ceo_data:JSON.parse(JSON.stringify(src.ceo_data)),depts_data:JSON.parse(JSON.stringify(src.depts_data))});
+  if(newVer){orgRenderSidebar();orgSelectVer(newVer.id);showToast('복제됐습니다 ✓');}
+}
+
+// ── CEO 편집 ──
+function orgOpenCeoModal() {
+  if(!orgActiveVer) return;
+  const c=orgActiveVer.ceo_data||{};
+  ['ci-name','ci-title','ci-phone','ci-email'].forEach((k,i)=>{const el=document.getElementById('org-'+k);if(el)el.value=[c.name,c.title,c.phone,c.email][i]||'';});
+  openModal('orgCeoModal'); setTimeout(()=>document.getElementById('org-ci-name').focus(),100);
+}
+async function orgSaveCeo() {
+  if(!orgActiveVer) return;
+  orgActiveVer.ceo_data={name:document.getElementById('org-ci-name').value.trim(),title:document.getElementById('org-ci-title').value.trim(),phone:document.getElementById('org-ci-phone').value.trim(),email:document.getElementById('org-ci-email').value.trim()};
+  await orgSaveActiveData(); closeModal('orgCeoModal'); orgRenderChart(); orgRenderSidebar(); showToast('저장됐습니다 ✓');
+}
+
+// ── 부서 CRUD ──
+function orgOpenDeptModal(id) {
+  if(!orgActiveVer) return;
+  orgDeptId=id;
+  const delBtn=document.getElementById('orgDeptDelBtn');
+  if(id){const d=orgActiveVer.depts_data.find(x=>x.id===id);document.getElementById('orgDeptMT').textContent='부서명 수정';document.getElementById('orgDeptSaveBtn').textContent='저장';document.getElementById('org-di-name').value=d.name;delBtn.style.display='';}
+  else{document.getElementById('orgDeptMT').textContent='부서 추가';document.getElementById('orgDeptSaveBtn').textContent='추가';document.getElementById('org-di-name').value='';delBtn.style.display='none';}
+  document.getElementById('org-di-name').classList.remove('err');
+  openModal('orgDeptModal'); setTimeout(()=>document.getElementById('org-di-name').focus(),100);
+}
+async function orgSaveDept() {
+  if(!orgActiveVer) return;
+  const name=document.getElementById('org-di-name').value.trim();
+  if(!name){document.getElementById('org-di-name').classList.add('err');return;}
+  document.getElementById('org-di-name').classList.remove('err');
+  if(orgDeptId){orgActiveVer.depts_data.find(x=>x.id===orgDeptId).name=name;}
+  else{orgActiveVer.depts_data.push({id:++orgEid,name,members:[]});}
+  await orgSaveActiveData(); closeModal('orgDeptModal'); orgRenderChart(); orgRenderSidebar(); showToast('저장됐습니다 ✓');
+}
+async function orgDoDelDept() {
+  if(!orgActiveVer) return;
+  const dept=orgActiveVer.depts_data.find(x=>x.id===orgDeptId);
+  if(!confirm(`"${dept.name}" 부서를 삭제할까요?`)) return;
+  orgActiveVer.depts_data=orgActiveVer.depts_data.filter(x=>x.id!==orgDeptId);
+  await orgSaveActiveData(); closeModal('orgDeptModal'); orgRenderChart(); orgRenderSidebar(); showToast('삭제됐습니다');
+}
+async function orgAskDelDept(id) {
+  if(!orgActiveVer) return;
+  const dept=orgActiveVer.depts_data.find(x=>x.id===id);
+  if(!confirm(`"${dept.name}" 부서를 삭제할까요?`)) return;
+  orgActiveVer.depts_data=orgActiveVer.depts_data.filter(x=>x.id!==id);
+  await orgSaveActiveData(); orgRenderChart(); orgRenderSidebar(); showToast('삭제됐습니다');
+}
+
+// ── 팀원 CRUD ──
+function orgOpenMemModal(deptId,memberId) {
+  if(!orgActiveVer) return;
+  orgMDeptId=deptId; orgMemberId=memberId;
+  ['org-mi-name','org-mi-title'].forEach(i=>document.getElementById(i).classList.remove('err'));
+  const delBtn=document.getElementById('orgMemDelBtn');
+  if(memberId){
+    const m=orgActiveVer.depts_data.find(x=>x.id===deptId).members.find(m=>m.id===memberId);
+    document.getElementById('orgMemMT').textContent='팀원 수정';document.getElementById('orgMemSaveBtn').textContent='저장';
+    document.getElementById('org-mi-name').value=m.name;document.getElementById('org-mi-title').value=m.title;
+    document.getElementById('org-mi-phone').value=m.phone||'';document.getElementById('org-mi-email').value=m.email||'';
+    document.getElementById('org-mi-hl').checked=!!m.hl;delBtn.style.display='';
+  } else {
+    document.getElementById('orgMemMT').textContent='팀원 추가';document.getElementById('orgMemSaveBtn').textContent='추가';
+    ['org-mi-name','org-mi-title','org-mi-phone','org-mi-email'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('org-mi-hl').checked=false;delBtn.style.display='none';
+  }
+  openModal('orgMemModal'); setTimeout(()=>document.getElementById('org-mi-name').focus(),100);
+}
+async function orgSaveMem() {
+  if(!orgActiveVer) return;
+  const name=document.getElementById('org-mi-name').value.trim();
+  const title=document.getElementById('org-mi-title').value.trim();
+  let ok=true;
+  if(!name){document.getElementById('org-mi-name').classList.add('err');ok=false;}
+  if(!title){document.getElementById('org-mi-title').classList.add('err');ok=false;}
+  if(!ok) return;
+  ['org-mi-name','org-mi-title'].forEach(i=>document.getElementById(i).classList.remove('err'));
+  const dept=orgActiveVer.depts_data.find(x=>x.id===orgMDeptId);
+  const md={name,title,phone:document.getElementById('org-mi-phone').value.trim(),email:document.getElementById('org-mi-email').value.trim(),hl:document.getElementById('org-mi-hl').checked};
+  if(orgMemberId){const idx=dept.members.findIndex(m=>m.id===orgMemberId);dept.members[idx]={...dept.members[idx],...md};}
+  else{dept.members.push({id:++orgEid,...md});}
+  await orgSaveActiveData(); closeModal('orgMemModal'); orgRenderChart(); orgRenderSidebar(); showToast('저장됐습니다 ✓');
+}
+async function orgDoDelMem() {
+  if(!orgActiveVer) return;
+  const dept=orgActiveVer.depts_data.find(x=>x.id===orgMDeptId);
+  const m=dept.members.find(m=>m.id===orgMemberId);
+  if(!confirm(`"${m.name}" 팀원을 삭제할까요?`)) return;
+  dept.members=dept.members.filter(m=>m.id!==orgMemberId);
+  await orgSaveActiveData(); closeModal('orgMemModal'); orgRenderChart(); orgRenderSidebar(); showToast('삭제됐습니다');
+}
+async function orgAskDelMem(deptId,memberId) {
+  if(!orgActiveVer) return;
+  const dept=orgActiveVer.depts_data.find(x=>x.id===deptId);
+  const m=dept.members.find(m=>m.id===memberId);
+  if(!confirm(`"${m.name}" 팀원을 삭제할까요?`)) return;
+  dept.members=dept.members.filter(m=>m.id!==memberId);
+  await orgSaveActiveData(); orgRenderChart(); orgRenderSidebar(); showToast('삭제됐습니다');
+}
+
+window.addEventListener('resize',()=>{if(document.getElementById('view-orgchart')?.classList.contains('active'))orgDrawLines();});
+
 </script>
