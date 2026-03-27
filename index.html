@@ -2056,6 +2056,26 @@ function setSP(p){sP=p;if(p!=='custom'){const r=getRange(p);sF=r[0];sT=r[1];}ren
 // AUTH
 // ══════════════════════════════════════════════
 // ── 금액 빠른입력 헬퍼 ──
+// DB 저장값(만원 기준) → 원 단위 표시값으로 역산
+// 단, DB에 실수로 원 단위로 저장된 경우도 처리
+function orgUnitToWon(v) {
+  // v가 만원 단위로 저장된 정상값이면 *10000
+  // v가 이미 원 단위로 저장된 비정상값이면 그대로
+  // 판별: 만원 단위라면 AI제품 단가는 통상 10~50000만원(100만원~5억원) 범위
+  // 10000만원(=1억원) = 10000 초과이면 만원 단위로 봐도 되지만
+  // 실수로 원 단위 저장 시 최소 100000원 이상
+  // → v가 100000 이하면 만원 단위로 확신 → *10000
+  // → v가 100000 초과면 원 단위로 저장된 것 → 그대로
+  if(!v) return 0;
+  return v <= 100000 ? v * 10000 : v;
+}
+function orgAmtToWon(v) {
+  // 총금액도 동일 기준: 10억원 = 100000만원
+  // → v가 100000 이하면 만원 단위 → *10000
+  // → v가 100000 초과면 원 단위로 저장된 것 → 그대로
+  if(!v) return 0;
+  return v <= 100000 ? v * 10000 : v;
+}
 function fmtWon(v) {
   // 원 단위 숫자를 읽기 좋게 표시
   if(!v || v===0) return '';
@@ -3213,8 +3233,8 @@ function buildDealEdit(id){
     <div class="form-field">
       <label class="form-label">대당 단가 (원)</label>
       <div class="amt-wrap">
-        <input class="form-input" id="de-unit" type="number" value="${(d.unit||0)*10000}" oninput="calcDeAmt();updateAmtPreview('de-unit','de-unit-preview')" placeholder="예: 75,000,000">
-        <div class="amt-preview" id="de-unit-preview">${d.unit?'현재: '+fmtWon((d.unit||0)*10000):''}</div>
+        <input class="form-input" id="de-unit" type="number" value="${orgUnitToWon(d.unit||0)}" oninput="calcDeAmt();updateAmtPreview('de-unit','de-unit-preview')" placeholder="예: 75,000,000">
+        <div class="amt-preview" id="de-unit-preview">${d.unit?'현재: '+fmtWon(orgUnitToWon(d.unit||0)):''}</div>
         <div class="amt-btns">
           <button type="button" class="amt-btn" onclick="addAmt('de-unit',100000000)">+1억</button>
           <button type="button" class="amt-btn" onclick="addAmt('de-unit',10000000)">+1천만</button>
@@ -3227,8 +3247,8 @@ function buildDealEdit(id){
     <div class="form-field full">
       <label class="form-label">예상 총금액 (원)</label>
       <div class="amt-wrap">
-        <input class="form-input auto" id="de-amt" type="number" value="${(d.amt||0)*10000}" oninput="updateAmtPreview('de-amt','de-amt-preview')">
-        <div class="amt-preview" id="de-amt-preview">${d.amt?'현재: '+fmtWon((d.amt||0)*10000):''}</div>
+        <input class="form-input auto" id="de-amt" type="number" value="${orgAmtToWon(d.amt||0)}" oninput="updateAmtPreview('de-amt','de-amt-preview')">
+        <div class="amt-preview" id="de-amt-preview">${d.amt?'현재: '+fmtWon(orgAmtToWon(d.amt||0)):''}</div>
         <div class="amt-btns">
           <button type="button" class="amt-btn" onclick="addAmt('de-amt',100000000)">+1억</button>
           <button type="button" class="amt-btn" onclick="addAmt('de-amt',10000000)">+1천만</button>
@@ -3438,7 +3458,7 @@ async function createDeal(){
   const inflow=document.getElementById('nd-inflow')?.value||'direct';
   let newDeal = {
     id: dealIdCnt++, name, co, prod, option, inflow,
-    qty, unit, amt: parseInt(document.getElementById('nd-amt').value)||0,
+    qty, unit, amt: amt,  // 원→만원 변환된 값 사용
     person: document.getElementById('nd-person').value,
     stage: document.getElementById('nd-stage').value,
     closeDate: document.getElementById('nd-date').value,
@@ -3912,6 +3932,11 @@ async function loadDealsFromDB(){
     if(le) throw le;
 
     // Map to local format
+    const fixAmt = v => {
+      // 비정상적으로 큰 값(100억만원=1조원 이상) → 원 단위로 저장된 것 → /10000 자동 보정
+      if(!v) return 0;
+      return v > 100000000 ? Math.round(v / 10000) : v;
+    };
     deals = dbDeals.map(d => ({
       id: d.id,
       name: d.name,
@@ -3920,8 +3945,8 @@ async function loadDealsFromDB(){
       option: d.option_items||'',
       inflow: d.inflow||'direct',
       qty: d.qty||1,
-      unit: d.unit_price||0,
-      amt: d.amount||0,
+      unit: fixAmt(d.unit_price||0),
+      amt: fixAmt(d.amount||0),
       person: d.person||'',
       stage: d.stage||'잠재 발굴',
       closeDate: d.close_date||'',
@@ -3960,10 +3985,12 @@ async function loadProductsFromDB(){
 async function saveDealToDB(deal){
   if(!sb){ return deal; }
   try{
+    const saveAmt = deal.amt > 100000000 ? Math.round(deal.amt/10000) : deal.amt;
+    const saveUnit = deal.unit > 100000000 ? Math.round(deal.unit/10000) : deal.unit;
     const {data, error} = await sb.from('deals').insert([{
       name: deal.name, co: deal.co, prod: deal.prod,
       option_items: deal.option, inflow: deal.inflow,
-      qty: deal.qty, unit_price: deal.unit, amount: deal.amt,
+      qty: deal.qty, unit_price: saveUnit, amount: saveAmt,
       person: deal.person, stage: deal.stage,
       close_date: deal.closeDate||null,
       priority: deal.priority,
@@ -3990,10 +4017,13 @@ async function saveDealToDB(deal){
 async function updateDealInDB(deal){
   if(!sb){ return; }
   try{
+    // deal.amt는 항상 만원 단위로 저장 (100억만원 이상이면 잘못된 값이므로 /10000)
+    const safeAmt = deal.amt > 100000000 ? Math.round(deal.amt/10000) : deal.amt;
+    const safeUnit = deal.unit > 100000000 ? Math.round(deal.unit/10000) : deal.unit;
     const {error} = await sb.from('deals').update({
       name: deal.name, co: deal.co, prod: deal.prod,
       option_items: deal.option, inflow: deal.inflow,
-      qty: deal.qty, unit_price: deal.unit, amount: deal.amt,
+      qty: deal.qty, unit_price: safeUnit, amount: safeAmt,
       person: deal.person, stage: deal.stage,
       close_date: deal.closeDate||null,
       priority: deal.priority,
