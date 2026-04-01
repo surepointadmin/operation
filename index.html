@@ -717,6 +717,51 @@ tbody tr:hover{background:var(--s2)}
 }
 
 /* 인쇄 여백 — 브라우저가 자동 스케일(fit to page) 하도록 여백 최소화 */
+
+/* ── 딜 알람 ── */
+.deal-alert-btn{display:flex;align-items:center;justify-content:center;gap:5px;height:34px;padding:0 12px;border-radius:var(--r-sm);border:1px solid var(--bd2);background:var(--surface);cursor:pointer;transition:all .15s;flex-shrink:0;color:var(--t2);font-size:13px;font-weight:600;font-family:var(--font);position:relative}
+.deal-alert-btn:hover{background:var(--al);border-color:var(--accent);color:var(--accent)}
+.deal-alert-btn.has-new{background:var(--rl);border-color:#fecaca;color:var(--red)}
+.deal-alert-badge{position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;border-radius:10px;background:var(--red);color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px;line-height:1;border:2px solid var(--surface)}
+.deal-alert-panel{position:fixed;top:60px;right:16px;width:360px;max-height:480px;background:var(--surface);border:1px solid var(--bd);border-radius:var(--r-lg);box-shadow:var(--sh-lg);z-index:800;display:none;flex-direction:column;overflow:hidden;animation:su .18s ease}
+.deal-alert-panel.open{display:flex}
+.deal-alert-hd{padding:14px 16px 10px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.deal-alert-title{font-size:14px;font-weight:800;letter-spacing:-.3px}
+.deal-alert-list{overflow-y:auto;flex:1}
+.deal-alert-list::-webkit-scrollbar{width:4px}.deal-alert-list::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px}
+.deal-alert-item{display:flex;align-items:flex-start;gap:10px;padding:12px 16px;border-bottom:1px solid var(--bd);cursor:pointer;transition:background .1s;position:relative}
+.deal-alert-item:hover{background:var(--s2)}
+.deal-alert-item.unread{background:#fffbeb}
+.deal-alert-item.unread::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);border-radius:0 2px 2px 0}
+.deal-alert-item:last-child{border-bottom:none}
+.deal-alert-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:5px}
+.deal-alert-dot.read{background:var(--bd2)}
+.deal-alert-body{flex:1;min-width:0}
+.deal-alert-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.deal-alert-meta{font-size:11px;color:var(--t3);margin-top:2px;line-height:1.5}
+.deal-alert-time{font-size:10px;color:var(--t3);flex-shrink:0;margin-top:4px;white-space:nowrap}
+.deal-alert-empty{padding:40px;text-align:center;color:var(--t3);font-size:13px}
+
+
+/* ── 비활동 딜 알람 모달 ── */
+.stale-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.48);backdrop-filter:blur(5px);z-index:2500;display:flex;align-items:center;justify-content:center;padding:16px;animation:fadeIn .2s ease}
+.stale-modal{background:var(--surface);border-radius:var(--r-xl);width:100%;max-width:520px;max-height:82vh;display:flex;flex-direction:column;box-shadow:var(--sh-lg);animation:su .22s ease;overflow:hidden}
+.stale-modal-hd{padding:20px 24px 14px;border-bottom:1px solid var(--bd);flex-shrink:0}
+.stale-modal-title{font-size:18px;font-weight:800;letter-spacing:-.4px;margin-bottom:3px}
+.stale-modal-sub{font-size:13px;color:var(--t2)}
+.stale-modal-list{overflow-y:auto;flex:1;padding:8px 0}
+.stale-modal-list::-webkit-scrollbar{width:4px}.stale-modal-list::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px}
+.stale-item{display:flex;align-items:flex-start;gap:12px;padding:13px 20px;border-bottom:1px solid var(--bd);cursor:pointer;transition:background .12s}
+.stale-item:hover{background:var(--s2)}
+.stale-item:last-child{border-bottom:none}
+.stale-icon{width:36px;height:36px;border-radius:10px;background:var(--aml);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;margin-top:1px}
+.stale-body{flex:1;min-width:0}
+.stale-name{font-size:14px;font-weight:700;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stale-msg{font-size:12px;color:var(--t2);line-height:1.55;margin-bottom:5px}
+.stale-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.stale-days{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--rl);color:var(--red)}
+.stale-modal-ft{padding:14px 20px;border-top:1px solid var(--bd);display:flex;gap:8px;justify-content:flex-end;flex-shrink:0}
+
 @page { margin: 6mm; size: auto; }
 </style>
 </head>
@@ -912,6 +957,11 @@ tbody tr:hover{background:var(--s2)}
           <span>🏠</span><span class="sw-label">홈</span>
         </button>
       </div>
+      <button class="deal-alert-btn" id="dealAlertBtn" onclick="toggleDealAlert()" title="딜 알람" style="display:none">
+        <svg viewBox="0 0 16 16" fill="none" style="width:14px;height:14px;flex-shrink:0"><path d="M8 2a5 5 0 00-5 5v2l-1 2h12l-1-2V7a5 5 0 00-5-5z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M6.5 13a1.5 1.5 0 003 0" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <span class="cal-btn-label">알람</span>
+        <span class="deal-alert-badge" id="dealAlertBadge" style="display:none">0</span>
+      </button>
       <button class="cal-topbar-btn" id="calTopbarBtn" onclick="toggleCalendar()" title="일정 캘린더">
         <svg viewBox="0 0 16 16" fill="none" style="width:14px;height:14px;flex-shrink:0"><rect x="2" y="2" width="12" height="13" rx="2" stroke="currentColor" stroke-width="1.4"/><line x1="5" y1="1" x2="5" y2="4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="11" y1="1" x2="11" y2="4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="2" y1="7" x2="14" y2="7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
         <span class="cal-btn-label">캘린더</span>
@@ -2351,6 +2401,8 @@ async function doLogin() {
   }
   initHistory();
   renderHome();
+  setTimeout(initDealAlerts, 500);
+  setTimeout(checkStaleDeals, 2000);
 }
 function doLogout() {
   CU=null;
@@ -3385,7 +3437,8 @@ function buildDealInfo(d) {
     <div class="det-item"><div class="det-label">담당자</div><div class="det-val">${d.person}</div></div>
     <div class="det-item"><div class="det-label">마감 예정일</div><div class="det-val" style="${isUrgent(d.closeDate)?'color:var(--red)':''}">${d.closeDate||'–'}</div></div>
     <div class="det-item"><div class="det-label">현재 단계</div><div class="det-val"><span class="sp ${spCls(d.stage)}">${d.stage}</span></div></div>
-    <div class="det-item" style="grid-column:1/-1"><div class="det-label">유입 경로</div><div class="det-val"><span style="padding:4px 12px;border-radius:20px;font-size:13px;${inflowStyle(d.inflow||'direct')}">${inflowLabel(d.inflow||'direct')}</span></div></div>`;
+    <div class="det-item"><div class="det-label">등록일</div><div class="det-val" style="color:var(--t2)">${d.createdAt||'–'}</div></div>
+    <div class="det-item"><div class="det-label">유입 경로</div><div class="det-val"><span style="padding:4px 12px;border-radius:20px;font-size:13px;${inflowStyle(d.inflow||'direct')}">${inflowLabel(d.inflow||'direct')}</span></div></div>`;
   const pi=document.getElementById('dealProdInfo');
   if(d.prod){
     pi.style.display='block';
@@ -4149,6 +4202,7 @@ async function loadDealsFromDB(){
       priority: d.priority||false,
       linkedProject: d.linked_project||null,
       createdAt: d.created_at?.slice(0,10)||'',
+      created_at: d.created_at||'',
       logs: dbLogs.filter(l=>l.deal_id===d.id).map(l=>({
         type: l.type,
         text: l.text,
@@ -4158,6 +4212,8 @@ async function loadDealsFromDB(){
       }))
     }));
     dealIdCnt = Math.max(...deals.map(d=>d.id), 0) + 1;
+    // 로드된 딜의 created_at 보존
+    deals.forEach(d => { if(!d.created_at) d.created_at = d.createdAt ? d.createdAt+'T00:00:00Z' : ''; });
   } catch(e){
     console.error('loadDealsFromDB error:', e);
     showToast('데이터 로드에 실패했습니다. 새로고침 후 다시 시도해주세요.', 'error');
@@ -4199,7 +4255,9 @@ async function saveDealToDB(deal){
         person: l.person, dept: l.dept
       })));
     }
-    return {...deal, id: data.id};
+    const savedDeal = {...deal, id: data.id, created_at: data.created_at||new Date().toISOString()};
+    updateDealAlertBadge();
+    return savedDeal;
   } catch(e){
     console.error('saveDealToDB:', e);
     showToast('저장 실패: '+e.message, 'error');
@@ -4322,6 +4380,20 @@ function initKanbanDrag(){
 document.getElementById('loginPw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 document.getElementById('loginId').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('loginPw').focus();});
 </script>
+
+<!-- 딜 알람 패널 -->
+<div class="deal-alert-panel" id="dealAlertPanel">
+  <div class="deal-alert-hd">
+    <div class="deal-alert-title">🔔 최신 딜 알람</div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <button onclick="markAllDealAlertsRead()" style="font-size:11px;color:var(--accent);background:none;border:none;cursor:pointer;font-family:var(--font);font-weight:600;padding:0">모두 읽음</button>
+      <button onclick="closeDealAlert()" style="width:26px;height:26px;border-radius:50%;background:var(--s2);border:none;cursor:pointer;font-size:16px;color:var(--t2);display:flex;align-items:center;justify-content:center">×</button>
+    </div>
+  </div>
+  <div class="deal-alert-list" id="dealAlertList">
+    <div class="deal-alert-empty">알람이 없습니다</div>
+  </div>
+</div>
 </body>
 </html>
 
@@ -6397,5 +6469,373 @@ async function orgAskDelMem(deptId,memberId) {
 }
 
 window.addEventListener('resize',()=>{if(document.getElementById('view-orgchart')?.classList.contains('active'))orgDrawLines();});
+
+
+// ══════════════════════════════════════════════
+// 딜 알람 시스템
+// ══════════════════════════════════════════════
+const DEAL_ALERT_READ_KEY = 'sp_deal_alert_read_ids';
+const DEAL_ALERT_WINDOW_HRS = 72; // 72시간 내 딜만 표시
+
+function getDealAlertReadIds() {
+  try { return new Set(JSON.parse(localStorage.getItem(DEAL_ALERT_READ_KEY)||'[]')); }
+  catch(e) { return new Set(); }
+}
+function saveDealAlertReadIds(ids) {
+  // 최대 500개만 유지
+  const arr = [...ids].slice(-500);
+  localStorage.setItem(DEAL_ALERT_READ_KEY, JSON.stringify(arr));
+}
+
+// 최근 딜 필터링 (created_at 기준)
+function getRecentDeals() {
+  const cutoff = new Date(Date.now() - DEAL_ALERT_WINDOW_HRS * 3600 * 1000);
+  return [...deals]
+    .filter(d => {
+      const ca = d.createdAt || d.created_at || '';
+      if(!ca) return false;
+      return new Date(ca) >= cutoff;
+    })
+    .sort((a, b) => {
+      const ta = new Date(b.createdAt||b.created_at||0);
+      const tb = new Date(a.createdAt||a.created_at||0);
+      return ta - tb;
+    });
+}
+
+// 상대 시간 표시
+function relTime(dateStr) {
+  if(!dateStr) return '';
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins  = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days  = Math.floor(diff / 86400000);
+  if(mins < 1)  return '방금 전';
+  if(mins < 60) return `${mins}분 전`;
+  if(hours < 24) return `${hours}시간 전`;
+  if(days < 7)  return `${days}일 전`;
+  return new Date(dateStr).toLocaleDateString('ko-KR',{month:'short',day:'numeric'});
+}
+
+// 알람 버튼 배지 업데이트
+function updateDealAlertBadge() {
+  const btn = document.getElementById('dealAlertBtn');
+  const badge = document.getElementById('dealAlertBadge');
+  if(!btn || !badge) return;
+
+  const recent = getRecentDeals();
+  if(recent.length === 0) { btn.style.display = 'none'; return; }
+
+  btn.style.display = 'flex';
+  const readIds = getDealAlertReadIds();
+  const unreadCount = recent.filter(d => !readIds.has(String(d.id))).length;
+
+  if(unreadCount > 0) {
+    badge.style.display = 'flex';
+    badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+    btn.classList.add('has-new');
+  } else {
+    badge.style.display = 'none';
+    btn.classList.remove('has-new');
+  }
+}
+
+// 알람 패널 렌더링
+function renderDealAlertPanel() {
+  const list = document.getElementById('dealAlertList');
+  if(!list) return;
+
+  const recent = getRecentDeals();
+  if(recent.length === 0) {
+    list.innerHTML = '<div class="deal-alert-empty">최근 72시간 내 새 딜이 없습니다</div>';
+    return;
+  }
+
+  const readIds = getDealAlertReadIds();
+  const inflow = d => {
+    const src = (window.INFLOW_SOURCES||[]).find(s=>s.id===d.inflow);
+    return src ? `<span style="font-size:10px;padding:1px 6px;border-radius:10px;background:${src.bg};color:${src.color};font-weight:600">${src.label}</span>` : '';
+  };
+
+  list.innerHTML = recent.map(d => {
+    const isRead = readIds.has(String(d.id));
+    const ca = d.createdAt || d.created_at || '';
+    const stageCls = {
+      '잠재 발굴':'#9ca3af','미팅·접촉':'#3b82f6','제안·견적':'#eab308',
+      '협상·검토':'#a855f7','구두합의':'#22c55e','계약 완료':'#16a34a','실패·보류':'#ef4444'
+    }[d.stage] || '#9ca3af';
+
+    return `<div class="deal-alert-item${isRead?'':' unread'}" onclick="onDealAlertClick(${d.id})">
+      <div class="deal-alert-dot${isRead?' read':''}" style="${isRead?'':'background:'+stageCls}"></div>
+      <div class="deal-alert-body">
+        <div class="deal-alert-name">${d.name}</div>
+        <div class="deal-alert-meta">
+          <span style="font-weight:600;color:var(--t2)">${d.co}</span>
+          <span style="color:var(--bd2)"> · </span>
+          <span>${d.person}</span>
+          <span style="color:var(--bd2)"> · </span>
+          <span style="font-size:10px;padding:1px 6px;border-radius:10px;background:${stageCls}22;color:${stageCls};font-weight:600">${d.stage}</span>
+          ${d.amt > 0 ? `<span style="color:var(--bd2)"> · </span><span style="font-weight:700;color:var(--accent)">${fmt(d.amt)}</span>` : ''}
+          ${d.inflow ? `<br>${inflow(d)}` : ''}
+        </div>
+      </div>
+      <div class="deal-alert-time">${relTime(ca)}</div>
+    </div>`;
+  }).join('');
+}
+
+// 알람 클릭 — 해당 딜 열기
+function onDealAlertClick(dealId) {
+  // 읽음 처리
+  const readIds = getDealAlertReadIds();
+  readIds.add(String(dealId));
+  saveDealAlertReadIds(readIds);
+
+  closeDealAlert();
+  updateDealAlertBadge();
+
+  // 영업 파이프라인으로 이동 후 딜 열기
+  if(currentDashContext !== 'sales') {
+    enterDashboard('sales');
+    setTimeout(() => openDeal(dealId), 300);
+  } else {
+    openDeal(dealId);
+  }
+}
+
+// 모두 읽음
+function markAllDealAlertsRead() {
+  const readIds = getDealAlertReadIds();
+  getRecentDeals().forEach(d => readIds.add(String(d.id)));
+  saveDealAlertReadIds(readIds);
+  updateDealAlertBadge();
+  renderDealAlertPanel();
+}
+
+// 패널 열기/닫기
+function toggleDealAlert() {
+  const panel = document.getElementById('dealAlertPanel');
+  if(!panel) return;
+  const isOpen = panel.classList.contains('open');
+  if(isOpen) { closeDealAlert(); }
+  else {
+    // 다른 패널 닫기 (캘린더 등)
+    renderDealAlertPanel();
+    panel.classList.add('open');
+    document.getElementById('dealAlertBtn').classList.add('active');
+  }
+}
+function closeDealAlert() {
+  const panel = document.getElementById('dealAlertPanel');
+  if(panel) panel.classList.remove('open');
+  const btn = document.getElementById('dealAlertBtn');
+  if(btn) btn.classList.remove('active');
+}
+
+// 외부 클릭 시 패널 닫기
+document.addEventListener('click', e => {
+  const panel = document.getElementById('dealAlertPanel');
+  const btn   = document.getElementById('dealAlertBtn');
+  if(panel && btn && !panel.contains(e.target) && !btn.contains(e.target)) {
+    closeDealAlert();
+  }
+});
+
+// 딜 로드 완료 후 배지 초기화 + 주기적 갱신
+function initDealAlerts() {
+  updateDealAlertBadge();
+  // 3분마다 새 딜 확인 (Supabase 재조회)
+  setInterval(async () => {
+    if(!sb) return;
+    try {
+      const cutoffIso = new Date(Date.now() - DEAL_ALERT_WINDOW_HRS * 3600000).toISOString();
+      const {data} = await sb.from('deals')
+        .select('id,name,co,prod,person,stage,amount,inflow,created_at')
+        .gte('created_at', cutoffIso)
+        .order('created_at', {ascending:false});
+      if(!data) return;
+      // 새로 추가된 딜 병합
+      let hasNew = false;
+      data.forEach(row => {
+        if(!deals.find(d=>d.id===row.id)) {
+          deals.unshift({
+            id:row.id, name:row.name, co:row.co, prod:row.prod||'',
+            option:'', inflow:row.inflow||'direct',
+            qty:1, unit:0, amt:row.amount||0,
+            person:row.person||'', stage:row.stage||'잠재 발굴',
+            closeDate:'', priority:false, linkedProject:null,
+            createdAt:row.created_at?.slice(0,10)||'',
+            created_at:row.created_at||'',
+            logs:[]
+          });
+          hasNew = true;
+        }
+      });
+      updateDealAlertBadge();
+      // 파이프라인이 열려있으면 재렌더
+      if(hasNew && document.getElementById('view-pipeline')?.classList.contains('active')) {
+        renderPipeline();
+        showToast('새 딜이 추가됐습니다 🔔');
+      }
+    } catch(e) { /* 무시 */ }
+  }, 3 * 60 * 1000);
+}
+
+
+// ══════════════════════════════════════════════
+// 비활동 딜 알람 (2주 이상 업데이트 없는 담당자 딜)
+// ══════════════════════════════════════════════
+const STALE_DAYS = 14;           // 비활동 기준 일수
+const STALE_DISMISS_KEY = 'sp_stale_dismissed'; // localStorage key
+
+// 오늘 이미 확인한 딜 ID 목록 (당일만 유효)
+function getStaleDismissed() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(STALE_DISMISS_KEY) || '{}');
+    const today = new Date().toISOString().slice(0, 10);
+    return raw.date === today ? new Set(raw.ids || []) : new Set();
+  } catch(e) { return new Set(); }
+}
+function saveStaleDismissed(ids) {
+  const today = new Date().toISOString().slice(0, 10);
+  localStorage.setItem(STALE_DISMISS_KEY, JSON.stringify({ date: today, ids: [...ids] }));
+}
+
+// 딜의 마지막 활동 일자 계산
+function dealLastActivity(d) {
+  // 로그 중 가장 최근 시각
+  if(d.logs && d.logs.length > 0) {
+    // 로그 time은 "YYYY.MM.DD HH:MM" 형식 또는 ISO 형식
+    const times = d.logs.map(l => {
+      const t = l.time || '';
+      // YYYY.MM.DD → Date
+      const m = t.match(/(\d{4})[.\-\/](\d{1,2})[.\-\/](\d{1,2})/);
+      return m ? new Date(parseInt(m[1]), parseInt(m[2])-1, parseInt(m[3])) : null;
+    }).filter(Boolean);
+    if(times.length > 0) {
+      return new Date(Math.max(...times.map(t => t.getTime())));
+    }
+  }
+  // 로그 없으면 등록일 기준
+  const ca = d.created_at || (d.createdAt ? d.createdAt + 'T00:00:00Z' : null);
+  return ca ? new Date(ca) : null;
+}
+
+// 비활동 딜 목록 계산 (본인 담당, 미완료)
+function getStaleDeals() {
+  const SKIP_STAGES = new Set(['계약 완료', '실패·보류']);
+  const now = Date.now();
+  const cutoffMs = STALE_DAYS * 24 * 3600 * 1000;
+
+  return deals.filter(d => {
+    if(SKIP_STAGES.has(d.stage)) return false;
+    // 담당자 본인 딜만 (superadmin/admin은 전체)
+    if(!['superadmin', 'admin'].includes(CU?.role) && d.person !== CU?.name) return false;
+    const last = dealLastActivity(d);
+    if(!last) return false;
+    return (now - last.getTime()) >= cutoffMs;
+  }).sort((a, b) => {
+    const la = dealLastActivity(a), lb = dealLastActivity(b);
+    return (la?.getTime() || 0) - (lb?.getTime() || 0); // 오래된 것 먼저
+  });
+}
+
+// 상대 일수 표시
+function staleDaysAgo(d) {
+  const last = dealLastActivity(d);
+  if(!last) return '?일';
+  const days = Math.floor((Date.now() - last.getTime()) / 86400000);
+  return days + '일';
+}
+
+// 알람 모달 열기
+function showStaleDealsModal(staleDeals) {
+  if(!staleDeals || staleDeals.length === 0) return;
+
+  const dismissed = getStaleDismissed();
+  const toShow = staleDeals.filter(d => !dismissed.has(String(d.id)));
+  if(toShow.length === 0) return;
+
+  // 이미 열려 있으면 스킵
+  if(document.getElementById('staleDealOverlay')) return;
+
+  const isSelfOnly = !['superadmin','admin'].includes(CU?.role);
+  const title = isSelfOnly ? '⚠️ 내 딜 관리 알림' : '⚠️ 비활동 딜 알람';
+  const sub   = isSelfOnly
+    ? `담당 딜 중 ${STALE_DAYS}일 이상 업데이트가 없는 건이 있습니다`
+    : `팀 딜 중 ${STALE_DAYS}일 이상 업데이트가 없는 건이 있습니다`;
+
+  const itemsHtml = toShow.map(d => {
+    const daysAgo = staleDaysAgo(d);
+    const last = dealLastActivity(d);
+    const lastStr = last ? last.toLocaleDateString('ko-KR', {month:'long',day:'numeric'}) : '–';
+    return `<div class="stale-item" onclick="onStaleItemClick(${d.id})">
+      <div class="stale-icon">⏰</div>
+      <div class="stale-body">
+        <div class="stale-name">${d.name}</div>
+        <div class="stale-msg">${d.co} · <strong>${d.person}</strong> 담당 — <strong>${daysAgo}</strong>째 업데이트가 없습니다. 해당 딜을 확인해 주세요.</div>
+        <div class="stale-meta">
+          <span class="stale-days">⏱ ${daysAgo} 경과</span>
+          <span class="chip chip-gray" style="font-size:10px">${d.stage}</span>
+          <span style="font-size:11px;color:var(--t3)">마지막 활동 ${lastStr}</span>
+          ${d.amt > 0 ? `<span style="font-size:11px;font-weight:700;color:var(--accent)">${fmt(d.amt)}</span>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const overlay = document.createElement('div');
+  overlay.id = 'staleDealOverlay';
+  overlay.className = 'stale-modal-overlay';
+  overlay.innerHTML = `
+    <div class="stale-modal">
+      <div class="stale-modal-hd">
+        <div class="stale-modal-title">${title}</div>
+        <div class="stale-modal-sub">${sub} (총 ${toShow.length}건)</div>
+      </div>
+      <div class="stale-modal-list">${itemsHtml}</div>
+      <div class="stale-modal-ft">
+        <button class="btn btn-s" onclick="dismissStaleAll()">오늘 하루 보지 않기</button>
+        <button class="btn btn-p" onclick="closeStaleModal()">확인</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  // 오버레이 클릭 시 닫기
+  overlay.addEventListener('click', e => { if(e.target === overlay) closeStaleModal(); });
+}
+
+// 딜 클릭 → 해당 딜 열기
+function onStaleItemClick(dealId) {
+  closeStaleModal();
+  if(currentDashContext !== 'sales') {
+    enterDashboard('sales');
+    setTimeout(() => openDeal(dealId), 300);
+  } else {
+    openDeal(dealId);
+  }
+}
+
+// 오늘 하루 모두 무시
+function dismissStaleAll() {
+  const dismissed = getStaleDismissed();
+  getStaleDeals().forEach(d => dismissed.add(String(d.id)));
+  saveStaleDismissed(dismissed);
+  closeStaleModal();
+}
+
+function closeStaleModal() {
+  const el = document.getElementById('staleDealOverlay');
+  if(el) el.remove();
+}
+
+// 로그인 후 비활동 딜 체크
+function checkStaleDeals() {
+  const stale = getStaleDeals();
+  if(stale.length > 0) {
+    // 1.5초 딜레이 후 표시 (홈 렌더링 완료 후)
+    setTimeout(() => showStaleDealsModal(stale), 1500);
+  }
+}
 
 </script>
