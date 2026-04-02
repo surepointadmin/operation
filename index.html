@@ -716,6 +716,87 @@ tbody tr:hover{background:var(--s2)}
   .org-ceo-sec::after { display: block !important; }
 }
 
+
+/* ── 양산/개발 파이프라인 공통 ── */
+.rd-kanban-wrap{overflow-x:auto;padding-bottom:8px;cursor:grab;user-select:none}
+.rd-kanban-wrap:active{cursor:grabbing}
+.rd-board{display:flex;gap:12px;min-width:max-content;align-items:flex-start;padding-bottom:4px}
+.rd-col{width:290px;background:var(--s2);border-radius:var(--r-lg);border:1px solid var(--bd);flex-shrink:0}
+.rd-col-hd{padding:14px 14px 12px;display:flex;align-items:flex-start;gap:8px}
+.rd-col-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.rd-col-name{font-size:13px;font-weight:700;flex:1}
+.rd-col-meta{font-size:11px;color:var(--t3);flex-shrink:0}
+.rd-col-body{padding:0 10px 10px;display:flex;flex-direction:column;gap:8px;min-height:40px}
+.rd-col-foot{padding:4px 10px 12px}
+/* 양산 카드 */
+.mass-card{background:var(--surface);border:1px solid var(--bd);border-radius:var(--r);padding:13px 14px;cursor:pointer;transition:all .15s;box-shadow:var(--sh)}
+.mass-card:hover{box-shadow:var(--sh-md);border-color:var(--bd2);transform:translateY(-1px)}
+.mass-card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px}
+.mass-card-name{font-size:13px;font-weight:700;line-height:1.3;flex:1}
+.mass-card-qty{font-size:12px;font-weight:700;color:var(--accent);white-space:nowrap;margin-left:6px}
+.mass-card-co{font-size:12px;color:var(--t2);margin-bottom:8px}
+.mass-card-foot{display:flex;align-items:center;gap:6px}
+.mass-dday{font-size:11px;font-weight:700;padding:2px 7px;border-radius:20px}
+.mass-dday-ok{background:var(--gl);color:var(--gt)}
+.mass-dday-warn{background:var(--aml);color:var(--amt)}
+.mass-dday-danger{background:var(--rl);color:var(--rt)}
+/* 개발 카드 */
+.rd-card{background:var(--surface);border:1px solid var(--bd);border-radius:var(--r);padding:13px 14px;cursor:pointer;transition:all .15s;box-shadow:var(--sh)}
+.rd-card:hover{box-shadow:var(--sh-md);border-color:var(--bd2);transform:translateY(-1px)}
+.rd-card-name{font-size:13px;font-weight:700;margin-bottom:4px;line-height:1.3}
+.rd-card-desc{font-size:11px;color:var(--t2);margin-bottom:8px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rd-card-foot{display:flex;align-items:center;gap:6px}
+.rd-progress{flex:1;height:4px;background:var(--s2);border-radius:2px;overflow:hidden}
+.rd-progress-fill{height:100%;border-radius:2px;background:var(--accent);transition:width .4s}
+/* 상세 뷰 공통 */
+.pipe-detail-wrap{max-width:860px;margin:0 auto}
+.pipe-detail-hd{background:var(--surface);border:1px solid var(--bd);border-radius:var(--r-lg);padding:22px 24px;margin-bottom:16px;box-shadow:var(--sh)}
+.pipe-section{background:var(--surface);border:1px solid var(--bd);border-radius:var(--r-lg);margin-bottom:14px;overflow:hidden;box-shadow:var(--sh)}
+.pipe-section-hd{padding:14px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;cursor:pointer}
+.pipe-section-hd:hover{background:var(--s2)}
+.pipe-section-body{padding:16px 20px}
+/* 개발 체크리스트 */
+.rd-task-row{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--bd)}
+.rd-task-row:last-child{border-bottom:none}
+.rd-task-check{width:18px;height:18px;border-radius:4px;border:2px solid var(--bd2);cursor:pointer;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.rd-task-check.done{background:var(--accent);border-color:var(--accent);color:#fff}
+.rd-task-body{flex:1;min-width:0}
+.rd-task-title{font-size:13px;font-weight:600;line-height:1.4}
+.rd-task-title.done-text{text-decoration:line-through;color:var(--t3)}
+.rd-task-desc{font-size:11px;color:var(--t3);margin-top:2px}
+.rd-task-dates{font-size:10px;color:var(--t3);margin-top:3px}
+.rd-task-actions{display:flex;gap:4px;flex-shrink:0;opacity:0;transition:opacity .15s}
+.rd-task-row:hover .rd-task-actions{opacity:1}
+/* 양산 부품 테이블 */
+.mass-part-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd);font-size:12px}
+.mass-part-row:last-child{border-bottom:none}
+.mass-part-name{font-weight:600;flex:1;min-width:0}
+.mass-install-grid{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.mass-week-chip{padding:5px 10px;border-radius:var(--r-sm);background:var(--s2);border:1px solid var(--bd);font-size:12px;font-weight:600;text-align:center;min-width:60px}
+
+
+/* ── BOM 드래그 순서 ── */
+.bom-drag-handle{cursor:grab;color:var(--t3);padding:0 6px;display:flex;align-items:center;flex-shrink:0;opacity:.5;transition:opacity .15s;user-select:none}
+.bom-drag-handle:hover{opacity:1;color:var(--t2)}
+.bom-drag-handle:active{cursor:grabbing}
+.bom-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--bd);transition:background .1s}
+.bom-row.dragging{opacity:.4;background:var(--al)}
+.bom-row.drag-over{background:var(--al);border-top:2px solid var(--accent)}
+/* ── 구성품 세트 ── */
+.comp-chip{display:inline-flex;align-items:center;gap:5px;background:var(--s2);border:1px solid var(--bd);border-radius:var(--r-sm);padding:3px 8px 3px 10px;font-size:11px;font-weight:600}
+.comp-chip-x{background:none;border:none;cursor:pointer;color:var(--t3);padding:0;font-size:14px;line-height:1;display:flex;align-items:center}
+.comp-chip-x:hover{color:var(--red)}
+/* ── 입출고 BOM 자동선택 ── */
+.tx-bom-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd);font-size:12px}
+.tx-bom-row:last-child{border-bottom:none}
+.tx-bom-check{width:16px;height:16px;border-radius:3px;border:2px solid var(--bd2);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .12s;accent-color:var(--accent)}
+
+
+/* ── 입출고 이력 선택/삭제/수정 ── */
+.tx-select-bar{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--al);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:10px;animation:fadeIn .15s ease;flex-wrap:wrap}
+.tx-row-selected td{background:#eff6ff!important}
+.tx-checkbox{width:16px;height:16px;cursor:pointer;accent-color:var(--accent);flex-shrink:0}
+
 /* 인쇄 여백 — 브라우저가 자동 스케일(fit to page) 하도록 여백 최소화 */
 
 /* ── 딜 알람 ── */
@@ -870,6 +951,28 @@ tbody tr:hover{background:var(--s2)}
         </div>
       </div>
 
+      <!-- 양산 파이프라인 컨텍스트 메뉴 -->
+      <div id="nav-mass-ctx" style="display:none">
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 10px 6px;cursor:pointer" onclick="showHome(null)">
+          <span style="font-size:11px;color:var(--t3)">← 홈</span>
+        </div>
+        <div class="nav-section" style="color:#0891b2">🏭 양산 파이프라인</div>
+        <div class="nav-item" onclick="showView('mass-pipeline',this)" id="ni-mass-pipeline">
+          <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="4" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="6" y="3" width="4" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="11" y="3" width="4" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/></svg>
+          양산 칸반
+        </div>
+      </div>
+      <!-- 개발 파이프라인 컨텍스트 메뉴 -->
+      <div id="nav-rd-ctx" style="display:none">
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 10px 6px;cursor:pointer" onclick="showHome(null)">
+          <span style="font-size:11px;color:var(--t3)">← 홈</span>
+        </div>
+        <div class="nav-section" style="color:#7c3aed">🔬 개발 파이프라인</div>
+        <div class="nav-item" onclick="showView('rd-pipeline',this)" id="ni-rd-pipeline">
+          <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="4" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="6" y="3" width="4" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="11" y="3" width="4" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/></svg>
+          개발 칸반
+        </div>
+      </div>
       <!-- 재무 대시보드 컨텍스트 메뉴 -->
       <div id="nav-fin-ctx" style="display:none">
         <div style="display:flex;align-items:center;gap:8px;padding:8px 10px 6px;cursor:pointer" onclick="showHome(null)">
@@ -952,6 +1055,12 @@ tbody tr:hover{background:var(--s2)}
         </button>
         <button class="dash-sw-btn" id="sw-fin" onclick="enterDashboard('fin')" title="재무">
           <span>💰</span><span class="sw-label">재무</span>
+        </button>
+        <button class="dash-sw-btn" id="sw-mass" onclick="enterDashboard('mass')" title="양산 파이프라인">
+          <span>🏭</span><span class="sw-label">양산</span>
+        </button>
+        <button class="dash-sw-btn" id="sw-rd" onclick="enterDashboard('rd')" title="개발 파이프라인">
+          <span>🔬</span><span class="sw-label">개발</span>
         </button>
         <button class="dash-sw-btn dash-sw-home" onclick="showHome(null)" title="홈으로">
           <span>🏠</span><span class="sw-label">홈</span>
@@ -1121,6 +1230,23 @@ tbody tr:hover{background:var(--s2)}
                 <div class="hdc-arrow">→</div>
               </div>
             </div>
+            <!-- 양산/개발 대시보드 카드 -->
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:20px" class="home-dash-grid">
+              <div class="home-dash-card" onclick="enterDashboard('mass')" style="border-color:#a5f3fc;background:linear-gradient(135deg,#ecfeff 0%,#fff 60%)">
+                <div class="hdc-icon" style="background:#0891b2">🏭</div>
+                <div class="hdc-title">양산 파이프라인</div>
+                <div class="hdc-desc">계약 완료 딜의 현장조사·제품준비·설치·납품 관리</div>
+                <div class="hdc-stats"><span class="chip chip-cyan" id="hs-mass">0건 진행</span></div>
+                <div class="hdc-arrow">→</div>
+              </div>
+              <div class="home-dash-card" onclick="enterDashboard('rd')" style="border-color:#ddd6fe;background:linear-gradient(135deg,#f5f3ff 0%,#fff 60%)">
+                <div class="hdc-icon" style="background:#7c3aed">🔬</div>
+                <div class="hdc-title">개발 파이프라인</div>
+                <div class="hdc-desc">신기술·신제품 개발 단계별 태스크 관리</div>
+                <div class="hdc-stats"><span class="chip chip-purple" id="hs-rd">0건 진행</span></div>
+                <div class="hdc-arrow">→</div>
+              </div>
+            </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px" id="homeSummaryGrid">
               <div class="card"><div class="card-hd"><div class="card-title">🔥 이번 달 마감 임박</div></div><div class="recent-list" id="home-urgent-deals"></div></div>
               <div class="card"><div class="card-hd"><div class="card-title">💸 수금 예정</div></div><div class="recent-list" id="home-recv-preview"></div></div>
@@ -1228,7 +1354,7 @@ tbody tr:hover{background:var(--s2)}
           </select>
         </div>
         <div class="table-wrap">
-          <table><thead><tr><th>딜명</th><th>고객사</th><th>제품</th><th>금액</th><th>담당자</th><th>단계</th><th>마감일</th></tr></thead>
+          <table><thead><tr><th>딜명</th><th>고객사</th><th>제품</th><th>금액</th><th>담당자</th><th>단계</th><th>계약목표일</th><th>납품기한</th></tr></thead>
           <tbody id="dealsBody"></tbody></table>
         </div>
       </div>
@@ -1339,10 +1465,23 @@ tbody tr:hover{background:var(--s2)}
           <input class="f-input" type="date" id="tx-date-from" onchange="renderTransactions()">
           <span style="color:var(--t3);align-self:center">~</span>
           <input class="f-input" type="date" id="tx-date-to" onchange="renderTransactions()">
+          <button class="btn btn-s btn-sm" onclick="resetTxFilters()" title="필터 초기화" style="flex-shrink:0">↺ 초기화</button>
+        </div>
+        <!-- 선택 액션 바 (선택 시 표시) -->
+        <div class="tx-select-bar" id="txSelectBar" style="display:none">
+          <span style="font-size:13px;font-weight:700;color:var(--at)" id="txSelectCount">0개 선택됨</span>
+          <button class="btn btn-danger btn-sm" onclick="deleteSelectedTx()">🗑 선택 삭제</button>
+          <button class="btn btn-s btn-sm" onclick="clearTxSelection()">선택 해제</button>
+          <span style="font-size:11px;color:var(--t3);margin-left:auto">삭제 시 재고 수량도 함께 복원됩니다</span>
         </div>
         <div class="table-wrap">
-          <table><thead><tr><th>일시</th><th>품목</th><th>구분</th><th>수량</th><th>사유</th><th>담당자</th><th>메모</th></tr></thead>
-          <tbody id="tx-table-body"></tbody></table>
+          <table>
+            <thead><tr>
+              <th style="width:36px"><input type="checkbox" class="tx-checkbox" id="tx-check-all" onclick="toggleAllTxCheck(this)" title="전체 선택"></th>
+              <th>일시</th><th>품목</th><th>구분</th><th>수량</th><th>사유</th><th>담당자</th><th>메모</th><th style="width:60px">관리</th>
+            </tr></thead>
+            <tbody id="tx-table-body"></tbody>
+          </table>
         </div>
       </div>
 
@@ -1485,6 +1624,24 @@ tbody tr:hover{background:var(--s2)}
         </div>
       </div>
 
+      <!-- MASS PIPELINE -->
+      <div class="view" id="view-mass-pipeline">
+        <div class="rd-kanban-wrap" id="massKanbanWrap"><div class="rd-board" id="massBoardEl"></div></div>
+      </div>
+      <!-- MASS DETAIL -->
+      <div class="view" id="view-mass-detail">
+        <div style="margin-bottom:14px"><button class="btn btn-s btn-sm" onclick="enterDashboard('mass')">← 양산 파이프라인</button></div>
+        <div id="massDetailContent" class="pipe-detail-wrap"></div>
+      </div>
+      <!-- RD PIPELINE -->
+      <div class="view" id="view-rd-pipeline">
+        <div class="rd-kanban-wrap" id="rdKanbanWrap"><div class="rd-board" id="rdBoardEl"></div></div>
+      </div>
+      <!-- RD DETAIL -->
+      <div class="view" id="view-rd-detail">
+        <div style="margin-bottom:14px"><button class="btn btn-s btn-sm" onclick="enterDashboard('rd')">← 개발 파이프라인</button></div>
+        <div id="rdDetailContent" class="pipe-detail-wrap"></div>
+      </div>
       <!-- SETTINGS -->
       <div class="view" id="view-settings">
         <div class="card" style="max-width:460px">
@@ -1612,7 +1769,14 @@ tbody tr:hover{background:var(--s2)}
             <option>잠재 발굴</option><option>미팅·접촉</option><option>제안·견적</option><option>협상·검토</option><option>구두합의</option>
           </select>
         </div>
-        <div class="form-field"><label class="form-label">마감 예정일</label><input class="form-input" id="nd-date" type="date"></div>
+        <div class="form-field">
+          <label class="form-label">계약 목표일 <span style="font-weight:400;color:var(--t3);font-size:10px">영업 클로징 기준</span></label>
+          <input class="form-input" id="nd-date" type="date">
+        </div>
+        <div class="form-field">
+          <label class="form-label">납품 완료 기한 <span style="font-weight:400;color:var(--t3);font-size:10px">고객사 납기 기준</span></label>
+          <input class="form-input" id="nd-delivery" type="date">
+        </div>
         <div class="form-field"><label class="form-label">우선순위</label><select class="form-select" id="nd-pri"><option value="0">보통</option><option value="1">중요 🔴</option></select></div>
         <div class="form-field full">
           <label class="form-label">메모 <span style="font-weight:400;color:var(--t3)">(미팅 내용, 고객 요청사항 등)</span></label>
@@ -1690,28 +1854,97 @@ tbody tr:hover{background:var(--s2)}
 
 <!-- Stock Transaction Modal (입출고 등록) -->
 <div class="overlay" id="txModal">
-  <div class="modal modal-sm">
+  <div class="modal modal-md">
     <div class="modal-hd">
-      <div class="modal-hd-info"><div class="modal-title" id="txModalTitle">입출고 등록</div><div class="modal-sub">재고 변동을 기록합니다</div></div>
+      <div class="modal-hd-info"><div class="modal-title" id="txModalTitle">입출고 등록</div><div class="modal-sub" id="txModalSub">재고 변동을 기록합니다</div></div>
       <button class="modal-close" onclick="closeModal('txModal')"><svg viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
     </div>
     <div class="modal-body">
-      <div class="form-grid">
-        <div class="form-field full"><label class="form-label">품목 *</label><select class="form-select" id="tx-item"></select></div>
-        <div class="form-field full"><label class="form-label">구분 *</label>
-          <div style="display:flex;gap:8px">
-            <button type="button" class="inflow-chip selected" id="tx-type-in" style="background:var(--gl);color:var(--gt);border-color:var(--green)" onclick="selectTxType('in')">📥 입고</button>
-            <button type="button" class="inflow-chip" id="tx-type-out" onclick="selectTxType('out')">📤 출고</button>
-            <button type="button" class="inflow-chip" id="tx-type-adj" onclick="selectTxType('adjust')">🔧 재고조정</button>
-          </div>
-          <input type="hidden" id="tx-type" value="in">
+      <!-- 구분 먼저 선택 -->
+      <div class="form-field full" style="margin-bottom:14px">
+        <label class="form-label">구분 *</label>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <button type="button" class="inflow-chip selected" id="tx-type-in" style="background:var(--gl);color:var(--gt);border-color:var(--green)" onclick="selectTxType('in')">📥 입고</button>
+          <button type="button" class="inflow-chip" id="tx-type-out" onclick="selectTxType('out')">📤 출고</button>
+          <button type="button" class="inflow-chip" id="tx-type-adj" onclick="selectTxType('adjust')">🔧 재고조정</button>
         </div>
-        <div class="form-field"><label class="form-label">수량 *</label><input class="form-input" id="tx-qty" type="number" min="1" value="1"></div>
-        <div class="form-field"><label class="form-label">담당자</label><input class="form-input" id="tx-person" placeholder="담당자 이름"></div>
-        <div class="form-field full"><label class="form-label">사유</label><input class="form-input" id="tx-reason" placeholder="예: 정기 발주 입고, 영업 출고(CJ대한통운)"></div>
-        <div class="form-field full"><label class="form-label">메모</label><textarea class="form-textarea" id="tx-note" rows="2" placeholder="추가 메모"></textarea></div>
+        <input type="hidden" id="tx-type" value="in">
       </div>
-      <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px;margin-top:16px" onclick="saveTx()">등록</button>
+
+      <!-- 입고 모드: 원재료 기준 -->
+      <div id="tx-in-section">
+        <div class="form-grid">
+          <div class="form-field full">
+            <label class="form-label">원재료 품목 *</label>
+            <select class="form-select" id="tx-item-in" onchange="onTxInItemChange()"></select>
+          </div>
+          <div class="form-field"><label class="form-label">수량 *</label><input class="form-input" id="tx-qty-in" type="number" min="1" value="1"></div>
+          <div class="form-field"><label class="form-label">담당자</label><input class="form-input" id="tx-person-in" placeholder="담당자 이름"></div>
+          <div class="form-field full"><label class="form-label">사유</label><input class="form-input" id="tx-reason-in" placeholder="예: 정기 발주 입고"></div>
+          <div class="form-field full"><label class="form-label">메모</label><textarea class="form-textarea" id="tx-note-in" rows="2" placeholder="추가 메모"></textarea></div>
+        </div>
+      </div>
+
+      <!-- 출고 모드: 완제품 복수 선택 → BOM 자동 원재료 선택 -->
+      <div id="tx-out-section" style="display:none">
+        <!-- 완제품 출고 행 목록 -->
+        <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+          <span>📦 완제품 출고 목록 *</span>
+          <button class="btn btn-s btn-sm" onclick="addTxFinishedRow()">+ 완제품 추가</button>
+        </div>
+        <div id="tx-finished-rows" style="border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:14px">
+          <!-- 행은 JS로 동적 생성 -->
+        </div>
+
+        <!-- BOM 자동 선택 원재료 목록 -->
+        <div id="tx-bom-section" style="display:none;margin-bottom:14px">
+          <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:8px;display:flex;align-items:center;gap:6px">
+            <span>🔩 BOM 기반 원재료 자동 선택</span>
+            <span style="font-size:10px;font-weight:400;color:var(--t3)">체크 해제 시 해당 원재료 제외</span>
+          </div>
+          <div id="tx-bom-list" style="background:var(--s2);border-radius:var(--r);padding:8px 12px;border:1px solid var(--bd)"></div>
+        </div>
+
+        <!-- 추가 원재료 출고 -->
+        <div style="margin-bottom:12px">
+          <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:6px;display:flex;align-items:center;gap:6px">
+            <span>➕ 추가 원재료 출고 <span style="font-size:10px;font-weight:400;color:var(--t3)">(선택사항)</span></span>
+          </div>
+          <div id="tx-extra-rows">
+            <div class="tx-extra-row" style="display:flex;gap:6px;margin-bottom:6px">
+              <select class="form-select tx-extra-item" style="flex:1;font-size:12px"><option value="">원재료 선택</option></select>
+              <input class="form-input tx-extra-qty" type="number" min="1" value="1" style="width:64px;flex:none" placeholder="수량">
+              <button onclick="addTxExtraRow()" style="background:var(--gl);border:1px solid #bbf7d0;border-radius:var(--r-sm);cursor:pointer;width:32px;height:32px;flex:none;font-size:18px;color:var(--gt);display:flex;align-items:center;justify-content:center">+</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-field"><label class="form-label">담당자</label><input class="form-input" id="tx-person-out" placeholder="담당자 이름"></div>
+          <div class="form-field"><label class="form-label">사유</label><input class="form-input" id="tx-reason-out" placeholder="예: 영업 출고 (현대중공업)"></div>
+          <div class="form-field full"><label class="form-label">메모</label><textarea class="form-textarea" id="tx-note-out" rows="2" placeholder="추가 메모"></textarea></div>
+        </div>
+      </div>
+
+      <!-- 재고조정 모드 -->
+      <div id="tx-adj-section" style="display:none">
+        <div class="form-grid">
+          <div class="form-field full"><label class="form-label">품목 *</label><select class="form-select" id="tx-item-adj"></select></div>
+          <div class="form-field"><label class="form-label">조정 수량 * <span style="font-weight:400;color:var(--t3);font-size:10px">(+증가 / -감소)</span></label><input class="form-input" id="tx-qty-adj" type="number" value="0"></div>
+          <div class="form-field"><label class="form-label">담당자</label><input class="form-input" id="tx-person-adj" placeholder="담당자 이름"></div>
+          <div class="form-field full"><label class="form-label">사유</label><input class="form-input" id="tx-reason-adj" placeholder="예: 재고 실사 후 조정"></div>
+          <div class="form-field full"><label class="form-label">메모</label><textarea class="form-textarea" id="tx-note-adj" rows="2" placeholder="추가 메모"></textarea></div>
+        </div>
+      </div>
+
+      <!-- 숨김 필드 (기존 saveTx 호환) -->
+      <input type="hidden" id="tx-item" value="">
+      <input type="hidden" id="tx-qty" value="1">
+      <input type="hidden" id="tx-person" value="">
+      <input type="hidden" id="tx-reason" value="">
+      <input type="hidden" id="tx-note" value="">
+
+      <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px;margin-top:16px" onclick="saveTxNew()">등록</button>
     </div>
   </div>
 </div>
@@ -1967,7 +2200,22 @@ tbody tr:hover{background:var(--s2)}
         <label class="form-label">메모</label>
         <textarea class="form-textarea" id="contract-note" rows="2" placeholder="특이사항, 세금계산서 마감일 등"></textarea>
       </div>
-      <div style="background:var(--gl);border-radius:var(--r);padding:10px 14px;margin-top:12px;font-size:12px;color:var(--gt)">
+      <!-- 납품 기한 -->
+      <div class="form-field full" style="margin-top:4px">
+        <label class="form-label">납품 완료 기한 <span style="font-weight:400;color:var(--t3);font-size:10px">고객사 납기 기준</span></label>
+        <input class="form-input" id="contract-delivery" type="date">
+      </div>
+      <!-- 양산 파이프라인 생성 -->
+      <div style="background:var(--al);border-radius:var(--r);padding:12px 14px;margin-top:12px;border:1px solid var(--bd)">
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+          <input type="checkbox" id="contract-create-mass" checked style="width:16px;height:16px;margin-top:2px;accent-color:var(--accent)">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--at)">🏭 양산 파이프라인 카드 자동 생성</div>
+            <div style="font-size:11px;color:var(--t2);margin-top:2px">계약 완료 후 양산 관리 파이프라인에 이 딜의 카드를 생성합니다</div>
+          </div>
+        </label>
+      </div>
+      <div style="background:var(--gl);border-radius:var(--r);padding:10px 14px;margin-top:8px;font-size:12px;color:var(--gt)">
         💡 입력한 수금 정보는 <strong>재무 &gt; 수금 관리</strong>에 자동으로 등록됩니다.
       </div>
     </div>
@@ -2310,6 +2558,8 @@ function openContractModal(deal) {
   // 금액 자동 채우기 (원 단위 그대로)
   document.getElementById('contract-amount').value = deal.amt||'';
   updateAmtPreview('contract-amount','contract-amount-preview');
+  // 납품 기한 자동 채우기
+  if(deal.deliveryDate) document.getElementById('contract-delivery').value = deal.deliveryDate;
   calcContractExpected();
   openModal('contractModal');
   setTimeout(()=>document.getElementById('contract-basis-date').focus(), 100);
@@ -2335,6 +2585,13 @@ async function confirmContractComplete(){
   if(!basisDate){ showToast('기준일을 입력해주세요','warn'); return; }
   if(!days)     { showToast('지급 기한을 입력해주세요','warn'); return; }
   if(!amount)   { showToast('수금 금액을 입력해주세요','warn'); return; }
+  const deliveryDateVal = document.getElementById('contract-delivery')?.value||'';
+  const createMass = document.getElementById('contract-create-mass')?.checked !== false;
+  // 납품 기한 딜에 저장
+  if(deliveryDateVal) {
+    deal.deliveryDate = deliveryDateVal;
+    updateDealInDB(deal);
+  }
   closeModal('contractModal');
   // 계약 완료 단계 변경 실행
   const os = deal.stage;
@@ -2343,7 +2600,9 @@ async function confirmContractComplete(){
   deal._contractRecv = {
     basis: document.getElementById('contract-basis').value,
     basisDate, days, expected, amount,
-    note: document.getElementById('contract-note').value.trim()
+    note: document.getElementById('contract-note').value.trim(),
+    deliveryDate: deliveryDateVal,
+    createMass
   };
 }
 
@@ -2396,6 +2655,8 @@ async function doLogin() {
       loadDealsFromDB(),
       loadInvData(),
       loadFinData(),
+      loadMassData(),
+      loadRdData(),
     ]).catch(e => console.error('load error:', e));
     hideLoading();
   }
@@ -2445,6 +2706,8 @@ function setupSidebar() {
   document.getElementById('nav-sales-ctx').style.display='none';
   document.getElementById('nav-inv-ctx').style.display='none';
   document.getElementById('nav-fin-ctx').style.display='none';
+  document.getElementById('nav-mass-ctx').style.display='none';
+  document.getElementById('nav-rd-ctx').style.display='none';
 }
 
 // ══════════════════════════════════════════════
@@ -2475,13 +2738,19 @@ const VIEW_ACTIONS = {
       <svg viewBox="0 0 14 14" fill="none" style="width:13px;height:13px;flex-shrink:0"><line x1="7" y1="2" x2="7" y2="12" stroke="white" stroke-width="1.8" stroke-linecap="round"/><line x1="2" y1="7" x2="12" y2="7" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
       <span class="btn-text-md">발주 등록</span>
     </button>`,
-  'inv-transactions': PLUS_BTN('입출고 등록','openTxModal'),
+  'inv-transactions': `${PLUS_BTN('입출고 등록','openTxModal')}`,
   'inv-orders':       PLUS_BTN('발주 등록','openPoModal') + `<button class="help-btn" onclick="showHelp('purchaseOrder')" style="margin-left:4px">?</button>`,
   'inv-bom':          '',
   'fin-cashflow':     PLUS_BTN('수금 등록', "openRecvModal"),
   'fin-receivables':  PLUS_BTN('수금 등록', "openRecvModal") + `<button class="help-btn" onclick="showHelp('finReceivables')" style="margin-left:4px">?</button>`,
   'fin-expenses':     PLUS_BTN('지출 등록', "openExpModal") + `<button class="help-btn" onclick="showHelp('finExpenses')" style="margin-left:4px">?</button>`,
   'fin-terms':        PLUS_BTN('조건 추가', 'openTermsModal'),
+  'mass-pipeline': `<button class="btn btn-p btn-sm" onclick="openNewMassModal()">
+    <svg viewBox="0 0 14 14" fill="none" style="width:12px;height:12px"><line x1="7" y1="2" x2="7" y2="12" stroke="white" stroke-width="1.8" stroke-linecap="round"/><line x1="2" y1="7" x2="12" y2="7" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+    양산 프로젝트 추가</button>`,
+  'rd-pipeline': `<button class="btn btn-p btn-sm" onclick="openNewRdModal()">
+    <svg viewBox="0 0 14 14" fill="none" style="width:12px;height:12px"><line x1="7" y1="2" x2="7" y2="12" stroke="white" stroke-width="1.8" stroke-linecap="round"/><line x1="2" y1="7" x2="12" y2="7" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+    개발 프로젝트 추가</button>`,
   orgchart: `<button class="btn btn-p btn-sm" onclick="orgOpenNewVerModal()"><svg viewBox="0 0 14 14" fill="none" style="width:12px;height:12px"><line x1="7" y1="2" x2="7" y2="12" stroke="white" stroke-width="1.8" stroke-linecap="round"/><line x1="2" y1="7" x2="12" y2="7" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>새 버전</button> <button class="btn btn-s btn-sm" onclick="window.print()">🖨 인쇄</button>` ,
 };
 
@@ -2497,6 +2766,8 @@ function showHome(el) {
   document.getElementById('nav-sales-ctx').style.display='none';
   document.getElementById('nav-inv-ctx').style.display='none';
   document.getElementById('nav-fin-ctx').style.display='none';
+  document.getElementById('nav-mass-ctx').style.display='none';
+  document.getElementById('nav-rd-ctx').style.display='none';
   const ni = document.getElementById('ni-home');
   if(ni) ni.classList.add('active');
   document.getElementById('topTitle').textContent='홈';
@@ -2508,17 +2779,18 @@ function showHome(el) {
 
 function enterDashboard(ctx) {
   currentDashContext = ctx;
-  // Update sidebar context
   document.getElementById('nav-home-section').style.display='none';
   document.getElementById('nav-sales-ctx').style.display = ctx==='sales' ? '' : 'none';
   document.getElementById('nav-inv-ctx').style.display   = ctx==='inv'   ? '' : 'none';
   document.getElementById('nav-fin-ctx').style.display   = ctx==='fin'   ? '' : 'none';
-  // Update switcher
+  document.getElementById('nav-mass-ctx').style.display  = ctx==='mass'  ? '' : 'none';
+  document.getElementById('nav-rd-ctx').style.display    = ctx==='rd'    ? '' : 'none';
   updateSwitcher(ctx);
-  // Navigate to first page of each dashboard
   if(ctx==='sales') showView('dashboard', document.getElementById('ni-dashboard'));
   if(ctx==='inv')   showView('inv-overview', document.getElementById('ni-inv-overview'));
   if(ctx==='fin')   showView('fin-cashflow', document.getElementById('ni-fin-cashflow'));
+  if(ctx==='mass')  showView('mass-pipeline', document.getElementById('ni-mass-pipeline'));
+  if(ctx==='rd')    showView('rd-pipeline', document.getElementById('ni-rd-pipeline'));
 }
 
 function updateSwitcher(ctx) {
@@ -2526,7 +2798,7 @@ function updateSwitcher(ctx) {
   if(!sw) return;
   if(!ctx) { sw.style.display='none'; return; }
   sw.style.display='flex';
-  ['sales','inv','fin'].forEach(k => {
+  ['sales','inv','fin','mass','rd'].forEach(k => {
     const btn = document.getElementById('sw-'+k);
     if(btn) btn.classList.toggle('sw-active', k===ctx);
   });
@@ -2569,6 +2841,8 @@ function showView(name, navEl) {
   if(name==='fin-expenses') renderExpenses();
   if(name==='fin-terms') renderTerms();
   if(name==='orgchart') { orgInitView(); }
+  if(name==='mass-pipeline') { renderMassPipeline(); initKanbanDrag(); }
+  if(name==='rd-pipeline') { renderRdPipeline(); initKanbanDrag(); }
 }
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sbOverlay').classList.toggle('open');}
 function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sbOverlay').classList.remove('open');}
@@ -3083,6 +3357,7 @@ function renderDeals(data) {
         ${x.inflow?`<div style="margin-top:3px"><span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;${inflowStyle(x.inflow)}">${inflowLabel(x.inflow)}</span></div>`:''}
       </td>
       <td style="${isUrgent(x.closeDate)?'color:var(--red);font-weight:700':''}">${x.closeDate||'–'}</td>
+      <td style="${x.deliveryDate?'color:var(--accent);font-weight:600':'color:var(--t3)'}">${x.deliveryDate||'–'}</td>
     </tr>`).join('');
 }
 function filterDeals() {
@@ -3435,8 +3710,9 @@ function buildDealInfo(d) {
   document.getElementById('dealDetGrid').innerHTML=`
     <div class="det-item"><div class="det-label">예상 금액</div><div class="det-val" style="color:var(--accent);font-size:18px">${fmt(d.amt)}</div></div>
     <div class="det-item"><div class="det-label">담당자</div><div class="det-val">${d.person}</div></div>
-    <div class="det-item"><div class="det-label">마감 예정일</div><div class="det-val" style="${isUrgent(d.closeDate)?'color:var(--red)':''}">${d.closeDate||'–'}</div></div>
+    <div class="det-item"><div class="det-label">계약 목표일</div><div class="det-val" style="${isUrgent(d.closeDate)?'color:var(--red)':''}">${d.closeDate||'–'}</div></div>
     <div class="det-item"><div class="det-label">현재 단계</div><div class="det-val"><span class="sp ${spCls(d.stage)}">${d.stage}</span></div></div>
+    <div class="det-item"><div class="det-label">납품 완료 기한</div><div class="det-val" style="${d.deliveryDate?'color:var(--accent);font-weight:700':'color:var(--t3)'}">${d.deliveryDate||'미설정'}</div></div>
     <div class="det-item"><div class="det-label">등록일</div><div class="det-val" style="color:var(--t2)">${d.createdAt||'–'}</div></div>
     <div class="det-item"><div class="det-label">유입 경로</div><div class="det-val"><span style="padding:4px 12px;border-radius:20px;font-size:13px;${inflowStyle(d.inflow||'direct')}">${inflowLabel(d.inflow||'direct')}</span></div></div>`;
   const pi=document.getElementById('dealProdInfo');
@@ -3500,7 +3776,14 @@ function buildDealEdit(id){
     </div>
     <div class="form-field"><label class="form-label">담당자</label><select class="form-select" id="de-person">${salesMembers().map(m=>`<option${m.name===d.person?' selected':''}>${m.name}</option>`).join('')}</select></div>
     <div class="form-field"><label class="form-label">단계</label><select class="form-select" id="de-stage">${STAGES.map(s=>`<option${s===d.stage?' selected':''}>${s}</option>`).join('')}</select></div>
-    <div class="form-field"><label class="form-label">마감 예정일</label><input class="form-input" id="de-date" type="date" value="${d.closeDate||''}"></div>
+    <div class="form-field">
+      <label class="form-label">계약 목표일 <span style="font-weight:400;color:var(--t3);font-size:10px">영업 클로징 기준</span></label>
+      <input class="form-input" id="de-date" type="date" value="${d.closeDate||''}">
+    </div>
+    <div class="form-field">
+      <label class="form-label">납품 완료 기한 <span style="font-weight:400;color:var(--t3);font-size:10px">고객사 납기 기준</span></label>
+      <input class="form-input" id="de-delivery" type="date" value="${d.deliveryDate||''}">
+    </div></div>
     <div class="form-field"><label class="form-label">우선순위</label><select class="form-select" id="de-pri"><option value="0"${!d.priority?' selected':''}>보통</option><option value="1"${d.priority?' selected':''}>중요</option></select></div>
     <div class="form-field full"><label class="form-label">유입 경로</label><div id="de-inflow-btns" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"></div><input type="hidden" id="de-inflow" value="${d.inflow||'direct'}"></div>`;
   const btn=document.getElementById('linkProjBtn');
@@ -3535,6 +3818,7 @@ async function saveDealEdit(){
   d.person=document.getElementById('de-person').value;
   d.stage=document.getElementById('de-stage').value;
   d.closeDate=document.getElementById('de-date').value;
+  d.deliveryDate=document.getElementById('de-delivery')?.value||'';
   d.priority=document.getElementById('de-pri').value==='1';
   d.inflow=document.getElementById('de-inflow')?.value||d.inflow||'direct';
   if(os!==d.stage){
@@ -3716,6 +4000,7 @@ async function createDeal(){
     person: document.getElementById('nd-person').value,
     stage: document.getElementById('nd-stage').value,
     closeDate: document.getElementById('nd-date').value,
+    deliveryDate: document.getElementById('nd-delivery')?.value||'',
     priority: document.getElementById('nd-pri').value==='1',
     createdAt: new Date().toISOString().slice(0,10), linkedProject: null,
     logs: memo ? [{type:'메모',text:memo,time:nowStr(),person:CU?.name||'',dept:CU?.role||'sales'}] : []
@@ -4203,6 +4488,7 @@ async function loadDealsFromDB(){
       linkedProject: d.linked_project||null,
       createdAt: d.created_at?.slice(0,10)||'',
       created_at: d.created_at||'',
+      deliveryDate: d.delivery_date||'',
       logs: dbLogs.filter(l=>l.deal_id===d.id).map(l=>({
         type: l.type,
         text: l.text,
@@ -4243,6 +4529,7 @@ async function saveDealToDB(deal){
       qty: deal.qty, unit_price: deal.unit, amount: deal.amt,
       person: deal.person, stage: deal.stage,
       close_date: deal.closeDate||null,
+      delivery_date: deal.deliveryDate||null,
       priority: deal.priority,
       linked_project: deal.linkedProject||null,
       created_at: new Date().toISOString()
@@ -4275,6 +4562,7 @@ async function updateDealInDB(deal){
       qty: deal.qty, unit_price: deal.unit, amount: deal.amt,
       person: deal.person, stage: deal.stage,
       close_date: deal.closeDate||null,
+      delivery_date: deal.deliveryDate||null,
       priority: deal.priority,
       linked_project: deal.linkedProject||null,
       updated_at: new Date().toISOString()
@@ -4380,6 +4668,97 @@ function initKanbanDrag(){
 document.getElementById('loginPw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 document.getElementById('loginId').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('loginPw').focus();});
 </script>
+
+
+<!-- ═══ 양산 프로젝트 신규/수정 모달 ═══ -->
+<div class="overlay" id="newMassModal">
+  <div class="modal modal-sm">
+    <div class="modal-hd">
+      <div class="modal-hd-info"><div class="modal-title" id="newMassMT">양산 프로젝트 추가</div><div class="modal-sub">계약 완료 딜의 양산 일정을 관리합니다</div></div>
+      <button class="modal-close" onclick="closeModal('newMassModal')"><svg viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="mass-edit-id">
+      <div class="form-grid">
+        <div class="form-field full"><label class="form-label">고객사 *</label><input class="form-input" id="mass-co" placeholder="예: 현대중공업"></div>
+        <div class="form-field full"><label class="form-label">제품</label><select class="form-select" id="mass-prod"></select></div>
+        <div class="form-field"><label class="form-label">수량</label><input class="form-input" id="mass-qty" type="number" min="1" value="1"></div>
+        <div class="form-field"><label class="form-label">담당자</label><select class="form-select" id="mass-person"></select></div>
+        <div class="form-field full"><label class="form-label">납품 완료 기한 <span style="font-weight:400;color:var(--t3);font-size:10px">D-day 카운팅 기준</span></label><input class="form-input" id="mass-delivery" type="date"></div>
+        <div class="form-field full"><label class="form-label">메모</label><textarea class="form-textarea" id="mass-note" rows="2"></textarea></div>
+      </div>
+      <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px;margin-top:16px" onclick="saveMassProject()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 개발 프로젝트 신규/수정 모달 ═══ -->
+<div class="overlay" id="newRdModal">
+  <div class="modal modal-sm">
+    <div class="modal-hd">
+      <div class="modal-hd-info"><div class="modal-title" id="newRdMT">개발 프로젝트 추가</div><div class="modal-sub">신기술·신제품 개발 일정을 관리합니다</div></div>
+      <button class="modal-close" onclick="closeModal('newRdModal')"><svg viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="rd-edit-id">
+      <div class="form-grid">
+        <div class="form-field full"><label class="form-label">프로젝트명 *</label><input class="form-input" id="rd-name" placeholder="예: 작업자 생체데이터 관제 기술 개발"></div>
+        <div class="form-field full"><label class="form-label">개요 <span style="font-weight:400;color:var(--t3)">(선택)</span></label><textarea class="form-textarea" id="rd-desc" rows="2" placeholder="어떤 기술/제품을 개발하는 프로젝트인지 간단히"></textarea></div>
+        <div class="form-field full"><label class="form-label">담당 연구원</label><select class="form-select" id="rd-person"><option value="">담당자 선택</option></select></div>
+        <div class="form-field full"><label class="form-label">목표 완료일</label><input class="form-input" id="rd-target" type="date"></div>
+      </div>
+      <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px;margin-top:16px" onclick="saveRdProject()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 개발 태스크 추가/수정 모달 ═══ -->
+<div class="overlay" id="rdTaskModal">
+  <div class="modal modal-sm">
+    <div class="modal-hd">
+      <div class="modal-hd-info"><div class="modal-title" id="rdTaskMT">태스크 추가</div><div class="modal-sub" id="rdTaskStageLbl"></div></div>
+      <button class="modal-close" onclick="closeModal('rdTaskModal')"><svg viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="rdt-id">
+      <input type="hidden" id="rdt-proj-id">
+      <input type="hidden" id="rdt-stage">
+      <div class="form-grid">
+        <div class="form-field full"><label class="form-label">개발 내용 *</label><input class="form-input" id="rdt-title" placeholder="예: 회로 설계 1차"></div>
+        <div class="form-field full"><label class="form-label">설명</label><input class="form-input" id="rdt-desc" placeholder="예: 1차 설계 / 시험 결과 반영"></div>
+        <div class="form-field"><label class="form-label">시작일</label><input class="form-input" id="rdt-start" type="date"></div>
+        <div class="form-field"><label class="form-label">완료 목표일</label><input class="form-input" id="rdt-end" type="date"></div>
+      </div>
+      <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px;margin-top:16px" onclick="saveRdTask()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 양산 부품 추가 모달 ═══ -->
+<div class="overlay" id="massPartModal">
+  <div class="modal modal-sm">
+    <div class="modal-hd">
+      <div class="modal-hd-info"><div class="modal-title">부품 발주 현황 추가</div><div class="modal-sub">엑셀 납기일 테이블과 동일하게 관리합니다</div></div>
+      <button class="modal-close" onclick="closeModal('massPartModal')"><svg viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="mpart-proj-id">
+      <input type="hidden" id="mpart-id">
+      <div class="form-grid">
+        <div class="form-field full"><label class="form-label">부품명 *</label><input class="form-input" id="mpart-name" placeholder="예: AI모니터, 카메라(PAL)"></div>
+        <div class="form-field"><label class="form-label">발주일</label><input class="form-input" id="mpart-order" type="date"></div>
+        <div class="form-field"><label class="form-label">리드타임 (주)</label><input class="form-input" id="mpart-weeks" type="number" min="1" value="4" oninput="calcMpartExpected()"></div>
+        <div class="form-field full"><label class="form-label">예상 입고일 — 자동계산</label><input class="form-input auto" id="mpart-expected" type="date"></div>
+        <div class="form-field full"><label class="form-label">상태</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap" id="mpart-status-btns"></div>
+          <input type="hidden" id="mpart-status" value="미발주">
+        </div>
+        <div class="form-field full"><label class="form-label">메모</label><input class="form-input" id="mpart-note"></div>
+      </div>
+      <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px;margin-top:16px" onclick="saveMassPart()">저장</button>
+    </div>
+  </div>
+</div>
 
 <!-- 딜 알람 패널 -->
 <div class="deal-alert-panel" id="dealAlertPanel">
@@ -5000,6 +5379,10 @@ window.addEventListener('popstate', function(e) {
     enterDashboard('inv');
   } else if(page === 'dashboard_fin') {
     enterDashboard('fin');
+  } else if(page === 'dashboard_mass') {
+    enterDashboard('mass');
+  } else if(page === 'dashboard_rd') {
+    enterDashboard('rd');
   } else if(page === 'view') {
     const {ctx, name, navId} = state;
     if(ctx) {
@@ -5155,37 +5538,255 @@ function itemRow(i) {
 // ══════════════════════════════════════════════════════════
 async function renderTransactions() {
   if(!stockTx.length) await loadInvData();
-  const typeF = document.getElementById('tx-type-filter')?.value||'';
-  const itemF = parseInt(document.getElementById('tx-item-filter')?.value)||0;
-  const dateFrom = document.getElementById('tx-date-from')?.value||'';
-  const dateTo = document.getElementById('tx-date-to')?.value||'';
+  const typeF   = document.getElementById('tx-type-filter')?.value||'';
+  const itemF   = parseInt(document.getElementById('tx-item-filter')?.value)||0;
+  const dateFrom= document.getElementById('tx-date-from')?.value||'';
+  const dateTo  = document.getElementById('tx-date-to')?.value||'';
 
-  // populate item filter
+  // 품목 필터 드롭다운 채우기
   const sel = document.getElementById('tx-item-filter');
   if(sel && sel.options.length <= 1) {
     invItems.forEach(i=>{ const o=document.createElement('option');o.value=i.id;o.textContent=i.name;sel.appendChild(o); });
   }
 
   let data = [...stockTx];
-  if(typeF) data = data.filter(t=>t.type===typeF);
-  if(itemF) data = data.filter(t=>t.item_id===itemF);
+  if(typeF)    data = data.filter(t=>t.type===typeF);
+  if(itemF)    data = data.filter(t=>t.item_id===itemF);
   if(dateFrom) data = data.filter(t=>t.created_at?.slice(0,10)>=dateFrom);
-  if(dateTo) data = data.filter(t=>t.created_at?.slice(0,10)<=dateTo);
+  if(dateTo)   data = data.filter(t=>t.created_at?.slice(0,10)<=dateTo);
 
   const typeLabel = {in:'📥 입고', out:'📤 출고', adjust:'🔧 조정'};
   const typeChip  = {in:'chip-green', out:'chip-amber', adjust:'chip-blue'};
-  const itemName = id => invItems.find(i=>i.id===id)?.name||'–';
+  const itemName  = id => invItems.find(i=>i.id===id)?.name||'–';
+
   document.getElementById('tx-table-body').innerHTML = data.length ?
-    data.map(t=>`<tr>
-      <td style="white-space:nowrap;color:var(--t2)">${t.created_at?.slice(0,10)||'–'}</td>
+    data.map(t=>`<tr id="tx-row-${t.id}" onclick="toggleTxRowCheck(${t.id},event)">
+      <td onclick="event.stopPropagation()" style="text-align:center;padding:8px 6px">
+        <input type="checkbox" class="tx-checkbox tx-row-check" data-id="${t.id}" onchange="onTxCheckChange()">
+      </td>
+      <td style="white-space:nowrap;color:var(--t2);font-size:12px">${fmtTxDate(t.created_at)}</td>
       <td style="font-weight:600">${itemName(t.item_id)}</td>
       <td><span class="chip ${typeChip[t.type]||'chip-gray'}">${typeLabel[t.type]||t.type}</span></td>
       <td style="font-weight:700;color:${t.qty>0?'var(--green)':'var(--red)'}">${t.qty>0?'+':''}${t.qty}</td>
-      <td>${t.reason||'–'}</td>
+      <td style="color:var(--t2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.reason||''}">${t.reason||'–'}</td>
       <td>${t.person||'–'}</td>
-      <td style="color:var(--t3)">${t.note||'–'}</td>
+      <td style="color:var(--t3);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.note||'–'}</td>
+      <td onclick="event.stopPropagation()">
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-s btn-sm" onclick="openTxEditModal(${t.id})" title="수정" style="padding:4px 7px">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteSingleTx(${t.id})" title="삭제" style="padding:4px 7px">🗑</button>
+        </div>
+      </td>
     </tr>`).join('') :
-    `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--t3)">입출고 이력이 없습니다</td></tr>`;
+    `<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--t3)">입출고 이력이 없습니다</td></tr>`;
+
+  // 전체선택 체크박스 초기화
+  const allChk = document.getElementById('tx-check-all');
+  if(allChk) allChk.checked = false;
+  updateTxSelectBar();
+}
+
+// 날짜 포맷 (YYYY-MM-DD HH:MM)
+function fmtTxDate(iso) {
+  if(!iso) return '–';
+  const d = new Date(iso);
+  const date = d.toLocaleDateString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit'}).replace(/\. /g,'-').replace('.','');
+  const time = d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false});
+  return `<div>${date}</div><div style="font-size:10px;color:var(--t3)">${time}</div>`;
+}
+
+// 필터 초기화
+function resetTxFilters() {
+  ['tx-type-filter','tx-item-filter','tx-date-from','tx-date-to'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  renderTransactions();
+}
+
+// ── 체크박스 선택 ──
+function toggleTxRowCheck(id, e) {
+  if(e.target.tagName==='INPUT'||e.target.tagName==='BUTTON') return;
+  const chk = document.querySelector(`.tx-row-check[data-id="${id}"]`);
+  if(chk) { chk.checked = !chk.checked; onTxCheckChange(); }
+}
+function toggleAllTxCheck(masterChk) {
+  document.querySelectorAll('.tx-row-check').forEach(c=>{ c.checked=masterChk.checked; });
+  onTxCheckChange();
+}
+function onTxCheckChange() {
+  // 행 하이라이트
+  document.querySelectorAll('.tx-row-check').forEach(c=>{
+    const row = document.getElementById(`tx-row-${c.dataset.id}`);
+    if(row) row.classList.toggle('tx-row-selected', c.checked);
+  });
+  // 전체선택 체크박스 상태
+  const all   = document.querySelectorAll('.tx-row-check');
+  const chkd  = document.querySelectorAll('.tx-row-check:checked');
+  const master= document.getElementById('tx-check-all');
+  if(master) { master.checked=chkd.length>0&&chkd.length===all.length; master.indeterminate=chkd.length>0&&chkd.length<all.length; }
+  updateTxSelectBar();
+}
+function clearTxSelection() {
+  document.querySelectorAll('.tx-row-check').forEach(c=>{ c.checked=false; });
+  const master=document.getElementById('tx-check-all');
+  if(master){ master.checked=false; master.indeterminate=false; }
+  onTxCheckChange();
+}
+function updateTxSelectBar() {
+  const chkd = document.querySelectorAll('.tx-row-check:checked');
+  const bar  = document.getElementById('txSelectBar');
+  const cnt  = document.getElementById('txSelectCount');
+  if(bar)  bar.style.display = chkd.length>0 ? '' : 'none';
+  if(cnt)  cnt.textContent   = `${chkd.length}개 선택됨`;
+}
+
+// ── 선택 삭제 ──
+async function deleteSelectedTx() {
+  const chkd = [...document.querySelectorAll('.tx-row-check:checked')];
+  if(!chkd.length) return;
+  const ids  = chkd.map(c=>parseInt(c.dataset.id));
+
+  // 2중 확인
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.innerHTML = `<div style="background:var(--surface);border-radius:var(--r-xl);padding:28px;max-width:400px;width:100%;box-shadow:var(--sh-lg)">
+    <div style="font-size:17px;font-weight:800;margin-bottom:6px;color:var(--red)">⚠️ ${ids.length}개 이력 삭제</div>
+    <div style="font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.6">선택한 이력을 삭제하면 해당 재고 수량도 역으로 복원됩니다. 이 작업은 되돌릴 수 없습니다.</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-danger" style="flex:1;justify-content:center;padding:11px" id="txDelConfirmBtn">삭제 확정</button>
+      <button class="btn btn-s" style="flex:1;justify-content:center;padding:11px" onclick="this.closest('div[style]').remove()">취소</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  document.getElementById('txDelConfirmBtn').onclick = async () => {
+    overlay.remove();
+    showLoading('삭제 중...');
+    for(const id of ids) {
+      await _doDeleteTx(id);
+    }
+    hideLoading();
+    showToast(`${ids.length}개 이력이 삭제됐습니다`);
+    clearTxSelection();
+    renderTransactions();
+    renderInvOverview();
+  };
+}
+
+// 단건 삭제
+async function deleteSingleTx(id) {
+  const tx = stockTx.find(t=>t.id===id); if(!tx) return;
+  const item = invItems.find(i=>i.id===tx.item_id);
+  const itemName = item?.name||'?';
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.innerHTML = `<div style="background:var(--surface);border-radius:var(--r-xl);padding:28px;max-width:400px;width:100%;box-shadow:var(--sh-lg)">
+    <div style="font-size:17px;font-weight:800;margin-bottom:6px;color:var(--red)">⚠️ 이력 삭제</div>
+    <div style="background:var(--s2);border-radius:var(--r);padding:12px 14px;margin-bottom:14px;font-size:13px">
+      <div style="font-weight:700">${itemName}</div>
+      <div style="color:var(--t2);margin-top:2px">${tx.qty>0?'입고':'출고'} ${Math.abs(tx.qty)}개 · ${tx.reason||'–'}</div>
+    </div>
+    <div style="font-size:13px;color:var(--t2);margin-bottom:16px">삭제 시 재고 수량이 역으로 복원됩니다.</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-danger" style="flex:1;justify-content:center;padding:11px" id="txSingleDelBtn">삭제</button>
+      <button class="btn btn-s" style="flex:1;justify-content:center;padding:11px" onclick="this.closest('div[style]').remove()">취소</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  document.getElementById('txSingleDelBtn').onclick = async () => {
+    overlay.remove();
+    await _doDeleteTx(id);
+    showToast('이력이 삭제됐습니다');
+    renderTransactions();
+    renderInvOverview();
+  };
+}
+
+async function _doDeleteTx(id) {
+  const tx = stockTx.find(t=>t.id===id); if(!tx) return;
+  // 재고 역복원
+  const item = invItems.find(i=>i.id===tx.item_id);
+  if(item) {
+    item.current_stock -= tx.qty; // 입고였으면 빼고, 출고였으면 더함
+    if(sb) await sb.from('items').update({current_stock:item.current_stock}).eq('id',item.id);
+  }
+  if(sb) await sb.from('stock_transactions').delete().eq('id',id);
+  stockTx = stockTx.filter(t=>t.id!==id);
+}
+
+// ── 이력 수정 모달 ──
+function openTxEditModal(id) {
+  const tx = stockTx.find(t=>t.id===id); if(!tx) return;
+  const typeLabel = {in:'📥 입고', out:'📤 출고', adjust:'🔧 조정'};
+  const item = invItems.find(i=>i.id===tx.item_id);
+  const overlay = document.createElement('div');
+  overlay.id = 'txEditOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.innerHTML = `<div style="background:var(--surface);border-radius:var(--r-xl);width:100%;max-width:440px;box-shadow:var(--sh-lg);animation:su .2s ease">
+    <div style="padding:20px 24px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface)">
+      <div>
+        <div style="font-size:17px;font-weight:800">이력 수정</div>
+        <div style="font-size:12px;color:var(--t2);margin-top:2px">${item?.name||'?'} · ${typeLabel[tx.type]||tx.type}</div>
+      </div>
+      <button onclick="document.getElementById('txEditOverlay').remove()" style="width:30px;height:30px;border-radius:50%;background:var(--s2);border:none;cursor:pointer;font-size:18px">×</button>
+    </div>
+    <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px">
+      <div class="form-field">
+        <label class="form-label">수량 <span style="font-weight:400;color:var(--t3);font-size:10px">(현재: ${tx.qty})</span></label>
+        <input class="form-input" id="txe-qty" type="number" value="${Math.abs(tx.qty)}" style="margin-top:4px" min="1">
+        <div style="font-size:11px;color:var(--t3);margin-top:4px">수량 변경 시 재고에 차이분이 자동 반영됩니다</div>
+      </div>
+      <div class="form-field">
+        <label class="form-label">사유</label>
+        <input class="form-input" id="txe-reason" value="${tx.reason||''}" placeholder="사유" style="margin-top:4px">
+      </div>
+      <div class="form-field">
+        <label class="form-label">담당자</label>
+        <input class="form-input" id="txe-person" value="${tx.person||''}" placeholder="담당자" style="margin-top:4px">
+      </div>
+      <div class="form-field">
+        <label class="form-label">메모</label>
+        <textarea class="form-textarea" id="txe-note" rows="2" style="margin-top:4px">${tx.note||''}</textarea>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn btn-p" style="flex:1;justify-content:center;padding:11px" onclick="saveTxEdit(${id})">저장</button>
+        <button class="btn btn-s" style="flex:1;justify-content:center;padding:11px" onclick="document.getElementById('txEditOverlay').remove()">취소</button>
+      </div>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  setTimeout(()=>document.getElementById('txe-qty')?.focus(), 100);
+}
+
+async function saveTxEdit(id) {
+  const tx = stockTx.find(t=>t.id===id); if(!tx) return;
+  const newAbsQty = parseInt(document.getElementById('txe-qty')?.value)||0;
+  if(!newAbsQty) { showToast('수량을 입력해주세요','warn'); return; }
+  const reason = document.getElementById('txe-reason')?.value||'';
+  const person = document.getElementById('txe-person')?.value||'';
+  const note   = document.getElementById('txe-note')?.value||'';
+
+  // 수량 부호 유지 (출고면 음수)
+  const newQty = tx.qty < 0 ? -newAbsQty : newAbsQty;
+  const diff   = newQty - tx.qty; // 차이분 → 재고에 반영
+
+  // 재고 차이분 반영
+  const item = invItems.find(i=>i.id===tx.item_id);
+  if(item && diff !== 0) {
+    item.current_stock += diff;
+    if(sb) await sb.from('items').update({current_stock:item.current_stock}).eq('id',item.id);
+  }
+
+  // DB 업데이트
+  const update = {qty:newQty, reason, person, note};
+  if(sb) await sb.from('stock_transactions').update(update).eq('id',id);
+
+  // 로컬 반영
+  Object.assign(tx, update);
+
+  document.getElementById('txEditOverlay')?.remove();
+  showToast('수정됐습니다 ✓');
+  renderTransactions();
+  renderInvOverview();
 }
 
 // ══════════════════════════════════════════════════════════
@@ -5193,22 +5794,39 @@ async function renderTransactions() {
 // ══════════════════════════════════════════════════════════
 async function renderBOM() {
   if(!invItems.length) await loadInvData();
+  // 구성품 데이터 로드
+  if(!window._itemComponents) await loadItemComponents();
   const finished = invItems.filter(i=>i.category==='finished');
   const raw = invItems.filter(i=>i.category==='raw');
   document.getElementById('bom-list').innerHTML = finished.length ?
     finished.map(fi => {
-      const myBom = bomData.filter(b=>b.finished_item_id===fi.id);
+      const myBom = [...bomData.filter(b=>b.finished_item_id===fi.id)].sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
       return `<div class="card">
         <div class="card-hd">
           <div class="card-title">📦 ${fi.name}</div>
           <button class="btn btn-s btn-sm" onclick="openBomAddModal(${fi.id})">+ 원재료 추가</button>
         </div>
-        <div class="card-body" style="padding:0">
-          ${myBom.length ? myBom.map(b => {
+        <div class="card-body" style="padding:0" id="bom-list-${fi.id}">
+          ${myBom.length ? myBom.map((b,bi) => {
             const rawItem = invItems.find(i=>i.id===b.raw_item_id);
-            return `<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--bd)">
-              <div style="flex:1"><div style="font-weight:600;font-size:13px">${rawItem?.name||'–'}</div></div>
-              <div style="font-weight:700;color:var(--accent)">${b.qty_required} ${rawItem?.unit||'개'}</div>
+            // 구성품 표시
+            const comps = (window._itemComponents||{})[b.raw_item_id]||[];
+            const compsHtml = comps.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">${comps.map(c=>`<span style="font-size:10px;padding:2px 7px;border-radius:20px;background:var(--s2);color:var(--t2);font-weight:600">${c.name} ${c.qty}${c.unit||'개'}</span>`).join('')}</div>` : '';
+            return `<div class="bom-row" data-bom-id="${b.id}" data-finished-id="${fi.id}" draggable="true"
+              ondragstart="bomDragStart(event,${b.id},${fi.id})"
+              ondragover="bomDragOver(event,${b.id},${fi.id})"
+              ondragleave="bomDragLeave(event)"
+              ondrop="bomDrop(event,${b.id},${fi.id})">
+              <div class="bom-drag-handle" title="드래그하여 순서 변경">
+                <svg viewBox="0 0 10 16" fill="currentColor" style="width:10px;height:16px"><circle cx="3" cy="3" r="1.3"/><circle cx="7" cy="3" r="1.3"/><circle cx="3" cy="8" r="1.3"/><circle cx="7" cy="8" r="1.3"/><circle cx="3" cy="13" r="1.3"/><circle cx="7" cy="13" r="1.3"/></svg>
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:600;font-size:13px">${rawItem?.name||'–'}</div>
+                ${rawItem?.code?`<div style="font-size:11px;color:var(--t2);margin-top:2px;font-family:monospace;letter-spacing:.3px">${rawItem.code}</div>`:''}
+                ${compsHtml}
+              </div>
+              <div style="font-weight:700;color:var(--accent);white-space:nowrap">${b.qty_required} ${rawItem?.unit||'개'}</div>
+              <button class="btn btn-s btn-sm" onclick="openBomEditModal(${b.id},${fi.id})">수정</button>
               <button class="btn btn-danger btn-sm" onclick="deleteBom(${b.id})">삭제</button>
             </div>`;
           }).join('') : `<div style="padding:20px;text-align:center;color:var(--t3);font-size:13px">구성된 원재료가 없습니다</div>`}
@@ -5232,7 +5850,7 @@ function openBomAddModal(finishedId) {
       <div style="font-size:13px;color:var(--t2);margin-bottom:20px">${name} 1대 기준</div>
       <div style="display:flex;flex-direction:column;gap:12px">
         <div><label class="form-label">원재료</label><select class="form-select" id="bom-raw-sel" style="width:100%;margin-top:4px">${opts}</select></div>
-        <div><label class="form-label">필요 수량</label><input class="form-input" id="bom-qty" type="number" min="0.01" step="0.01" value="1" style="width:100%;margin-top:4px"></div>
+        <div><label class="form-label">필요 수량 (완제품 1대 기준)</label><input class="form-input" id="bom-qty" type="number" min="1" step="1" value="1" style="width:100%;margin-top:4px"></div>
       </div>
       <div style="display:flex;gap:8px;margin-top:20px">
         <button class="btn btn-p" style="flex:1;justify-content:center" onclick="saveBomRow(${finishedId})">추가</button>
@@ -5549,7 +6167,7 @@ function openRawItemModal(prefillFinishedId) {
                     <option value="">완제품 선택 (선택사항)</option>
                     ${finOpts}
                   </select>
-                  <input class="form-input raw-qty-in" type="number" min="0.01" step="0.01" value="1" placeholder="수량">
+                  <input class="form-input raw-qty-in" type="number" min="1" step="1" value="1" placeholder="수량">
                   <span style="font-size:11px;color:var(--t3);text-align:center">개</span>
                 </div>
               </div>
@@ -5575,7 +6193,7 @@ function addRawBomRow() {
   row.className = 'raw-bom-row';
   row.style.cssText = 'display:grid;grid-template-columns:1fr 80px 32px;gap:6px;align-items:center;margin-bottom:6px';
   row.innerHTML = `<select class="form-select raw-finished-sel" style="font-size:13px"><option value="">완제품 선택</option>${opts}</select>
-    <input class="form-input raw-qty-in" type="number" min="0.01" step="0.01" value="1" placeholder="수량">
+    <input class="form-input raw-qty-in" type="number" min="1" step="1" value="1" placeholder="수량">
     <button onclick="this.parentElement.remove()" style="background:var(--rl);border:none;border-radius:var(--r-sm);cursor:pointer;width:28px;height:28px;color:var(--rt);font-size:16px">×</button>`;
   document.getElementById('raw-bom-rows').appendChild(row);
 }
@@ -5911,6 +6529,11 @@ async function onDealContractComplete(deal) {
   }
 
   showToast('✅ 계약 완료 — 수금 예정이 재무 대시보드에 자동 등록됐습니다');
+
+  // 양산 파이프라인 자동 생성
+  if(cr?.createMass !== false) {
+    await createMassProjectFromDeal(deal, cr?.deliveryDate||deal.deliveryDate||'');
+  }
 }
 
 
@@ -6838,4 +7461,1338 @@ function checkStaleDeals() {
   }
 }
 
+</script>
+<script>
+// ══════════════════════════════════════════════════════════════════
+// 양산 파이프라인 — DATA & CONSTANTS
+// ══════════════════════════════════════════════════════════════════
+let massProjects = [];
+let massParts    = {};   // { proj_id: [...parts] }
+let massSchedule = {};   // { proj_id: [...weeks] }
+let massLogs     = {};   // { proj_id: [...logs] }
+
+const MASS_STAGES = ['현장조사','제품준비','현장설치','요구사항 반영','납품완료'];
+const MASS_DOTS   = ['#0891b2','#3b82f6','#a855f7','#f59e0b','#22c55e'];
+const MASS_PART_STATUS = ['미발주','발주완료','입고완료'];
+const MASS_PART_STATUS_CLS = {'미발주':'chip-gray','발주완료':'chip-blue','입고완료':'chip-green'};
+
+// ── DB 로드 ──
+async function loadMassData() {
+  if(!sb) return;
+  try {
+    const [r1,r2,r3,r4] = await Promise.all([
+      sb.from('mass_projects').select('*').order('created_at',{ascending:false}),
+      sb.from('mass_parts').select('*').order('id'),
+      sb.from('mass_install_schedule').select('*').order('week_num'),
+      sb.from('mass_logs').select('*').order('created_at',{ascending:false}),
+    ]);
+    massProjects = r1.data||[];
+    massParts    = {};
+    (r2.data||[]).forEach(p => { if(!massParts[p.mass_project_id]) massParts[p.mass_project_id]=[]; massParts[p.mass_project_id].push(p); });
+    massSchedule = {};
+    (r3.data||[]).forEach(s => { if(!massSchedule[s.mass_project_id]) massSchedule[s.mass_project_id]=[]; massSchedule[s.mass_project_id].push(s); });
+    massLogs = {};
+    (r4.data||[]).forEach(l => { if(!massLogs[l.mass_project_id]) massLogs[l.mass_project_id]=[]; massLogs[l.mass_project_id].push(l); });
+    // 홈 카드 업데이트
+    const hs = document.getElementById('hs-mass');
+    if(hs) hs.textContent = `${massProjects.filter(p=>p.stage!=='납품완료').length}건 진행`;
+  } catch(e) { console.error('loadMassData:', e); }
+}
+
+async function createMassProjectFromDeal(deal, deliveryDate) {
+  const data = {
+    deal_id: deal.id, co: deal.co, prod: deal.prod||'',
+    qty: deal.qty||1, person: deal.person,
+    stage: '현장조사', delivery_date: deliveryDate||null,
+    note: `${deal.name} 계약 완료 — 자동 생성`
+  };
+  if(!sb) { massProjects.unshift({id:Date.now(),...data}); return; }
+  try {
+    const {data:d,error} = await sb.from('mass_projects').insert([data]).select().single();
+    if(error) throw error;
+    massProjects.unshift(d);
+    showToast('🏭 양산 파이프라인 카드가 생성됐습니다');
+  } catch(e) { console.error('createMassProjectFromDeal:', e); }
+}
+
+// ── 칸반 렌더 ──
+async function renderMassPipeline() {
+  if(!massProjects.length) await loadMassData();
+  const board = document.getElementById('massBoardEl');
+  if(!board) return;
+
+  const dday = p => {
+    if(!p.delivery_date) return '';
+    const diff = Math.round((new Date(p.delivery_date) - new Date()) / 86400000);
+    const cls  = diff < 0 ? 'mass-dday-danger' : diff <= 14 ? 'mass-dday-warn' : 'mass-dday-ok';
+    const txt  = diff < 0 ? `D+${Math.abs(diff)} 초과` : diff === 0 ? 'D-day' : `D-${diff}`;
+    return `<span class="mass-dday ${cls}">${txt}</span>`;
+  };
+
+  board.innerHTML = MASS_STAGES.map((stage, si) => {
+    const cols = massProjects.filter(p => p.stage === stage);
+    return `<div class="rd-col">
+      <div class="rd-col-hd">
+        <div class="rd-col-dot" style="background:${MASS_DOTS[si]}"></div>
+        <div class="rd-col-name">${stage}</div>
+        <div class="rd-col-meta">${cols.length}</div>
+      </div>
+      <div class="rd-col-body">
+        ${cols.map(p => `
+          <div class="mass-card" onclick="openMassDetail(${p.id})">
+            <div class="mass-card-top">
+              <div class="mass-card-name">${p.co}</div>
+              <div class="mass-card-qty">${p.qty}대</div>
+            </div>
+            <div class="mass-card-co">${p.prod||'–'} · ${p.person||'–'}</div>
+            <div class="mass-card-foot">
+              ${dday(p)}
+              ${p.delivery_date ? `<span style="font-size:10px;color:var(--t3)">${p.delivery_date}</span>` : ''}
+              ${(() => { const pts = massParts[p.id]||[]; const done = pts.filter(x=>x.status==='입고완료').length; return pts.length ? `<span class="chip chip-${done===pts.length?'green':'amber'}" style="font-size:10px">부품 ${done}/${pts.length}</span>` : ''; })()}
+            </div>
+          </div>`).join('')}
+      </div>
+      <div class="rd-col-foot">
+        <button class="add-btn" onclick="openNewMassModal(null,'${stage}')">+ 프로젝트 추가</button>
+      </div>
+    </div>`;
+  }).join('');
+  initKanbanDrag();
+}
+
+// ── 상세 뷰 ──
+async function openMassDetail(id) {
+  if(!massParts[id]) {
+    const [r1,r2,r3] = await Promise.all([
+      sb.from('mass_parts').select('*').eq('mass_project_id',id).order('id'),
+      sb.from('mass_install_schedule').select('*').eq('mass_project_id',id).order('week_num'),
+      sb.from('mass_logs').select('*').eq('mass_project_id',id).order('created_at',{ascending:false}),
+    ]);
+    massParts[id]    = r1.data||[];
+    massSchedule[id] = r2.data||[];
+    massLogs[id]     = r3.data||[];
+  }
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-mass-detail').classList.add('active');
+  document.getElementById('topTitle').textContent = '양산 프로젝트 상세';
+  document.getElementById('topActions').innerHTML = '';
+  renderMassDetail(id);
+}
+
+function renderMassDetail(id) {
+  const p = massProjects.find(x=>x.id===id); if(!p) return;
+  const parts    = massParts[id]||[];
+  const schedule = (massSchedule[id]||[]).sort((a,b)=>a.week_num-b.week_num);
+  const logs     = massLogs[id]||[];
+
+  const diff = p.delivery_date ? Math.round((new Date(p.delivery_date)-new Date())/86400000) : null;
+  const ddayTxt = diff === null ? '납기 미설정' : diff < 0 ? `D+${Math.abs(diff)} 초과 ⚠️` : diff === 0 ? 'D-day 🔴' : `D-${diff}`;
+  const ddayColor = diff === null ? 'var(--t3)' : diff <= 0 ? 'var(--red)' : diff <= 14 ? 'var(--amber)' : 'var(--green)';
+
+  // 단계 스테퍼
+  const stepperHtml = MASS_STAGES.map((s,i) => {
+    const cur = s === p.stage;
+    const done = MASS_STAGES.indexOf(p.stage) > i;
+    return `<div class="step${done?' done':cur?' cur':''}" onclick="changeMassStage(${id},'${s}')">${s}</div>`;
+  }).join('');
+
+  // 부품 발주 테이블
+  const partsHtml = parts.length ? parts.map(pt => {
+    const stCls = {'미발주':'chip-gray','발주완료':'chip-blue','입고완료':'chip-green'}[pt.status]||'chip-gray';
+    return `<div class="mass-part-row">
+      <div class="mass-part-name">${pt.part_name}</div>
+      <span style="font-size:11px;color:var(--t3);white-space:nowrap">${pt.order_date||'발주전'}</span>
+      <span style="font-size:11px;color:var(--t2);white-space:nowrap">+${pt.lead_weeks||'?'}주</span>
+      <span style="font-size:11px;font-weight:600;white-space:nowrap">${pt.expected_date||'–'}</span>
+      <span class="chip ${stCls}" style="font-size:10px">${pt.status}</span>
+      <button class="btn btn-s btn-sm" onclick="openMassPartEdit(${id},${pt.id})">수정</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteMassPart(${id},${pt.id})">✕</button>
+    </div>`;
+  }).join('') : '<div style="padding:16px;text-align:center;color:var(--t3);font-size:13px">부품을 추가해주세요</div>';
+
+  // 주차별 설치 계획
+  const schedHtml = schedule.length ? `
+    <div class="mass-install-grid">
+      ${schedule.map(s=>`<div class="mass-week-chip"><div style="font-size:10px;color:var(--t3)">${s.week_num}주차</div><div style="font-weight:700">${s.qty}대</div>${s.note?`<div style="font-size:9px;color:var(--t3)">${s.note}</div>`:''}</div>`).join('')}
+    </div>` : '<div style="padding:12px;text-align:center;color:var(--t3);font-size:12px">주차별 설치 계획을 추가해주세요</div>';
+
+  // 피드
+  const logsHtml = logs.length ? logs.map(l => {
+    const uIdx = Object.values(USERS).find(u=>u.name===l.person)?.idx||0;
+    return `<div class="tline-item">
+      <div class="tline-dot av${uIdx%12}">${l.person?l.person.slice(-2):'?'}</div>
+      <div class="tline-body">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+          <span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;background:var(--cl2);color:var(--ct)">${l.type}</span>
+          <span style="font-size:10px;color:var(--t3)">${new Date(l.created_at).toLocaleDateString('ko-KR')}</span>
+        </div>
+        <div class="tline-text">${l.text}</div>
+        ${l.person?`<div class="tline-meta">${l.person}</div>`:''}
+      </div>
+    </div>`;
+  }).join('') : '<div style="color:var(--t3);font-size:13px;padding:8px 0">기록이 없습니다</div>';
+
+  document.getElementById('massDetailContent').innerHTML = `
+    <div class="pipe-detail-hd">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px">
+        <div>
+          <div style="font-size:22px;font-weight:800;letter-spacing:-.5px;margin-bottom:4px">${p.co}</div>
+          <div style="font-size:14px;color:var(--t2)">${p.prod||'–'} · ${p.qty}대 · ${p.person||'담당자 미지정'}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:24px;font-weight:800;color:${ddayColor}">${ddayTxt}</div>
+          <div style="font-size:12px;color:var(--t3);margin-top:2px">납품 기한: ${p.delivery_date||'미설정'}</div>
+          <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:8px">
+            <button class="btn btn-s btn-sm" onclick="openNewMassModal(${id})">✏️ 수정</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteMassProject(${id})">삭제</button>
+          </div>
+        </div>
+      </div>
+      <div class="stepper">${stepperHtml}</div>
+    </div>
+
+    <div class="pipe-section">
+      <div class="pipe-section-hd">
+        <div style="font-size:14px;font-weight:700">📦 부품 발주 현황</div>
+        <button class="btn btn-p btn-sm" onclick="openMassPartEdit(${id},null)" style="margin-left:auto">+ 부품 추가</button>
+      </div>
+      <div class="pipe-section-body" style="padding:0">${partsHtml}</div>
+    </div>
+
+    <div class="pipe-section">
+      <div class="pipe-section-hd">
+        <div style="font-size:14px;font-weight:700">🗓 주차별 설치 계획</div>
+        <button class="btn btn-s btn-sm" onclick="openMassScheduleEditor(${id})" style="margin-left:auto">편집</button>
+      </div>
+      <div class="pipe-section-body">${schedHtml}</div>
+    </div>
+
+    <div class="pipe-section">
+      <div class="pipe-section-hd"><div style="font-size:14px;font-weight:700">📝 활동 로그</div></div>
+      <div class="pipe-section-body">
+        <div class="tline" id="massLogList">${logsHtml}</div>
+        <div class="note-form" style="margin-top:14px">
+          <textarea class="note-ta" id="massNoteText" rows="2" placeholder="진행 상황, 이슈 등 기록..."></textarea>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-p" style="flex:1" onclick="addMassLog(${id})">기록 추가</button>
+            <select class="f-select" id="massNoteType" style="flex:1"><option>메모</option><option>현장방문</option><option>통화</option><option>이슈</option></select>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function changeMassStage(id, stage) {
+  const p = massProjects.find(x=>x.id===id); if(!p) return;
+  p.stage = stage;
+  if(sb) await sb.from('mass_projects').update({stage, updated_at:new Date().toISOString()}).eq('id',id);
+  showToast(`단계 변경: ${stage}`);
+  renderMassDetail(id);
+}
+
+// ── 양산 프로젝트 CRUD ──
+function openNewMassModal(editId, prefillStage) {
+  const prod = document.getElementById('mass-prod');
+  const finNames = invItems.filter(i=>i.category==='finished').map(i=>i.name);
+  prod.innerHTML = (finNames.length ? finNames : PRODUCTS).map(n=>`<option>${n}</option>`).join('');
+  document.getElementById('mass-person').innerHTML = allMembers().map(m=>`<option>${m.name}</option>`).join('');
+  const editIdEl = document.getElementById('mass-edit-id');
+  if(editId) {
+    const p = massProjects.find(x=>x.id===editId);
+    editIdEl.value = editId;
+    document.getElementById('newMassMT').textContent = '양산 프로젝트 수정';
+    document.getElementById('mass-co').value = p.co||'';
+    prod.value = p.prod||'';
+    document.getElementById('mass-qty').value = p.qty||1;
+    document.getElementById('mass-person').value = p.person||'';
+    document.getElementById('mass-delivery').value = p.delivery_date||'';
+    document.getElementById('mass-note').value = p.note||'';
+  } else {
+    editIdEl.value = '';
+    document.getElementById('newMassMT').textContent = '양산 프로젝트 추가';
+    ['mass-co','mass-delivery','mass-note'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('mass-qty').value = '1';
+  }
+  openModal('newMassModal');
+}
+async function saveMassProject() {
+  const id = parseInt(document.getElementById('mass-edit-id').value)||null;
+  const co = document.getElementById('mass-co').value.trim();
+  if(!co) { showToast('고객사는 필수입니다','warn'); return; }
+  const data = {
+    co, prod: document.getElementById('mass-prod').value,
+    qty: parseInt(document.getElementById('mass-qty').value)||1,
+    person: document.getElementById('mass-person').value,
+    delivery_date: document.getElementById('mass-delivery').value||null,
+    note: document.getElementById('mass-note').value.trim(),
+    updated_at: new Date().toISOString()
+  };
+  if(id) {
+    if(sb) await sb.from('mass_projects').update(data).eq('id',id);
+    const idx = massProjects.findIndex(p=>p.id===id);
+    if(idx>=0) massProjects[idx] = {...massProjects[idx],...data};
+  } else {
+    data.stage = '현장조사';
+    if(sb) { const {data:d} = await sb.from('mass_projects').insert([data]).select().single(); if(d) massProjects.unshift(d); }
+    else { massProjects.unshift({id:Date.now(),...data}); }
+  }
+  closeModal('newMassModal');
+  showToast(id?'수정됐습니다 ✓':'양산 프로젝트가 추가됐습니다 ✓');
+  renderMassPipeline();
+}
+async function deleteMassProject(id) {
+  if(!confirm('이 양산 프로젝트를 삭제할까요?')) return;
+  if(sb) await sb.from('mass_projects').delete().eq('id',id);
+  massProjects = massProjects.filter(p=>p.id!==id);
+  delete massParts[id]; delete massSchedule[id]; delete massLogs[id];
+  showToast('삭제됐습니다');
+  enterDashboard('mass');
+}
+
+// ── 부품 CRUD ──
+function openMassPartEdit(projId, partId) {
+  document.getElementById('mpart-proj-id').value = projId;
+  document.getElementById('mpart-id').value = partId||'';
+  const part = partId ? (massParts[projId]||[]).find(p=>p.id===partId) : null;
+  document.getElementById('mpart-name').value    = part?.part_name||'';
+  document.getElementById('mpart-order').value   = part?.order_date||'';
+  document.getElementById('mpart-weeks').value   = part?.lead_weeks||4;
+  document.getElementById('mpart-expected').value= part?.expected_date||'';
+  document.getElementById('mpart-note').value    = part?.note||'';
+  renderMpartStatusBtns(part?.status||'미발주');
+  calcMpartExpected();
+  openModal('massPartModal');
+}
+function renderMpartStatusBtns(selected) {
+  const wrap = document.getElementById('mpart-status-btns');
+  if(!wrap) return;
+  const colors = {'미발주':'#6b7280','발주완료':'#2563eb','입고완료':'#16a34a'};
+  const bgs    = {'미발주':'#f3f4f6','발주완료':'#eff6ff','입고완료':'#f0fdf4'};
+  wrap.innerHTML = MASS_PART_STATUS.map(s=>
+    `<button type="button" class="inflow-chip${s===selected?' selected':''}"
+      style="${s===selected?`background:${bgs[s]};border-color:${colors[s]};color:${colors[s]}`:''}"
+      onclick="selMpartStatus('${s}')">${s}</button>`).join('');
+  document.getElementById('mpart-status').value = selected;
+}
+function selMpartStatus(s){ document.getElementById('mpart-status').value=s; renderMpartStatusBtns(s); }
+function calcMpartExpected() {
+  const orderDate = document.getElementById('mpart-order')?.value;
+  const weeks = parseInt(document.getElementById('mpart-weeks')?.value)||0;
+  if(orderDate && weeks) {
+    const d = new Date(orderDate); d.setDate(d.getDate() + weeks*7);
+    document.getElementById('mpart-expected').value = d.toISOString().slice(0,10);
+  }
+}
+async function saveMassPart() {
+  const projId = parseInt(document.getElementById('mpart-proj-id').value);
+  const partId = parseInt(document.getElementById('mpart-id').value)||null;
+  const name   = document.getElementById('mpart-name').value.trim();
+  if(!name) { showToast('부품명은 필수입니다','warn'); return; }
+  const data = {
+    mass_project_id: projId,
+    part_name: name,
+    order_date: document.getElementById('mpart-order').value||null,
+    lead_weeks: parseInt(document.getElementById('mpart-weeks').value)||4,
+    expected_date: document.getElementById('mpart-expected').value||null,
+    status: document.getElementById('mpart-status').value||'미발주',
+    note: document.getElementById('mpart-note').value.trim()
+  };
+  if(!massParts[projId]) massParts[projId] = [];
+  if(partId) {
+    if(sb) await sb.from('mass_parts').update(data).eq('id',partId);
+    const idx = massParts[projId].findIndex(p=>p.id===partId);
+    if(idx>=0) massParts[projId][idx] = {...massParts[projId][idx],...data};
+  } else {
+    if(sb) { const {data:d} = await sb.from('mass_parts').insert([data]).select().single(); if(d) massParts[projId].push(d); }
+    else { massParts[projId].push({id:Date.now(),...data}); }
+  }
+  closeModal('massPartModal');
+  showToast('저장됐습니다 ✓');
+  renderMassDetail(projId);
+}
+async function deleteMassPart(projId, partId) {
+  if(!confirm('삭제할까요?')) return;
+  if(sb) await sb.from('mass_parts').delete().eq('id',partId);
+  if(massParts[projId]) massParts[projId] = massParts[projId].filter(p=>p.id!==partId);
+  showToast('삭제됐습니다');
+  renderMassDetail(projId);
+}
+
+// ── 주차별 설치 계획 편집 ──
+function openMassScheduleEditor(projId) {
+  const existing = massSchedule[projId]||[];
+  const overlay = document.createElement('div');
+  overlay.id = 'massSchedOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px';
+  const rowsHtml = existing.map(s=>schedRowHtml(s.week_num,s.qty,s.note)).join('');
+  overlay.innerHTML = `<div style="background:var(--surface);border-radius:var(--r-xl);width:100%;max-width:480px;max-height:85vh;overflow-y:auto;box-shadow:var(--sh-lg);animation:su .2s ease">
+    <div style="padding:20px 24px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface)">
+      <div style="font-size:17px;font-weight:800">주차별 설치 계획</div>
+      <button onclick="document.getElementById('massSchedOverlay').remove()" style="width:30px;height:30px;border-radius:50%;background:var(--s2);border:none;cursor:pointer;font-size:18px">×</button>
+    </div>
+    <div style="padding:20px 24px">
+      <div style="font-size:12px;color:var(--t2);margin-bottom:14px">엑셀의 주차별 설치 수량 행과 동일한 구조입니다</div>
+      <div id="massSchedRows">${rowsHtml}</div>
+      <button class="btn btn-s btn-sm" style="margin-top:8px" onclick="addSchedRow()">+ 주차 추가</button>
+      <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px;margin-top:16px" onclick="saveMassSchedule(${projId})">저장</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+function schedRowHtml(wk,qty,note) {
+  return `<div class="mass-part-row" style="gap:8px">
+    <input class="form-input sched-week" type="number" min="1" value="${wk||''}" placeholder="주차" style="width:64px;flex:none">
+    <input class="form-input sched-qty" type="number" min="0" value="${qty||0}" placeholder="대수" style="width:64px;flex:none">
+    <input class="form-input sched-note" value="${note||''}" placeholder="메모 (예: 2팀 하루 2대)" style="flex:1">
+    <button onclick="this.closest('.mass-part-row').remove()" style="background:var(--rl);border:none;border-radius:var(--r-sm);cursor:pointer;width:28px;height:28px;color:var(--red);font-size:16px">×</button>
+  </div>`;
+}
+function addSchedRow() {
+  document.getElementById('massSchedRows').insertAdjacentHTML('beforeend', schedRowHtml('','0',''));
+}
+async function saveMassSchedule(projId) {
+  const rows = document.querySelectorAll('#massSchedRows .mass-part-row');
+  const newSched = [...rows].map(r=>({
+    mass_project_id: projId,
+    week_num: parseInt(r.querySelector('.sched-week').value)||0,
+    qty: parseInt(r.querySelector('.sched-qty').value)||0,
+    note: r.querySelector('.sched-note').value.trim()
+  })).filter(s=>s.week_num>0);
+  if(sb) {
+    await sb.from('mass_install_schedule').delete().eq('mass_project_id',projId);
+    if(newSched.length) { const {data:d} = await sb.from('mass_install_schedule').insert(newSched).select(); massSchedule[projId]=d||[]; }
+    else { massSchedule[projId]=[]; }
+  } else { massSchedule[projId]=newSched; }
+  document.getElementById('massSchedOverlay')?.remove();
+  showToast('주차별 계획이 저장됐습니다 ✓');
+  renderMassDetail(projId);
+}
+
+// ── 양산 로그 추가 ──
+async function addMassLog(projId) {
+  const txt = document.getElementById('massNoteText')?.value.trim();
+  if(!txt) return;
+  const type = document.getElementById('massNoteType')?.value||'메모';
+  const data = {mass_project_id:projId, type, text:txt, person:CU?.name||''};
+  if(!massLogs[projId]) massLogs[projId]=[];
+  if(sb) {
+    const {data:d} = await sb.from('mass_logs').insert([data]).select().single();
+    if(d) massLogs[projId].unshift(d);
+  } else { massLogs[projId].unshift({id:Date.now(),created_at:new Date().toISOString(),...data}); }
+  document.getElementById('massNoteText').value='';
+  showToast('기록 추가됐습니다 ✓');
+  renderMassDetail(projId);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 개발 파이프라인 — DATA & CONSTANTS
+// ══════════════════════════════════════════════════════════════════
+let rdProjects = [];
+let rdTasks    = {};   // { proj_id: [...tasks] }
+let rdLogs     = {};   // { proj_id: [...logs] }
+
+const RD_STAGES     = ['분석','설계','제작','시험','완료'];
+const RD_STAGE_DOTS = ['#0891b2','#3b82f6','#a855f7','#f59e0b','#22c55e'];
+// 엑셀 개발일정_샘플과 동일한 기본 태스크 구조
+const RD_DEFAULT_TASKS = {
+  '분석': [
+    {title:'사전 미팅',description:'업무범위 선정'},
+    {title:'자료 분석',description:'자료 분석 및 데이터 비교'},
+  ],
+  '설계': [
+    {title:'시험 환경 구축',description:'시험환경 구성(계측기 등)'},
+    {title:'회로 설계 1차',description:'1차 설계'},
+    {title:'회로 설계 2차',description:'2차 설계 / 1차 시험 결과 반영'},
+    {title:'PCB Artwork 설계',description:'PCB Artwork 설계'},
+    {title:'PCB Artwork 수정',description:'PCB Artwork 수정 보완'},
+    {title:'기구 설계',description:'기구 설계'},
+    {title:'기구 수정 보완',description:'기구 수정 보완'},
+  ],
+  '제작': [
+    {title:'자재 구매',description:'PCB 자재 구매'},
+    {title:'PCB 제작 1차',description:'1차 PCB 제작'},
+    {title:'PCB 제작 2차',description:'2차 PCB 제작'},
+    {title:'기구 제작 1차',description:'1차 기구 제작'},
+    {title:'기구 제작 2차',description:'2차 기구 제작'},
+  ],
+  '시험': [
+    {title:'단품시험 1차',description:'1차 단품시험'},
+    {title:'단품시험 2차',description:'2차 단품시험'},
+    {title:'통합시험 1차',description:'1차 종합시험'},
+    {title:'통합시험 2차',description:'2차 종합시험'},
+  ],
+  '완료': [
+    {title:'양산 문서 이관',description:'생산자료, 제작사양서, 매뉴얼 등 이관'},
+  ],
+};
+
+async function loadRdData() {
+  if(!sb) return;
+  try {
+    const [r1,r2,r3] = await Promise.all([
+      sb.from('rd_projects').select('*').order('created_at',{ascending:false}),
+      sb.from('rd_tasks').select('*').order('sort_order'),
+      sb.from('rd_logs').select('*').order('created_at',{ascending:false}),
+    ]);
+    rdProjects = r1.data||[];
+    rdTasks={};
+    (r2.data||[]).forEach(t => { if(!rdTasks[t.rd_project_id]) rdTasks[t.rd_project_id]=[]; rdTasks[t.rd_project_id].push(t); });
+    rdLogs={};
+    (r3.data||[]).forEach(l => { if(!rdLogs[l.rd_project_id]) rdLogs[l.rd_project_id]=[]; rdLogs[l.rd_project_id].push(l); });
+    const hs = document.getElementById('hs-rd');
+    if(hs) hs.textContent = `${rdProjects.filter(p=>p.stage!=='완료').length}건 진행`;
+  } catch(e) { console.error('loadRdData:', e); }
+}
+
+// ── 칸반 렌더 ──
+async function renderRdPipeline() {
+  if(!rdProjects.length && sb) await loadRdData();
+  const board = document.getElementById('rdBoardEl');
+  if(!board) return;
+
+  board.innerHTML = RD_STAGES.map((stage, si) => {
+    const cols = rdProjects.filter(p=>p.stage===stage);
+    return `<div class="rd-col">
+      <div class="rd-col-hd">
+        <div class="rd-col-dot" style="background:${RD_STAGE_DOTS[si]}"></div>
+        <div class="rd-col-name">${stage}</div>
+        <div class="rd-col-meta">${cols.length}</div>
+      </div>
+      <div class="rd-col-body">
+        ${cols.map(p => {
+          const tasks  = rdTasks[p.id]||[];
+          const doneCnt= tasks.filter(t=>t.done).length;
+          const pct    = tasks.length ? Math.round(doneCnt/tasks.length*100) : 0;
+          const stageTasksDone = tasks.filter(t=>t.stage===stage&&t.done).length;
+          const stageTasks     = tasks.filter(t=>t.stage===stage).length;
+          return `<div class="rd-card" onclick="openRdDetail(${p.id})">
+            <div class="rd-card-name">${p.name}</div>
+            ${p.description?`<div class="rd-card-desc">${p.description}</div>`:''}
+            <div class="rd-card-foot">
+              ${avEl(p.person,'22px','9px')}
+              <span style="font-size:11px;color:var(--t2);flex:1">${p.person||'담당자 미지정'}</span>
+              ${tasks.length?`<span style="font-size:10px;color:var(--t3)">${doneCnt}/${tasks.length}</span>`:''}
+            </div>
+            ${tasks.length?`<div class="rd-progress" style="margin-top:8px"><div class="rd-progress-fill" style="width:${pct}%"></div></div>`:''}
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="rd-col-foot">
+        <button class="add-btn" onclick="openNewRdModal(null,'${stage}')">+ 프로젝트 추가</button>
+      </div>
+    </div>`;
+  }).join('');
+  initKanbanDrag();
+}
+
+// ── 상세 뷰 ──
+async function openRdDetail(id) {
+  if(!rdTasks[id]) {
+    const [r1,r2] = await Promise.all([
+      sb.from('rd_tasks').select('*').eq('rd_project_id',id).order('sort_order'),
+      sb.from('rd_logs').select('*').eq('rd_project_id',id).order('created_at',{ascending:false}),
+    ]);
+    rdTasks[id] = r1.data||[];
+    rdLogs[id]  = r2.data||[];
+  }
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-rd-detail').classList.add('active');
+  document.getElementById('topTitle').textContent = '개발 프로젝트 상세';
+  document.getElementById('topActions').innerHTML = '';
+  renderRdDetail(id);
+}
+
+function renderRdDetail(id) {
+  const p = rdProjects.find(x=>x.id===id); if(!p) return;
+  const tasks = rdTasks[id]||[];
+  const logs  = rdLogs[id]||[];
+
+  const totDone = tasks.filter(t=>t.done).length;
+  const pct = tasks.length ? Math.round(totDone/tasks.length*100) : 0;
+
+  // 단계 스테퍼
+  const stepperHtml = RD_STAGES.map((s,i) => {
+    const cur  = s === p.stage;
+    const done = RD_STAGES.indexOf(p.stage) > i;
+    return `<div class="step${done?' done':cur?' cur':''}" onclick="changeRdStage(${id},'${s}')">${s}</div>`;
+  }).join('');
+
+  // 단계별 체크리스트 — 엑셀과 동일한 구조
+  const stageColors = {'분석':'#0891b2','설계':'#3b82f6','제작':'#a855f7','시험':'#f59e0b','완료':'#22c55e','기타':'#6b7280'};
+  const taskSectionsHtml = RD_STAGES.map(stage => {
+    const stageTasks = tasks.filter(t=>t.stage===stage);
+    if(!stageTasks.length) return `
+      <div style="background:var(--s2);border:1px dashed var(--bd2);border-radius:var(--r);margin-bottom:10px;overflow:hidden">
+        <div style="padding:10px 14px;display:flex;align-items:center;gap:8px">
+          <div style="width:10px;height:10px;border-radius:50%;background:${stageColors[stage]||'#9ca3af'};flex-shrink:0"></div>
+          <div style="font-size:13px;font-weight:700;flex:1;color:var(--t2)">${stage}</div>
+          <button class="btn btn-s btn-sm" onclick="openRdTaskModal(${id},'${stage}',null)">+ 태스크 추가</button>
+        </div>
+      </div>`;
+    const doneCnt = stageTasks.filter(t=>t.done).length;
+    return `
+      <div class="pipe-section" style="margin-bottom:10px">
+        <div class="pipe-section-hd" style="background:${doneCnt===stageTasks.length&&stageTasks.length>0?'var(--gl)':''}">
+          <div style="width:10px;height:10px;border-radius:50%;background:${stageColors[stage]||'#9ca3af'};flex-shrink:0"></div>
+          <div style="font-size:13px;font-weight:700;flex:1">${stage}</div>
+          <span style="font-size:11px;color:var(--t3)">${doneCnt}/${stageTasks.length}</span>
+          ${doneCnt===stageTasks.length&&stageTasks.length>0?`<span class="chip chip-green" style="font-size:10px">✓ 완료</span>`:''}
+          <button class="btn btn-s btn-sm" onclick="openRdTaskModal(${id},'${stage}',null);event.stopPropagation()" style="margin-left:4px">+ 추가</button>
+        </div>
+        <div class="pipe-section-body" style="padding:4px 0">
+          ${stageTasks.map(t=>`
+            <div class="rd-task-row">
+              <div class="rd-task-check${t.done?' done':''}" onclick="toggleRdTask(${id},${t.id})">
+                ${t.done?`<svg viewBox="0 0 12 12" fill="none" style="width:9px;height:9px"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`:''}
+              </div>
+              <div class="rd-task-body">
+                <div class="rd-task-title${t.done?' done-text':''}">${t.title}</div>
+                ${t.description?`<div class="rd-task-desc">${t.description}</div>`:''}
+                ${(t.start_date||t.end_date)?`<div class="rd-task-dates">${t.start_date||'?'} ~ ${t.end_date||'?'}</div>`:''}
+              </div>
+              <div class="rd-task-actions">
+                <button class="btn btn-s btn-sm" onclick="openRdTaskModal(${id},'${stage}',${t.id})">✏️</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteRdTask(${id},${t.id})">✕</button>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }).join('');
+
+  // 피드
+  const logsHtml = logs.length ? logs.map(l=>{
+    const uIdx = Object.values(USERS).find(u=>u.name===l.person)?.idx||0;
+    return `<div class="tline-item">
+      <div class="tline-dot av${uIdx%12}">${l.person?l.person.slice(-2):'?'}</div>
+      <div class="tline-body">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+          <span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;background:var(--pl);color:var(--pt)">${l.type}</span>
+          <span style="font-size:10px;color:var(--t3)">${new Date(l.created_at).toLocaleDateString('ko-KR')}</span>
+        </div>
+        <div class="tline-text">${l.text}</div>
+        ${l.person?`<div class="tline-meta">${l.person}</div>`:''}
+      </div>
+    </div>`;
+  }).join('') : '<div style="color:var(--t3);font-size:13px;padding:8px 0">기록이 없습니다</div>';
+
+  document.getElementById('rdDetailContent').innerHTML = `
+    <div class="pipe-detail-hd">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px">
+        <div>
+          <div style="font-size:22px;font-weight:800;letter-spacing:-.5px;margin-bottom:4px">${p.name}</div>
+          ${p.description?`<div style="font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:4px">${p.description}</div>`:''}
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            ${avEl(p.person,'22px','9px')}
+            <span style="font-size:13px;font-weight:600">${p.person||'담당자 미지정'}</span>
+            ${p.target_date?`<span style="font-size:12px;color:var(--t3)">목표 ${p.target_date}</span>`:''}
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:28px;font-weight:800;color:var(--accent)">${pct}%</div>
+          <div style="font-size:11px;color:var(--t3)">전체 진행률 (${totDone}/${tasks.length})</div>
+          <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:8px">
+            <button class="btn btn-s btn-sm" onclick="openNewRdModal(${id})">✏️ 수정</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteRdProject(${id})">삭제</button>
+          </div>
+        </div>
+      </div>
+      <div style="height:8px;background:var(--s2);border-radius:4px;overflow:hidden;margin-bottom:16px">
+        <div style="height:100%;border-radius:4px;background:var(--accent);width:${pct}%;transition:width .5s"></div>
+      </div>
+      <div class="stepper">${stepperHtml}</div>
+    </div>
+
+    <div style="margin-bottom:14px">
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+        📋 단계별 태스크
+        <span style="font-size:11px;font-weight:400;color:var(--t3)">엑셀 개발일정과 동일한 구조로 관리합니다</span>
+      </div>
+      ${taskSectionsHtml}
+    </div>
+
+    <div class="pipe-section">
+      <div class="pipe-section-hd"><div style="font-size:14px;font-weight:700">📝 개발 피드</div></div>
+      <div class="pipe-section-body">
+        <div class="tline" id="rdLogList">${logsHtml}</div>
+        <div class="note-form" style="margin-top:14px">
+          <textarea class="note-ta" id="rdNoteText" rows="2" placeholder="개발 진행 상황, 이슈, 결정 사항 등..."></textarea>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-p" style="flex:1" onclick="addRdLog(${id})">기록 추가</button>
+            <select class="f-select" id="rdNoteType" style="flex:1"><option>메모</option><option>이슈</option><option>결정</option><option>시험결과</option><option>설계변경</option></select>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function changeRdStage(id, stage) {
+  const p = rdProjects.find(x=>x.id===id); if(!p) return;
+  p.stage = stage;
+  if(sb) await sb.from('rd_projects').update({stage, updated_at:new Date().toISOString()}).eq('id',id);
+  showToast(`단계 변경: ${stage}`);
+  renderRdDetail(id);
+}
+
+// ── 개발 프로젝트 CRUD ──
+function openNewRdModal(editId, prefillStage) {
+  const selPerson = document.getElementById('rd-person');
+  selPerson.innerHTML = '<option value="">담당자 선택</option>' + allMembers().map(m=>`<option>${m.name}</option>`).join('');
+  document.getElementById('rd-edit-id').value = editId||'';
+  if(editId) {
+    const p = rdProjects.find(x=>x.id===editId);
+    document.getElementById('newRdMT').textContent = '개발 프로젝트 수정';
+    document.getElementById('rd-name').value   = p.name||'';
+    document.getElementById('rd-desc').value   = p.description||'';
+    selPerson.value                             = p.person||'';
+    document.getElementById('rd-target').value = p.target_date||'';
+  } else {
+    document.getElementById('newRdMT').textContent = '개발 프로젝트 추가';
+    ['rd-name','rd-desc','rd-target'].forEach(i=>document.getElementById(i).value='');
+  }
+  openModal('newRdModal');
+}
+
+async function saveRdProject() {
+  const id   = parseInt(document.getElementById('rd-edit-id').value)||null;
+  const name = document.getElementById('rd-name').value.trim();
+  if(!name) { showToast('프로젝트명은 필수입니다','warn'); return; }
+  const data = {
+    name, description: document.getElementById('rd-desc').value.trim(),
+    person: document.getElementById('rd-person').value||null,
+    target_date: document.getElementById('rd-target').value||null,
+    updated_at: new Date().toISOString()
+  };
+  if(id) {
+    if(sb) await sb.from('rd_projects').update(data).eq('id',id);
+    const idx = rdProjects.findIndex(p=>p.id===id);
+    if(idx>=0) rdProjects[idx]={...rdProjects[idx],...data};
+    closeModal('newRdModal');
+    showToast('수정됐습니다 ✓');
+    renderRdDetail(id);
+  } else {
+    data.stage = prefillStage||'분석'; data.created_by = CU?.name||'';
+    let newProj;
+    if(sb) { const {data:d} = await sb.from('rd_projects').insert([data]).select().single(); newProj=d; if(d) rdProjects.unshift(d); }
+    else { newProj={id:Date.now(),...data}; rdProjects.unshift(newProj); }
+    // 기본 태스크 자동 생성 (엑셀 구조 반영)
+    if(newProj && sb) {
+      const defaultTasks = Object.entries(RD_DEFAULT_TASKS).flatMap(([stage, list], si) =>
+        list.map((t,ti) => ({rd_project_id:newProj.id, stage, title:t.title, description:t.description, done:false, sort_order:si*100+ti}))
+      );
+      const {data:dt} = await sb.from('rd_tasks').insert(defaultTasks).select();
+      rdTasks[newProj.id] = dt||[];
+    }
+    closeModal('newRdModal');
+    showToast('개발 프로젝트가 추가됐습니다 ✓');
+    renderRdPipeline();
+  }
+}
+
+async function deleteRdProject(id) {
+  if(!confirm('이 개발 프로젝트를 삭제할까요?')) return;
+  if(sb) await sb.from('rd_projects').delete().eq('id',id);
+  rdProjects = rdProjects.filter(p=>p.id!==id);
+  delete rdTasks[id]; delete rdLogs[id];
+  showToast('삭제됐습니다');
+  enterDashboard('rd');
+}
+
+// ── 태스크 CRUD ──
+function openRdTaskModal(projId, stage, taskId) {
+  document.getElementById('rdt-proj-id').value = projId;
+  document.getElementById('rdt-stage').value   = stage;
+  document.getElementById('rdt-id').value       = taskId||'';
+  document.getElementById('rdTaskStageLbl').textContent = `${stage} 단계`;
+  const task = taskId ? (rdTasks[projId]||[]).find(t=>t.id===taskId) : null;
+  document.getElementById('rdTaskMT').textContent = taskId ? '태스크 수정' : '태스크 추가';
+  document.getElementById('rdt-title').value = task?.title||'';
+  document.getElementById('rdt-desc').value  = task?.description||'';
+  document.getElementById('rdt-start').value = task?.start_date||'';
+  document.getElementById('rdt-end').value   = task?.end_date||'';
+  openModal('rdTaskModal');
+}
+async function saveRdTask() {
+  const projId = parseInt(document.getElementById('rdt-proj-id').value);
+  const taskId = parseInt(document.getElementById('rdt-id').value)||null;
+  const title  = document.getElementById('rdt-title').value.trim();
+  if(!title) { showToast('개발 내용은 필수입니다','warn'); return; }
+  const stage  = document.getElementById('rdt-stage').value;
+  const data   = {
+    rd_project_id: projId, stage, title,
+    description: document.getElementById('rdt-desc').value.trim(),
+    start_date: document.getElementById('rdt-start').value||null,
+    end_date:   document.getElementById('rdt-end').value||null,
+    sort_order: (rdTasks[projId]||[]).length * 10
+  };
+  if(!rdTasks[projId]) rdTasks[projId]=[];
+  if(taskId) {
+    if(sb) await sb.from('rd_tasks').update(data).eq('id',taskId);
+    const idx = rdTasks[projId].findIndex(t=>t.id===taskId);
+    if(idx>=0) rdTasks[projId][idx]={...rdTasks[projId][idx],...data};
+  } else {
+    if(sb) { const {data:d}=await sb.from('rd_tasks').insert([{...data,done:false}]).select().single(); if(d) rdTasks[projId].push(d); }
+    else { rdTasks[projId].push({id:Date.now(),done:false,...data}); }
+  }
+  closeModal('rdTaskModal');
+  showToast('저장됐습니다 ✓');
+  renderRdDetail(projId);
+}
+async function toggleRdTask(projId, taskId) {
+  if(!rdTasks[projId]) return;
+  const task = rdTasks[projId].find(t=>t.id===taskId); if(!task) return;
+  task.done = !task.done;
+  if(sb) await sb.from('rd_tasks').update({done:task.done}).eq('id',taskId);
+  renderRdDetail(projId);
+  // 단계 내 모든 태스크 완료 시 자동 다음 단계 제안
+  const p = rdProjects.find(x=>x.id===projId);
+  if(p && task.done) {
+    const stageIdx = RD_STAGES.indexOf(p.stage);
+    const curStageTasks = rdTasks[projId].filter(t=>t.stage===p.stage);
+    const allDone = curStageTasks.length>0 && curStageTasks.every(t=>t.done);
+    if(allDone && stageIdx < RD_STAGES.length-1) {
+      const nextStage = RD_STAGES[stageIdx+1];
+      if(confirm(`'${p.stage}' 단계의 모든 태스크가 완료됐습니다!\n다음 단계 '${nextStage}'로 이동할까요?`)) {
+        changeRdStage(projId, nextStage);
+      }
+    }
+  }
+}
+async function deleteRdTask(projId, taskId) {
+  if(!confirm('태스크를 삭제할까요?')) return;
+  if(sb) await sb.from('rd_tasks').delete().eq('id',taskId);
+  if(rdTasks[projId]) rdTasks[projId]=rdTasks[projId].filter(t=>t.id!==taskId);
+  showToast('삭제됐습니다');
+  renderRdDetail(projId);
+}
+async function addRdLog(projId) {
+  const txt = document.getElementById('rdNoteText')?.value.trim();
+  if(!txt) return;
+  const type = document.getElementById('rdNoteType')?.value||'메모';
+  const data = {rd_project_id:projId, type, text:txt, person:CU?.name||''};
+  if(!rdLogs[projId]) rdLogs[projId]=[];
+  if(sb) { const {data:d}=await sb.from('rd_logs').insert([data]).select().single(); if(d) rdLogs[projId].unshift(d); }
+  else { rdLogs[projId].unshift({id:Date.now(),created_at:new Date().toISOString(),...data}); }
+  document.getElementById('rdNoteText').value='';
+  showToast('기록 추가됐습니다 ✓');
+  renderRdDetail(projId);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 초기 로드 연동 (doLogin 에서 loadMassData, loadRdData 호출)
+// ══════════════════════════════════════════════════════════════════
+// doLogin의 Promise.all에 포함되도록 별도 초기화
+async function loadPipelineData() {
+  await Promise.all([loadMassData(), loadRdData()]);
+}
+</script>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// 1. BOM 드래그 순서 변경
+// ══════════════════════════════════════════════════════════════════
+let _bomDragId = null;
+let _bomDragFinishedId = null;
+
+function bomDragStart(e, bomId, finishedId) {
+  _bomDragId = bomId;
+  _bomDragFinishedId = finishedId;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function bomDragOver(e, bomId, finishedId) {
+  if(bomId === _bomDragId) return;
+  if(finishedId !== _bomDragFinishedId) return;
+  e.preventDefault();
+  e.currentTarget.classList.add('drag-over');
+}
+function bomDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+async function bomDrop(e, targetBomId, finishedId) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if(!_bomDragId || _bomDragId === targetBomId) return;
+  if(finishedId !== _bomDragFinishedId) return;
+
+  // 순서 재계산
+  const container = document.getElementById(`bom-list-${finishedId}`);
+  const rows = [...container.querySelectorAll('.bom-row')];
+  const ids  = rows.map(r => parseInt(r.dataset.bomId));
+
+  const fromIdx = ids.indexOf(_bomDragId);
+  const toIdx   = ids.indexOf(targetBomId);
+  if(fromIdx < 0 || toIdx < 0) return;
+
+  // 배열에서 이동
+  ids.splice(fromIdx, 1);
+  ids.splice(toIdx, 0, _bomDragId);
+
+  // DB 업데이트
+  const updates = ids.map((id, i) => sb.from('bom').update({sort_order: i}).eq('id', id));
+  await Promise.all(updates);
+
+  // 로컬 bomData 순서 반영
+  ids.forEach((id, i) => {
+    const b = bomData.find(x=>x.id===id);
+    if(b) b.sort_order = i;
+  });
+
+  _bomDragId = null;
+  _bomDragFinishedId = null;
+  renderBOM();
+}
+
+// ── BOM 수정 모달 ──
+function openBomEditModal(bomId, finishedId) {
+  const b = bomData.find(x=>x.id===bomId); if(!b) return;
+  const raw = invItems.filter(i=>i.category==='raw');
+  const opts = raw.map(r=>`<option value="${r.id}"${r.id===b.raw_item_id?' selected':''}>${r.name} (${r.unit})</option>`).join('');
+  const overlay = document.createElement('div');
+  overlay.id = 'bomEditOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(3px);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.innerHTML = `<div style="background:var(--surface);border-radius:var(--r-xl);padding:28px;width:100%;max-width:400px;box-shadow:var(--sh-lg)">
+    <div style="font-size:16px;font-weight:800;margin-bottom:20px">BOM 수정</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div><label class="form-label">원재료</label><select class="form-select" id="bom-edit-raw" style="width:100%;margin-top:4px">${opts}</select></div>
+      <div><label class="form-label">필요 수량</label><input class="form-input" id="bom-edit-qty" type="number" min="1" step="1" value="${Math.round(b.qty_required)}" style="width:100%;margin-top:4px"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:20px">
+      <button class="btn btn-p" style="flex:1;justify-content:center" onclick="saveBomEdit(${bomId})">저장</button>
+      <button class="btn btn-s" onclick="document.getElementById('bomEditOverlay').remove()">취소</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+async function saveBomEdit(bomId) {
+  const rawId = parseInt(document.getElementById('bom-edit-raw').value);
+  const qty   = parseFloat(document.getElementById('bom-edit-qty').value)||1;
+  if(sb) await sb.from('bom').update({raw_item_id:rawId, qty_required:qty}).eq('id',bomId);
+  const b = bomData.find(x=>x.id===bomId);
+  if(b) { b.raw_item_id=rawId; b.qty_required=qty; }
+  document.getElementById('bomEditOverlay')?.remove();
+  showToast('수정됐습니다 ✓');
+  renderBOM();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 2. 원재료 구성품 관리
+// ══════════════════════════════════════════════════════════════════
+window._itemComponents = null; // { item_id: [...components] }
+
+async function loadItemComponents() {
+  if(!sb) { window._itemComponents = {}; return; }
+  try {
+    const {data} = await sb.from('item_components').select('*').order('sort_order');
+    window._itemComponents = {};
+    (data||[]).forEach(c => {
+      if(!window._itemComponents[c.item_id]) window._itemComponents[c.item_id] = [];
+      window._itemComponents[c.item_id].push(c);
+    });
+  } catch(e) { window._itemComponents = {}; }
+}
+
+// openRawItemModal에 구성품 섹션 추가 — saveRawItem 후 구성품 저장
+// 기존 rawItemOverlay를 확장: 구성품 입력 섹션 삽입
+const _origOpenRawItemModal = window.openRawItemModal;
+window.openRawItemModal = function(prefillFinishedId) {
+  _origOpenRawItemModal?.call(this, prefillFinishedId);
+  // 구성품 섹션을 rawItemOverlay 안에 삽입 (BOM 연결 섹션 앞)
+  setTimeout(() => {
+    const overlay = document.getElementById('rawItemOverlay');
+    if(!overlay) return;
+    const bomSection = overlay.querySelector('#raw-bom-rows')?.closest('div')?.parentElement;
+    if(!bomSection) return;
+    const compSection = document.createElement('div');
+    compSection.style.cssText = 'grid-column:1/-1;border-top:1px solid var(--bd);padding-top:16px;margin-top:4px';
+    compSection.id = 'raw-comp-section';
+    compSection.innerHTML = `
+      <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:10px;display:flex;align-items:center;gap:6px">
+        🧩 세트 구성품 <span style="font-size:10px;font-weight:400;color:var(--t3)">이 원재료가 세트 구성품으로 이루어진 경우 입력 (선택사항)</span>
+      </div>
+      <div id="raw-comp-rows"></div>
+      <button type="button" onclick="addRawCompRow()" style="font-size:12px;color:var(--accent);background:none;border:none;cursor:pointer;padding:4px 0;font-family:var(--font);font-weight:600">+ 구성품 추가</button>`;
+    bomSection.parentElement.insertBefore(compSection, bomSection);
+  }, 50);
+};
+
+function addRawCompRow(name='', qty=1, unit='개') {
+  const wrap = document.getElementById('raw-comp-rows');
+  if(!wrap) return;
+  const row = document.createElement('div');
+  row.className = 'comp-row';
+  row.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:6px';
+  row.innerHTML = `
+    <input class="form-input comp-name" placeholder="구성품명 (예: 3M 연장선)" value="${name}" style="flex:1;font-size:12px">
+    <input class="form-input comp-qty" type="number" min="1" step="1" value="${qty}" placeholder="수량" style="width:60px;flex:none;font-size:12px">
+    <input class="form-input comp-unit" value="${unit}" placeholder="단위" style="width:48px;flex:none;font-size:12px">
+    <button onclick="this.closest('.comp-row').remove()" style="background:var(--rl);border:1px solid #fecaca;border-radius:var(--r-sm);cursor:pointer;width:28px;height:28px;flex:none;color:var(--red);font-size:14px;display:flex;align-items:center;justify-content:center">×</button>`;
+  wrap.appendChild(row);
+}
+
+// saveRawItem 확장 — 저장 후 구성품 저장
+const _origSaveRawItem = window.saveRawItem;
+window.saveRawItem = async function() {
+  // 기존 로직 실행 (newItem 반환값 캡처 불가 → 품목 이름으로 찾기)
+  const rawName = document.getElementById('raw-name')?.value.trim();
+  await _origSaveRawItem?.call(this);
+  // 저장 후 구성품 저장
+  await saveRawCompComponents(rawName);
+};
+
+async function saveRawCompComponents(itemName) {
+  const rows = document.querySelectorAll('#raw-comp-rows .comp-row');
+  if(!rows.length) return;
+  const item = invItems.find(i=>i.name===itemName && i.category==='raw');
+  if(!item || !sb) return;
+  const comps = [...rows].map((r,i) => ({
+    item_id: item.id,
+    name: r.querySelector('.comp-name')?.value.trim(),
+    qty: parseInt(r.querySelector('.comp-qty')?.value)||1,
+    unit: r.querySelector('.comp-unit')?.value||'개',
+    sort_order: i
+  })).filter(c=>c.name);
+  if(!comps.length) return;
+  await sb.from('item_components').delete().eq('item_id', item.id);
+  await sb.from('item_components').insert(comps);
+  if(!window._itemComponents) window._itemComponents = {};
+  const {data} = await sb.from('item_components').select('*').eq('item_id', item.id).order('sort_order');
+  window._itemComponents[item.id] = data||[];
+}
+
+// openItemModalEdit 확장 — 구성품 탭 추가
+const _origOpenItemModalEdit = window.openItemModalEdit;
+window.openItemModalEdit = async function(id) {
+  _origOpenItemModalEdit?.call(this, id);
+  const item = invItems.find(i=>i.id===id);
+  if(!item || item.category !== 'raw') return;
+  // 구성품 로드
+  if(!window._itemComponents) await loadItemComponents();
+  const comps = (window._itemComponents||{})[id]||[];
+  // itemModal body에 구성품 섹션 추가
+  setTimeout(() => {
+    const modal = document.getElementById('itemModal');
+    if(!modal) return;
+    const existing = modal.querySelector('#item-comp-section');
+    if(existing) existing.remove();
+    const saveBtn = modal.querySelector('button[onclick="saveItem()"]');
+    if(!saveBtn) return;
+    const section = document.createElement('div');
+    section.id = 'item-comp-section';
+    section.style.cssText = 'border-top:1px solid var(--bd);padding-top:16px;margin-top:12px';
+    section.innerHTML = `
+      <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:10px">🧩 세트 구성품</div>
+      <div id="item-comp-rows">${comps.map(c=>`
+        <div class="comp-row" style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+          <input class="form-input comp-name" placeholder="구성품명" value="${c.name}" style="flex:1;font-size:12px">
+          <input class="form-input comp-qty" type="number" min="1" step="1" value="${c.qty}" style="width:60px;flex:none;font-size:12px">
+          <input class="form-input comp-unit" value="${c.unit||'개'}" style="width:48px;flex:none;font-size:12px">
+          <button onclick="this.closest('.comp-row').remove()" style="background:var(--rl);border:1px solid #fecaca;border-radius:var(--r-sm);cursor:pointer;width:28px;height:28px;flex:none;color:var(--red);font-size:14px;display:flex;align-items:center;justify-content:center">×</button>
+        </div>`).join('')}
+      </div>
+      <button type="button" onclick="addItemCompRow()" style="font-size:12px;color:var(--accent);background:none;border:none;cursor:pointer;padding:4px 0;font-family:var(--font);font-weight:600">+ 구성품 추가</button>`;
+    saveBtn.parentElement.insertBefore(section, saveBtn);
+  }, 50);
+};
+
+function addItemCompRow() {
+  const wrap = document.getElementById('item-comp-rows');
+  if(!wrap) return;
+  const row = document.createElement('div');
+  row.className = 'comp-row';
+  row.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:6px';
+  row.innerHTML = `
+    <input class="form-input comp-name" placeholder="구성품명" style="flex:1;font-size:12px">
+    <input class="form-input comp-qty" type="number" min="1" step="1" value="1" style="width:60px;flex:none;font-size:12px">
+    <input class="form-input comp-unit" value="개" style="width:48px;flex:none;font-size:12px">
+    <button onclick="this.closest('.comp-row').remove()" style="background:var(--rl);border:1px solid #fecaca;border-radius:var(--r-sm);cursor:pointer;width:28px;height:28px;flex:none;color:var(--red);font-size:14px;display:flex;align-items:center;justify-content:center">×</button>`;
+  wrap.appendChild(row);
+}
+
+// saveItem 확장 — 구성품 저장
+const _origSaveItem = window.saveItem;
+window.saveItem = async function() {
+  const id = parseInt(document.getElementById('item-id').value)||null;
+  const name = document.getElementById('item-name').value.trim();
+  await _origSaveItem?.call(this);
+  // 구성품 저장 (수정 시만, 원재료만)
+  const item = invItems.find(i=>(id ? i.id===id : i.name===name) && i.category==='raw');
+  if(!item || !sb) return;
+  const rows = document.querySelectorAll('#item-comp-rows .comp-row');
+  if(!rows.length) return;
+  const comps = [...rows].map((r,i) => ({
+    item_id: item.id,
+    name: r.querySelector('.comp-name')?.value.trim(),
+    qty: parseInt(r.querySelector('.comp-qty')?.value)||1,
+    unit: r.querySelector('.comp-unit')?.value||'개',
+    sort_order: i
+  })).filter(c=>c.name);
+  await sb.from('item_components').delete().eq('item_id', item.id);
+  if(comps.length) await sb.from('item_components').insert(comps);
+  if(!window._itemComponents) window._itemComponents = {};
+  const {data} = await sb.from('item_components').select('*').eq('item_id', item.id).order('sort_order');
+  window._itemComponents[item.id] = data||[];
+};
+
+// ══════════════════════════════════════════════════════════════════
+// 3. 입출고 모달 — 새 로직
+// ══════════════════════════════════════════════════════════════════
+
+// selectTxType override — 모드별 섹션 전환
+const _origSelectTxType = window.selectTxType;
+window.selectTxType = function(t) {
+  // 버튼 스타일
+  ['in','out','adjust'].forEach(x=>{
+    const btn=document.getElementById(`tx-type-${x}`);
+    if(btn){btn.classList.remove('selected');btn.style.background='';btn.style.color='';btn.style.borderColor='';}
+  });
+  const btn = document.getElementById(`tx-type-${t}`);
+  const colors = {in:['var(--gl)','var(--gt)','var(--green)'], out:['var(--rl)','var(--rt)','var(--red)'], adjust:['var(--al)','var(--at)','var(--accent)']};
+  if(btn&&colors[t]){btn.classList.add('selected');[btn.style.background,btn.style.color,btn.style.borderColor]=colors[t];}
+  document.getElementById('tx-type').value=t;
+  // 섹션 전환
+  document.getElementById('tx-in-section').style.display  = t==='in'     ? '' : 'none';
+  document.getElementById('tx-out-section').style.display = t==='out'    ? '' : 'none';
+  document.getElementById('tx-adj-section').style.display = t==='adjust' ? '' : 'none';
+};
+
+// openTxModal override
+window.openTxModal = function() {
+  const rawItems     = invItems.filter(i=>i.category==='raw');
+  const finItems     = invItems.filter(i=>i.category==='finished');
+  const allItems     = invItems;
+
+  // 입고: 원재료 목록
+  const inSel = document.getElementById('tx-item-in');
+  if(inSel) inSel.innerHTML = '<option value="">원재료 선택</option>' + rawItems.map(i=>`<option value="${i.id}">${i.name} (재고 ${i.current_stock}${i.unit})</option>`).join('');
+
+  // 출고: 완제품 행 초기화
+  const finRowWrap = document.getElementById('tx-finished-rows');
+  if(finRowWrap) { finRowWrap.innerHTML = ''; addTxFinishedRow(); }
+
+  // 추가 원재료: 원재료 목록
+  populateTxExtraSelects();
+
+  // 재고조정: 전체 품목
+  const adjSel = document.getElementById('tx-item-adj');
+  if(adjSel) adjSel.innerHTML = '<option value="">품목 선택</option>' + allItems.map(i=>`<option value="${i.id}">[${i.category==='raw'?'원재료':'완제품'}] ${i.name} (재고 ${i.current_stock}${i.unit})</option>`).join('');
+
+  selectTxType('in');
+  openModal('txModal');
+};
+
+window.openTxModalForItem = function(itemId, type='in') {
+  openTxModal();
+  const item = invItems.find(i=>i.id===itemId);
+  if(!item) return;
+  if(type==='in' && item.category==='raw') {
+    selectTxType('in');
+    const sel = document.getElementById('tx-item-in');
+    if(sel) sel.value = itemId;
+  } else if(type==='out' && item.category==='finished') {
+    selectTxType('out');
+    const sel = document.getElementById('tx-finished-sel');
+    if(sel) { sel.value = itemId; onTxFinishedChange(); }
+  } else {
+    selectTxType('in');
+  }
+};
+
+function populateTxExtraSelects() {
+  const rawItems = invItems.filter(i=>i.category==='raw');
+  const opts = '<option value="">원재료 선택</option>' + rawItems.map(i=>`<option value="${i.id}">${i.name} (재고 ${i.current_stock}${i.unit})</option>`).join('');
+  document.querySelectorAll('.tx-extra-item').forEach(sel=>{ sel.innerHTML = opts; });
+}
+
+function addTxExtraRow() {
+  const rawItems = invItems.filter(i=>i.category==='raw');
+  const opts = '<option value="">원재료 선택</option>' + rawItems.map(i=>`<option value="${i.id}">${i.name} (재고 ${i.current_stock}${i.unit})</option>`).join('');
+  const wrap = document.getElementById('tx-extra-rows');
+  const row  = document.createElement('div');
+  row.className = 'tx-extra-row';
+  row.style.cssText = 'display:flex;gap:6px;margin-bottom:6px';
+  row.innerHTML = `
+    <select class="form-select tx-extra-item" style="flex:1;font-size:12px">${opts}</select>
+    <input class="form-input tx-extra-qty" type="number" min="1" value="1" style="width:64px;flex:none" placeholder="수량">
+    <button onclick="this.closest('.tx-extra-row').remove()" style="background:var(--rl);border:1px solid #fecaca;border-radius:var(--r-sm);cursor:pointer;width:32px;height:32px;flex:none;color:var(--red);font-size:14px;display:flex;align-items:center;justify-content:center">×</button>`;
+  wrap.appendChild(row);
+}
+
+// ── 완제품 출고 행 추가 ──
+function addTxFinishedRow() {
+  const finItems = invItems.filter(i=>i.category==='finished');
+  const wrap = document.getElementById('tx-finished-rows');
+  if(!wrap) return;
+  const rowIdx = wrap.children.length;
+  const opts = finItems.map(i=>`<option value="${i.id}">${i.name} (재고 ${i.current_stock}${i.unit})</option>`).join('');
+  const row = document.createElement('div');
+  row.className = 'tx-finished-row';
+  row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--bd)';
+  row.innerHTML = `
+    <div style="flex:1;min-width:0">
+      <select class="form-select tx-fin-sel" style="width:100%;font-size:13px" onchange="recalcTxBom()">
+        <option value="">완제품 선택 *</option>${opts}
+      </select>
+    </div>
+    <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+      <label style="font-size:11px;color:var(--t2);white-space:nowrap">수량</label>
+      <input class="form-input tx-fin-qty" type="number" min="1" step="1" value="1" style="width:64px;font-size:13px" oninput="recalcTxBom()">
+    </div>
+    ${rowIdx > 0 ? `<button onclick="this.closest('.tx-finished-row').remove();recalcTxBom()" style="background:var(--rl);border:1px solid #fecaca;border-radius:var(--r-sm);cursor:pointer;width:28px;height:28px;flex:none;color:var(--red);font-size:14px;display:flex;align-items:center;justify-content:center">×</button>` : '<div style="width:28px;flex:none"></div>'}`;
+  // 마지막 행 border 제거
+  wrap.querySelectorAll('.tx-finished-row').forEach(r=>r.style.borderBottom='1px solid var(--bd)');
+  wrap.appendChild(row);
+  row.style.borderBottom = 'none';
+}
+
+// BOM 재계산 — 선택된 모든 완제품 행 합산
+function recalcTxBom() {
+  const bomSec  = document.getElementById('tx-bom-section');
+  const bomList = document.getElementById('tx-bom-list');
+  if(!bomSec || !bomList) return;
+
+  // 행별로 finId + qty 수집
+  const finRows = [...document.querySelectorAll('.tx-finished-row')];
+  const selected = finRows.map(r=>({
+    finId: parseInt(r.querySelector('.tx-fin-sel')?.value)||0,
+    qty:   parseInt(r.querySelector('.tx-fin-qty')?.value)||1,
+  })).filter(r=>r.finId>0);
+
+  if(!selected.length) { bomSec.style.display='none'; return; }
+
+  // 원재료별로 수량 합산 (같은 원재료가 여러 완제품에 있을 수 있음)
+  const rawMap = {}; // raw_item_id → { rawItem, totalQty }
+  selected.forEach(({finId, qty}) => {
+    bomData.filter(b=>b.finished_item_id===finId).forEach(b=>{
+      const needed = Math.round(b.qty_required * qty * 100) / 100;
+      if(!rawMap[b.raw_item_id]) rawMap[b.raw_item_id] = {qtyPer: b.qty_required, totalQty: 0};
+      rawMap[b.raw_item_id].totalQty += needed;
+      rawMap[b.raw_item_id].qtyPer   = b.qty_required; // 마지막 값 (단일 완제품 기준)
+    });
+  });
+
+  if(!Object.keys(rawMap).length) { bomSec.style.display='none'; return; }
+
+  bomList.innerHTML = Object.entries(rawMap).map(([rawId, {totalQty, qtyPer}])=>{
+    const rawItem = invItems.find(i=>i.id===parseInt(rawId));
+    return `<div class="tx-bom-row">
+      <input type="checkbox" class="tx-bom-check" checked data-raw-id="${rawId}" data-total-qty="${totalQty}" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+      <div style="flex:1;font-weight:600">${rawItem?.name||'–'}</div>
+      <div style="color:var(--accent);font-weight:700;white-space:nowrap">${totalQty} ${rawItem?.unit||'개'}</div>
+      <div style="font-size:10px;color:var(--t3);white-space:nowrap">재고 ${rawItem?.current_stock||0}</div>
+    </div>`;
+  }).join('');
+  bomSec.style.display = '';
+}
+
+// 기존 단일 선택 함수들 — 호환성 유지
+function onTxFinishedChange() { recalcTxBom(); }
+function onTxQtyChange() { recalcTxBom(); }
+
+function onTxInItemChange() {
+  // 입고 시 구성품 표시 (정보성)
+}
+
+// 새 saveTxNew — 타입별 처리
+async function saveTxNew() {
+  const type = document.getElementById('tx-type').value;
+
+  if(type === 'in') {
+    // 원재료 입고
+    const itemId = parseInt(document.getElementById('tx-item-in')?.value)||0;
+    const qty    = parseInt(document.getElementById('tx-item-in') ? document.getElementById('tx-qty-in')?.value : 1)||0;
+    if(!itemId||!qty){showToast('품목과 수량을 입력해주세요','warn');return;}
+    const person = document.getElementById('tx-person-in')?.value||CU?.name||'';
+    const reason = document.getElementById('tx-reason-in')?.value||'';
+    const note   = document.getElementById('tx-note-in')?.value||'';
+    await doSingleTx(itemId, 'in', qty, reason, person, note);
+    showToast('입고가 등록됐습니다 ✓');
+    closeModal('txModal');
+    renderInvOverview();
+
+  } else if(type === 'out') {
+    // 완제품 복수 + BOM 원재료 + 추가 원재료 출고
+    const person = document.getElementById('tx-person-out')?.value||CU?.name||'';
+    const reason = document.getElementById('tx-reason-out')?.value||'';
+    const note   = document.getElementById('tx-note-out')?.value||'';
+
+    // 완제품 행 수집
+    const finRows = [...document.querySelectorAll('.tx-finished-row')].map(r=>({
+      finId: parseInt(r.querySelector('.tx-fin-sel')?.value)||0,
+      qty:   parseInt(r.querySelector('.tx-fin-qty')?.value)||1,
+    })).filter(r=>r.finId>0 && r.qty>0);
+
+    if(!finRows.length){showToast('완제품을 선택해주세요','warn');return;}
+
+    const txList = [];
+
+    // 완제품 출고 (행별)
+    finRows.forEach(({finId, qty}) => {
+      txList.push({itemId:finId, qty, reason, person, note});
+    });
+
+    // BOM 체크된 원재료 — data-total-qty 사용 (recalcTxBom에서 합산된 값)
+    document.querySelectorAll('#tx-bom-list .tx-bom-check').forEach(chk=>{
+      if(!chk.checked) return;
+      const rawId   = parseInt(chk.dataset.rawId)||0;
+      const totalQty = parseFloat(chk.dataset.totalQty)||0;
+      if(rawId && totalQty > 0) txList.push({itemId:rawId, qty:totalQty, reason:`${reason} (BOM 자동)`, person, note});
+    });
+
+    // 추가 원재료 출고
+    document.querySelectorAll('#tx-extra-rows .tx-extra-row').forEach(row=>{
+      const rawId = parseInt(row.querySelector('.tx-extra-item')?.value)||0;
+      const eQty  = parseInt(row.querySelector('.tx-extra-qty')?.value)||0;
+      if(rawId && eQty > 0) txList.push({itemId:rawId, qty:eQty, reason:`${reason} (추가 출고)`, person, note});
+    });
+
+    // 일괄 출고
+    let ok = true;
+    for(const t of txList) {
+      try { await doSingleTx(t.itemId, 'out', t.qty, t.reason, t.person, t.note); }
+      catch(e) { showToast(`출고 실패: ${e.message}`,'error'); ok=false; break; }
+    }
+    if(ok) {
+      const finSummary = finRows.map(r=>{const fi=invItems.find(i=>i.id===r.finId);return `${fi?.name||'?'} ${r.qty}대`;}).join(', ');
+      showToast(`출고 완료 — ${finSummary} (원재료 포함 ${txList.length}개 품목) ✓`);
+      closeModal('txModal');
+      renderInvOverview();
+    }
+
+  } else if(type === 'adjust') {
+    const itemId = parseInt(document.getElementById('tx-item-adj')?.value)||0;
+    const qty    = parseInt(document.getElementById('tx-qty-adj')?.value)||0;
+    if(!itemId){showToast('품목을 선택해주세요','warn');return;}
+    const person = document.getElementById('tx-person-adj')?.value||CU?.name||'';
+    const reason = document.getElementById('tx-reason-adj')?.value||'';
+    const note   = document.getElementById('tx-note-adj')?.value||'';
+    await doSingleTx(itemId, 'adjust', qty, reason, person, note);
+    showToast('재고 조정됐습니다 ✓');
+    closeModal('txModal');
+    renderInvOverview();
+  }
+}
+
+async function doSingleTx(itemId, type, qty, reason, person, note) {
+  const realQty = type==='out' ? -Math.abs(qty) : (type==='adjust' ? qty : Math.abs(qty));
+  const txData  = {item_id:itemId, type, qty:realQty, reason, person: person||CU?.name||'', note};
+  if(sb) {
+    const {data,error} = await sb.from('stock_transactions').insert([txData]).select().single();
+    if(error) throw error;
+    if(data) stockTx.unshift(data);
+  } else {
+    stockTx.unshift({id:Date.now(),...txData, created_at:new Date().toISOString()});
+  }
+  const item = invItems.find(i=>i.id===itemId);
+  if(item) {
+    item.current_stock += realQty;
+    if(sb) await sb.from('items').update({current_stock:item.current_stock}).eq('id',item.id);
+  }
+}
+
+// loadInvData 후 구성품도 로드
+const _origLoadInvData = window.loadInvData;
+window.loadInvData = async function() {
+  await _origLoadInvData?.call(this);
+  await loadItemComponents();
+};
 </script>
