@@ -797,6 +797,29 @@ tbody tr:hover{background:var(--s2)}
 .tx-row-selected td{background:#eff6ff!important}
 .tx-checkbox{width:16px;height:16px;cursor:pointer;accent-color:var(--accent);flex-shrink:0}
 
+
+/* ── 품번 규칙 패널 ── */
+.code-rule-panel{background:var(--surface);border:1px solid var(--bd);border-radius:var(--r-lg);padding:20px 24px;margin-bottom:20px;box-shadow:var(--sh)}
+.code-rule-structure{display:flex;align-items:center;gap:4px;font-family:monospace;font-size:15px;font-weight:800;letter-spacing:2px;margin-bottom:14px}
+.code-seg{display:inline-flex;flex-direction:column;align-items:center;gap:3px}
+.code-seg-box{padding:6px 14px;border-radius:var(--r-sm);font-size:14px;font-weight:800;letter-spacing:1px}
+.code-seg-label{font-size:10px;font-weight:600;color:var(--t3);font-family:var(--font);letter-spacing:0}
+.code-rule-divider{font-size:20px;font-weight:300;color:var(--bd2);margin-bottom:18px}
+.code-rule-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.code-rule-col-title{font-size:11px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.code-rule-row{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:var(--r-sm);transition:background .1s}
+.code-rule-row:hover{background:var(--s2)}
+.code-rule-row:hover .cr-edit-btn{opacity:1}
+.code-badge{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;font-size:13px;font-weight:800;font-family:monospace;flex-shrink:0}
+.code-rule-text{font-size:13px;font-weight:600;flex:1}
+.cr-edit-btn{opacity:0;transition:opacity .15s;background:none;border:none;cursor:pointer;font-size:12px;color:var(--t3);padding:2px 6px;border-radius:4px}
+.cr-edit-btn:hover{background:var(--s2);color:var(--t1)}
+.code-example-wrap{margin-top:14px;padding-top:14px;border-top:1px solid var(--bd)}
+.code-example-title{font-size:11px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.code-examples{display:flex;flex-wrap:wrap;gap:8px}
+.code-example-chip{display:flex;align-items:center;gap:7px;background:var(--s2);border-radius:var(--r-sm);padding:6px 12px;font-size:12px}
+.code-example-num{font-family:monospace;font-weight:800;font-size:13px;color:var(--accent)}
+
 /* 인쇄 여백 — 브라우저가 자동 스케일(fit to page) 하도록 여백 최소화 */
 
 /* ── 딜 알람 ── */
@@ -891,7 +914,7 @@ tbody tr:hover{background:var(--s2)}
         <div style="display:flex;align-items:center;gap:8px;padding:8px 10px 6px;cursor:pointer" onclick="showHome(null)" id="ni-sales-back">
           <span style="font-size:11px;color:var(--t3)">← 홈</span>
         </div>
-        <div class="nav-section" style="color:#2563eb">📊 영업 대시보드</div>
+        <div class="nav-section" style="color:#2563eb">📊 영업 운영툴</div>
         <div class="nav-item" onclick="showView('dashboard',this)" id="ni-dashboard">
           <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="1" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/></svg>
           요약
@@ -932,7 +955,7 @@ tbody tr:hover{background:var(--s2)}
         <div style="display:flex;align-items:center;gap:8px;padding:8px 10px 6px;cursor:pointer" onclick="showHome(null)">
           <span style="font-size:11px;color:var(--t3)">← 홈</span>
         </div>
-        <div class="nav-section" style="color:#16a34a">📦 자재/재고</div>
+        <div class="nav-section" style="color:#16a34a">📦 자재/재고 운영툴</div>
         <div class="nav-item" onclick="showView('inv-overview',this)" id="ni-inv-overview">
           <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="7" width="12" height="7" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 7V5a3 3 0 016 0v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
           재고 현황
@@ -956,7 +979,7 @@ tbody tr:hover{background:var(--s2)}
         <div style="display:flex;align-items:center;gap:8px;padding:8px 10px 6px;cursor:pointer" onclick="showHome(null)">
           <span style="font-size:11px;color:var(--t3)">← 홈</span>
         </div>
-        <div class="nav-section" style="color:#0891b2">🏭 양산 파이프라인</div>
+        <div class="nav-section" style="color:#0891b2">🏭 양산 운영툴</div>
         <div class="nav-item" onclick="showView('mass-pipeline',this)" id="ni-mass-pipeline">
           <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="4" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="6" y="3" width="4" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="11" y="3" width="4" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/></svg>
           양산 칸반
@@ -967,7 +990,7 @@ tbody tr:hover{background:var(--s2)}
         <div style="display:flex;align-items:center;gap:8px;padding:8px 10px 6px;cursor:pointer" onclick="showHome(null)">
           <span style="font-size:11px;color:var(--t3)">← 홈</span>
         </div>
-        <div class="nav-section" style="color:#7c3aed">🔬 개발 파이프라인</div>
+        <div class="nav-section" style="color:#7c3aed">🔬 개발 운영툴</div>
         <div class="nav-item" onclick="showView('rd-pipeline',this)" id="ni-rd-pipeline">
           <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="4" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="6" y="3" width="4" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="11" y="3" width="4" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/></svg>
           개발 칸반
@@ -978,7 +1001,7 @@ tbody tr:hover{background:var(--s2)}
         <div style="display:flex;align-items:center;gap:8px;padding:8px 10px 6px;cursor:pointer" onclick="showHome(null)">
           <span style="font-size:11px;color:var(--t3)">← 홈</span>
         </div>
-        <div class="nav-section" style="color:#7c3aed">💰 재무</div>
+        <div class="nav-section" style="color:#7c3aed">💰 재무 운영툴</div>
         <div class="nav-item" onclick="showView('fin-cashflow',this)" id="ni-fin-cashflow">
           <svg viewBox="0 0 16 16" fill="none"><polyline points="1,11 4,6 7,9 10,3 13,7 15,5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
           캐시플로우
@@ -1048,19 +1071,19 @@ tbody tr:hover{background:var(--s2)}
       <!-- 대시보드 스위처 (홈이 아닐 때만 표시) -->
       <div id="dashSwitcher" style="display:none;align-items:center;gap:4px;flex:1;margin:0 12px">
         <button class="dash-sw-btn" id="sw-sales" onclick="enterDashboard('sales')" title="영업 대시보드">
-          <span>📊</span><span class="sw-label">영업</span>
+          <span>📊</span><span class="sw-label">영업 운영툴</span>
         </button>
         <button class="dash-sw-btn" id="sw-inv" onclick="enterDashboard('inv')" title="자재/재고">
-          <span>📦</span><span class="sw-label">자재/재고</span>
+          <span>📦</span><span class="sw-label">자재/재고 운영툴</span>
         </button>
         <button class="dash-sw-btn" id="sw-fin" onclick="enterDashboard('fin')" title="재무">
-          <span>💰</span><span class="sw-label">재무</span>
+          <span>💰</span><span class="sw-label">재무 운영툴</span>
         </button>
         <button class="dash-sw-btn" id="sw-mass" onclick="enterDashboard('mass')" title="양산 파이프라인">
-          <span>🏭</span><span class="sw-label">양산</span>
+          <span>🏭</span><span class="sw-label">양산 운영툴</span>
         </button>
         <button class="dash-sw-btn" id="sw-rd" onclick="enterDashboard('rd')" title="개발 파이프라인">
-          <span>🔬</span><span class="sw-label">개발</span>
+          <span>🔬</span><span class="sw-label">개발 운영툴</span>
         </button>
         <button class="dash-sw-btn dash-sw-home" onclick="showHome(null)" title="홈으로">
           <span>🏠</span><span class="sw-label">홈</span>
@@ -1096,13 +1119,19 @@ tbody tr:hover{background:var(--s2)}
             <!-- 대시보드 빠른 이동 -->
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button onclick="enterDashboard('sales')" style="display:flex;align-items:center;gap:7px;padding:8px 16px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:var(--r-sm);color:#fff;cursor:pointer;font-size:13px;font-weight:600;font-family:var(--font);transition:all .15s" onmouseenter="this.style.background='rgba(255,255,255,.22)'" onmouseleave="this.style.background='rgba(255,255,255,.12)'">
-                <span>📊</span> 영업 대시보드
+                <span>📊</span> 영업 운영툴
               </button>
               <button onclick="enterDashboard('inv')" style="display:flex;align-items:center;gap:7px;padding:8px 16px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:var(--r-sm);color:#fff;cursor:pointer;font-size:13px;font-weight:600;font-family:var(--font);transition:all .15s" onmouseenter="this.style.background='rgba(255,255,255,.22)'" onmouseleave="this.style.background='rgba(255,255,255,.12)'">
-                <span>📦</span> 자재/재고
+                <span>📦</span> 자재/재고 운영툴
               </button>
               <button onclick="enterDashboard('fin')" style="display:flex;align-items:center;gap:7px;padding:8px 16px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:var(--r-sm);color:#fff;cursor:pointer;font-size:13px;font-weight:600;font-family:var(--font);transition:all .15s" onmouseenter="this.style.background='rgba(255,255,255,.22)'" onmouseleave="this.style.background='rgba(255,255,255,.12)'">
-                <span>💰</span> 재무
+                <span>💰</span> 재무 운영툴
+              </button>
+              <button onclick="enterDashboard('rd')" style="display:flex;align-items:center;gap:7px;padding:8px 16px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:var(--r-sm);color:#fff;cursor:pointer;font-size:13px;font-weight:600;font-family:var(--font);transition:all .15s" onmouseenter="this.style.background='rgba(255,255,255,.22)'" onmouseleave="this.style.background='rgba(255,255,255,.12)'">
+                <span>🔬</span> 개발 운영툴
+              </button>
+              <button onclick="enterDashboard('mass')" style="display:flex;align-items:center;gap:7px;padding:8px 16px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:var(--r-sm);color:#fff;cursor:pointer;font-size:13px;font-weight:600;font-family:var(--font);transition:all .15s" onmouseenter="this.style.background='rgba(255,255,255,.22)'" onmouseleave="this.style.background='rgba(255,255,255,.12)'">
+                <span>🏭</span> 양산 운영툴
               </button>
             </div>
           </div>
@@ -1210,21 +1239,21 @@ tbody tr:hover{background:var(--s2)}
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:40px" class="home-dash-grid">
               <div class="home-dash-card" onclick="enterDashboard('sales')" style="border-color:#bfdbfe;background:linear-gradient(135deg,#eff6ff 0%,#fff 60%)">
                 <div class="hdc-icon" style="background:#2563eb">📊</div>
-                <div class="hdc-title">영업 대시보드</div>
+                <div class="hdc-title">영업 운영툴</div>
                 <div class="hdc-desc">파이프라인, 딜 관리, 고객사, 프로젝트 협업</div>
                 <div class="hdc-stats"><span class="chip chip-blue" id="hs-deals">딜 0건</span><span class="chip chip-green" id="hs-won">완료 ₩0</span></div>
                 <div class="hdc-arrow">→</div>
               </div>
               <div class="home-dash-card" onclick="enterDashboard('inv')" style="border-color:#bbf7d0;background:linear-gradient(135deg,#f0fdf4 0%,#fff 60%)">
                 <div class="hdc-icon" style="background:#16a34a">📦</div>
-                <div class="hdc-title">자재/재고 대시보드</div>
+                <div class="hdc-title">자재/재고 운영툴</div>
                 <div class="hdc-desc">재고 현황, 입출고, BOM 관리, 발주</div>
                 <div class="hdc-stats"><span class="chip chip-green" id="hs-items">품목 0개</span><span class="chip chip-red" id="hs-warn" style="display:none">경고 0</span></div>
                 <div class="hdc-arrow">→</div>
               </div>
               <div class="home-dash-card" onclick="enterDashboard('fin')" style="border-color:#ddd6fe;background:linear-gradient(135deg,#f5f3ff 0%,#fff 60%)">
                 <div class="hdc-icon" style="background:#7c3aed">💰</div>
-                <div class="hdc-title">재무 대시보드</div>
+                <div class="hdc-title">재무 운영툴</div>
                 <div class="hdc-desc">캐시플로우, 수금 관리, 지출 기록</div>
                 <div class="hdc-stats"><span class="chip chip-purple" id="hs-recv">수금예정 ₩0</span><span class="chip chip-red" id="hs-overdue" style="display:none">연체 0건</span></div>
                 <div class="hdc-arrow">→</div>
@@ -1234,14 +1263,14 @@ tbody tr:hover{background:var(--s2)}
             <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:20px" class="home-dash-grid">
               <div class="home-dash-card" onclick="enterDashboard('mass')" style="border-color:#a5f3fc;background:linear-gradient(135deg,#ecfeff 0%,#fff 60%)">
                 <div class="hdc-icon" style="background:#0891b2">🏭</div>
-                <div class="hdc-title">양산 파이프라인</div>
+                <div class="hdc-title">양산 운영툴</div>
                 <div class="hdc-desc">계약 완료 딜의 현장조사·제품준비·설치·납품 관리</div>
                 <div class="hdc-stats"><span class="chip chip-cyan" id="hs-mass">0건 진행</span></div>
                 <div class="hdc-arrow">→</div>
               </div>
               <div class="home-dash-card" onclick="enterDashboard('rd')" style="border-color:#ddd6fe;background:linear-gradient(135deg,#f5f3ff 0%,#fff 60%)">
                 <div class="hdc-icon" style="background:#7c3aed">🔬</div>
-                <div class="hdc-title">개발 파이프라인</div>
+                <div class="hdc-title">개발 운영툴</div>
                 <div class="hdc-desc">신기술·신제품 개발 단계별 태스크 관리</div>
                 <div class="hdc-stats"><span class="chip chip-purple" id="hs-rd">0건 진행</span></div>
                 <div class="hdc-arrow">→</div>
@@ -1435,6 +1464,28 @@ tbody tr:hover{background:var(--s2)}
 
       <!-- INV: 재고 현황 -->
       <div class="view" id="view-inv-overview">
+        <!-- 품번 규칙 패널 -->
+        <div class="code-rule-panel" id="codeRulePanel">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
+            <div>
+              <div style="font-size:15px;font-weight:800;letter-spacing:-.3px;margin-bottom:3px">📋 품번 체계</div>
+              <div style="display:inline-flex;align-items:center;background:var(--s2);border-radius:var(--r);padding:10px 16px;border:1px solid var(--bd);margin-top:6px"><span style="font-size:13px;font-weight:700;font-family:monospace;color:var(--t1);letter-spacing:.5px" id="codeRuleStructureDesc">구분(1자리) + 라인(1자리) + 번호(4자리) — 총 6자리</span></div>
+            </div>
+            <button class="btn btn-s btn-sm" onclick="openCodeRuleEdit()" id="codeRuleEditBtn" style="display:none">✏️ 규칙 수정</button>
+          </div>
+
+          <!-- 구분 / 라인 테이블 -->
+          <div class="code-rule-cols" id="codeRuleCols">
+            <div style="text-align:center;color:var(--t3);font-size:13px;grid-column:1/-1">로드 중...</div>
+          </div>
+          <!-- 예시 -->
+          <div class="code-example-wrap">
+            <div class="code-example-title">예시</div>
+            <div class="code-examples" id="codeRuleExamples">
+              <div style="color:var(--t3);font-size:12px">로드 중...</div>
+            </div>
+          </div>
+        </div>
         <div class="kpi-grid" id="inv-kpi-grid">
           <div class="kpi-card"><div class="kpi-label">전체 품목 수</div><div class="kpi-val" id="inv-kpi-items">0</div><span class="chip chip-blue">품목</span></div>
           <div class="kpi-card"><div class="kpi-label">재고 부족 경고</div><div class="kpi-val" id="inv-kpi-warn" style="color:var(--red)">0</div><span class="chip chip-red">안전재고 이하</span></div>
@@ -5436,6 +5487,7 @@ async function loadInvData() {
       sb.from('purchase_orders').select('*').order('order_date',{ascending:false}),
     ]);
     invItems = r1.data||[]; bomData = r2.data||[]; stockTx = r3.data||[]; poOrders = r4.data||[];
+    await loadCodeRules();
   } catch(e) { console.error('loadInvData:', e); }
 }
 
@@ -5512,7 +5564,17 @@ function itemRow(i) {
   const stockPct = i.safety_stock > 0 ? Math.min(100, Math.round(i.current_stock/i.safety_stock*100)) : 100;
   const stockColor = i.current_stock <= 0 ? 'var(--red)' : i.current_stock <= i.safety_stock ? 'var(--amber)' : 'var(--green)';
   const barColor = i.current_stock <= 0 ? '#ef4444' : i.current_stock <= i.safety_stock ? '#f59e0b' : '#22c55e';
-  return `<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--bd);cursor:pointer;transition:background .1s" onmouseenter="this.style.background='var(--s2)'" onmouseleave="this.style.background=''">
+  return `<div class="inv-item-row" data-item-id="${i.id}" data-category="${i.category}"
+    style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--bd);transition:background .1s"
+    draggable="true"
+    ondragstart="invItemDragStart(event,${i.id},'${i.category}')"
+    ondragover="invItemDragOver(event,${i.id},'${i.category}')"
+    ondragleave="invItemDragLeave(event)"
+    ondrop="invItemDrop(event,${i.id},'${i.category}')"
+    onmouseenter="this.style.background='var(--s2)'" onmouseleave="this.style.background=''">
+    <div class="bom-drag-handle" title="드래그하여 순서 변경" style="cursor:grab">
+      <svg viewBox="0 0 10 16" fill="currentColor" style="width:10px;height:16px"><circle cx="3" cy="3" r="1.3"/><circle cx="7" cy="3" r="1.3"/><circle cx="3" cy="8" r="1.3"/><circle cx="7" cy="8" r="1.3"/><circle cx="3" cy="13" r="1.3"/><circle cx="7" cy="13" r="1.3"/></svg>
+    </div>
     <div style="flex:1;min-width:0">
       <div style="font-weight:700;font-size:13px">${i.name}</div>
       <div style="font-size:11px;color:var(--t3);margin-top:2px">${i.code||''} ${i.supplier?`· ${i.supplier}`:''}</div>
@@ -8795,4 +8857,337 @@ window.loadInvData = async function() {
   await _origLoadInvData?.call(this);
   await loadItemComponents();
 };
+</script>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// 품번 규칙 (code_rules)
+// ══════════════════════════════════════════════════════════════════
+let codeRules = [];
+
+async function loadCodeRules() {
+  if(!sb) return;
+  try {
+    const {data} = await sb.from('code_rules').select('*').order('category').order('sort_order');
+    codeRules = data||[];
+  } catch(e) { console.error('loadCodeRules:', e); }
+}
+
+function renderCodeRulePanel() {
+  // 구조 설명 텍스트 복원
+  const savedStructure = localStorage.getItem('sp_code_rule_structure');
+  if(savedStructure) {
+    window._codeRuleStructure = savedStructure;
+    const descEl = document.getElementById('codeRuleStructureDesc');
+    if(descEl) descEl.textContent = savedStructure;
+  }
+  const divisions = codeRules.filter(r=>r.category==='division');
+  const lines     = codeRules.filter(r=>r.category==='line');
+
+  const divColors = ['#dbeafe','#dcfce7','#fef9c3','#fce7f3'];
+  const divText   = ['#1d4ed8','#15803d','#854d0e','#9d174d'];
+  const lineColors= ['#eff6ff','#f0fdf4','#fdf4ff','#f3f4f6'];
+  const lineText  = ['#1d4ed8','#15803d','#7e22ce','#374151'];
+
+  const colsEl = document.getElementById('codeRuleCols');
+  if(colsEl) colsEl.innerHTML = `
+    <div>
+      <div class="code-rule-col-title">구분 (첫째 자리)</div>
+      ${divisions.map((r,i)=>`
+        <div class="code-rule-row" data-rule-id="${r.id}">
+          <div class="code-badge" style="background:${divColors[i%4]};color:${divText[i%4]}">${r.code}</div>
+          <div class="code-rule-text">${r.label}</div>
+          <button class="cr-edit-btn" onclick="openRuleRowEdit(${r.id})">✏️</button>
+        </div>`).join('')}
+    </div>
+    <div>
+      <div class="code-rule-col-title">라인 (둘째 자리)</div>
+      ${lines.map((r,i)=>`
+        <div class="code-rule-row" data-rule-id="${r.id}">
+          <div class="code-badge" style="background:${lineColors[i%4]};color:${lineText[i%4]}">${r.code}</div>
+          <div class="code-rule-text">${r.label}</div>
+          <button class="cr-edit-btn" onclick="openRuleRowEdit(${r.id})">✏️</button>
+        </div>`).join('')}
+    </div>`;
+
+  // 예시 고정 (규칙 기반 자동 생성)
+  const examplesEl = document.getElementById('codeRuleExamples');
+  const examples = [
+    {code:'120001', desc:'S2 완제품'},
+    {code:'230001', desc:'S3 모듈'},
+    {code:'400001', desc:'싱글 LED'},
+    {code:'400002', desc:'듀얼 LED'},
+    {code:'40000?', desc:'추후 추가 구성품'},
+  ];
+  if(examplesEl) examplesEl.innerHTML = examples.map(e=>`
+    <div class="code-example-chip">
+      <span class="code-example-num">${e.code}</span>
+      <span style="color:var(--t2)">${e.desc}</span>
+    </div>`).join('');
+
+  // 수정 버튼 — 관리자 이상만
+  const editBtn = document.getElementById('codeRuleEditBtn');
+  if(editBtn) editBtn.style.display = ['superadmin','admin'].includes(CU?.role) ? '' : 'none';
+}
+
+// renderInvOverview override — 품번 규칙 패널도 렌더
+const _origRenderInvOverview = window.renderInvOverview;
+window.renderInvOverview = async function() {
+  await _origRenderInvOverview?.call(this);
+  if(!codeRules.length) await loadCodeRules();
+  renderCodeRulePanel();
+};
+
+// ── 규칙 행 인라인 수정 ──
+function openRuleRowEdit(id) {
+  const rule = codeRules.find(r=>r.id===id); if(!rule) return;
+  const row = document.querySelector(`.code-rule-row[data-rule-id="${id}"]`);
+  if(!row) return;
+
+  // 행 자체를 인라인 편집 모드로 전환
+  const badge = row.querySelector('.code-badge');
+  const text  = row.querySelector('.code-rule-text');
+  const origLabel = rule.label;
+  const origCode  = rule.code;
+
+  row.innerHTML = `
+    <div class="code-badge" style="${badge?.style?.cssText||''}">${origCode}</div>
+    <input class="form-input cr-inline-input" value="${origLabel}" style="flex:1;height:30px;font-size:13px;padding:4px 8px">
+    <button class="btn btn-p btn-sm" onclick="saveRuleRowEdit(${id},this)">저장</button>
+    <button class="btn btn-s btn-sm" onclick="renderCodeRulePanel()">취소</button>`;
+  row.querySelector('.cr-inline-input')?.focus();
+}
+
+async function saveRuleRowEdit(id, btn) {
+  const row = btn.closest('.code-rule-row');
+  const val = row.querySelector('.cr-inline-input')?.value.trim();
+  if(!val) { showToast('이름을 입력해주세요','warn'); return; }
+  if(sb) await sb.from('code_rules').update({label:val, updated_at:new Date().toISOString()}).eq('id',id);
+  const rule = codeRules.find(r=>r.id===id);
+  if(rule) rule.label = val;
+  showToast('저장됐습니다 ✓');
+  renderCodeRulePanel();
+}
+
+// ── 전체 규칙 수정 모달 (+ 행 추가/삭제) ──
+function openCodeRuleEdit() {
+  const overlay = document.createElement('div');
+  overlay.id = 'codeRuleOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px';
+
+  const divisions = codeRules.filter(r=>r.category==='division');
+  const lines     = codeRules.filter(r=>r.category==='line');
+
+  const renderSection = (list, cat, title) => `
+    <div style="margin-bottom:20px">
+      <div style="font-size:12px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">${title}</div>
+      <div id="cr-rows-${cat}">
+        ${list.map(r=>`
+          <div class="cr-edit-row" data-id="${r.id}" style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+            <input class="form-input cr-code" value="${r.code}" placeholder="코드" style="width:50px;flex:none;font-family:monospace;font-weight:700;text-align:center">
+            <input class="form-input cr-label" value="${r.label}" placeholder="이름" style="flex:1">
+            <input class="form-input cr-sort" value="${r.sort_order||0}" type="number" style="width:46px;flex:none" title="순서">
+            <button onclick="deleteCodeRule(${r.id},this)" style="background:var(--rl);border:1px solid #fecaca;border-radius:var(--r-sm);cursor:pointer;width:28px;height:28px;flex:none;color:var(--red);font-size:14px;display:flex;align-items:center;justify-content:center">×</button>
+          </div>`).join('')}
+      </div>
+      <button onclick="addCodeRuleRow('${cat}')" style="font-size:12px;color:var(--accent);background:none;border:none;cursor:pointer;padding:4px 0;font-family:var(--font);font-weight:600">+ 항목 추가</button>
+    </div>`;
+
+  overlay.innerHTML = `<div style="background:var(--surface);border-radius:var(--r-xl);width:100%;max-width:560px;max-height:88vh;overflow-y:auto;box-shadow:var(--sh-lg);animation:su .2s ease">
+    <div style="padding:20px 24px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1">
+      <div style="font-size:17px;font-weight:800">품번 규칙 수정</div>
+      <button onclick="document.getElementById('codeRuleOverlay').remove()" style="width:30px;height:30px;border-radius:50%;background:var(--s2);border:none;cursor:pointer;font-size:18px">×</button>
+    </div>
+    <div style="padding:20px 24px">
+      <!-- 구조 설명 수정 -->
+      <div style="margin-bottom:18px">
+        <label style="font-size:11px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">구조 설명</label>
+        <input class="form-input" id="cr-structure-text" value="${window._codeRuleStructure||'구분(1자리) + 라인(1자리) + 번호(4자리) = 6자리 품번'}" style="font-size:13px">
+        <div style="font-size:11px;color:var(--t3);margin-top:4px">상단 패널의 구조 설명 텍스트를 변경합니다</div>
+      </div>
+      ${renderSection(divisions,'division','구분 (첫째 자리)')}
+      ${renderSection(lines,'line','라인 (둘째 자리)')}
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-p" style="flex:1;justify-content:center;padding:11px" onclick="saveAllCodeRules()">전체 저장</button>
+        <button class="btn btn-s" style="flex:1;justify-content:center;padding:11px" onclick="document.getElementById('codeRuleOverlay').remove()">취소</button>
+      </div>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+function addCodeRuleRow(cat) {
+  const wrap = document.getElementById(`cr-rows-${cat}`);
+  if(!wrap) return;
+  const row = document.createElement('div');
+  row.className = 'cr-edit-row';
+  row.dataset.id = 'new_' + Date.now();
+  row.dataset.cat = cat;
+  row.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:6px';
+  row.innerHTML = `
+    <input class="form-input cr-code" placeholder="코드" style="width:50px;flex:none;font-family:monospace;font-weight:700;text-align:center">
+    <input class="form-input cr-label" placeholder="이름" style="flex:1">
+    <input class="form-input cr-sort" value="${wrap.children.length}" type="number" style="width:46px;flex:none" title="순서">
+    <button onclick="this.closest('.cr-edit-row').remove()" style="background:var(--rl);border:1px solid #fecaca;border-radius:var(--r-sm);cursor:pointer;width:28px;height:28px;flex:none;color:var(--red);font-size:14px;display:flex;align-items:center;justify-content:center">×</button>`;
+  wrap.appendChild(row);
+}
+
+async function deleteCodeRule(id, btn) {
+  if(!confirm('이 항목을 삭제할까요?')) return;
+  if(sb) await sb.from('code_rules').delete().eq('id',id);
+  codeRules = codeRules.filter(r=>r.id!==id);
+  btn.closest('.cr-edit-row').remove();
+  showToast('삭제됐습니다');
+}
+
+async function saveAllCodeRules() {
+  const rows = document.querySelectorAll('.cr-edit-row');
+  const toUpsert = [];
+  const toInsert = [];
+
+  for(const row of rows) {
+    const id    = row.dataset.id;
+    const cat   = id.startsWith('new_') ? (row.closest('[id^="cr-rows-"]')?.id.replace('cr-rows-','')) : (codeRules.find(r=>r.id===parseInt(id))?.category);
+    const code  = row.querySelector('.cr-code')?.value.trim();
+    const label = row.querySelector('.cr-label')?.value.trim();
+    const sort  = parseInt(row.querySelector('.cr-sort')?.value)||0;
+    if(!code||!label) continue;
+
+    if(id.startsWith('new_')) {
+      toInsert.push({category:cat, code, label, sort_order:sort});
+    } else {
+      toUpsert.push({id:parseInt(id), category:cat, code, label, sort_order:sort, updated_at:new Date().toISOString()});
+    }
+  }
+
+  // 구조 설명 텍스트 저장 (localStorage)
+  const structureText = document.getElementById('cr-structure-text')?.value.trim();
+  if(structureText) {
+    window._codeRuleStructure = structureText;
+    localStorage.setItem('sp_code_rule_structure', structureText);
+  }
+
+  if(sb) {
+    if(toUpsert.length) await sb.from('code_rules').upsert(toUpsert);
+    if(toInsert.length) await sb.from('code_rules').insert(toInsert);
+  }
+
+  // 리로드
+  await loadCodeRules();
+  document.getElementById('codeRuleOverlay')?.remove();
+  showToast('품번 규칙이 저장됐습니다 ✓');
+  renderCodeRulePanel();
+}
+</script>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// 재고현황 품목 드래그 순서 변경
+// ══════════════════════════════════════════════════════════════════
+let _invDragId = null;
+let _invDragCat = null;
+
+function invItemDragStart(e, itemId, category) {
+  _invDragId  = itemId;
+  _invDragCat = category;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function invItemDragOver(e, itemId, category) {
+  if(itemId === _invDragId || category !== _invDragCat) return;
+  e.preventDefault();
+  e.currentTarget.classList.add('drag-over');
+}
+
+function invItemDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+
+async function invItemDrop(e, targetId, category) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if(!_invDragId || _invDragId === targetId || _invDragCat !== category) return;
+
+  // 해당 카테고리 품목 순서 재계산
+  const catItems = invItems.filter(i => i.category === category);
+  const ids = catItems
+    .sort((a,b) => (a.sort_order||0) - (b.sort_order||0))
+    .map(i => i.id);
+
+  const fromIdx = ids.indexOf(_invDragId);
+  const toIdx   = ids.indexOf(targetId);
+  if(fromIdx < 0 || toIdx < 0) return;
+
+  ids.splice(fromIdx, 1);
+  ids.splice(toIdx, 0, _invDragId);
+
+  // DB 업데이트
+  if(sb) {
+    await Promise.all(ids.map((id, i) =>
+      sb.from('items').update({sort_order: i}).eq('id', id)
+    ));
+  }
+  // 로컬 반영
+  ids.forEach((id, i) => {
+    const item = invItems.find(x => x.id === id);
+    if(item) item.sort_order = i;
+  });
+
+  _invDragId = null;
+  _invDragCat = null;
+
+  // 렌더 — 해당 섹션만 다시 그리기
+  renderInvSection(category);
+}
+
+function renderInvSection(category) {
+  const isFinished = category === 'finished';
+  const listId = isFinished ? 'inv-finished-list' : 'inv-raw-list';
+  const listEl = document.getElementById(listId);
+  if(!listEl) return;
+
+  const items = invItems
+    .filter(i => i.category === category)
+    .sort((a,b) => (a.sort_order||0) - (b.sort_order||0));
+
+  listEl.innerHTML = items.length
+    ? items.map(i => itemRow(i)).join('')
+    : `<div style="text-align:center;padding:32px;color:var(--t3)">
+        <div style="font-size:13px;margin-bottom:8px">${isFinished ? '등록된 완제품이 없습니다' : '등록된 원재료가 없습니다'}</div>
+        <button class="btn btn-s btn-sm" onclick="openItemModal('${category}')">+ ${isFinished ? '완제품' : '원재료'} 추가</button>
+      </div>`;
+}
+
+// renderInvOverview 재고 목록을 sort_order 순으로 정렬되도록 override
+const _origRenderInvOverview2 = window.renderInvOverview;
+window.renderInvOverview = async function() {
+  await _origRenderInvOverview2?.call(this);
+  // sort_order 기준으로 재정렬 후 재렌더
+  invItems.sort((a,b) => {
+    if(a.category !== b.category) return 0; // 카테고리 내에서만
+    return (a.sort_order||0) - (b.sort_order||0);
+  });
+};
+
+// loadInvData 후 sort_order 정렬 보장
+const _origLoadInvData2 = window.loadInvData;
+window.loadInvData = async function() {
+  await _origLoadInvData2?.call(this);
+  // items를 sort_order 기준으로 정렬
+  invItems.sort((a,b) => {
+    if(a.category !== b.category) {
+      // finished 먼저, raw 다음
+      const order = {finished:0, raw:1};
+      return (order[a.category]||99) - (order[b.category]||99);
+    }
+    return (a.sort_order||0) - (b.sort_order||0);
+  });
+};
+
+// dragend 처리 (드래그 클래스 정리)
+document.addEventListener('dragend', () => {
+  document.querySelectorAll('.inv-item-row.dragging').forEach(el => el.classList.remove('dragging'));
+  document.querySelectorAll('.inv-item-row.drag-over').forEach(el => el.classList.remove('drag-over'));
+});
 </script>
