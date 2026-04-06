@@ -1601,7 +1601,7 @@ tbody tr:hover{background:var(--s2)}
           <input class="f-input" type="month" id="recv-month-filter" onchange="renderReceivables()" style="flex:none;width:160px">
         </div>
         <div class="table-wrap">
-          <table><thead><tr><th>고객사</th><th>딜</th><th>금액</th><th>수금 기준</th><th>기준일</th><th>예상 수금일</th><th>세금계산서</th><th>상태</th><th>관리</th></tr></thead>
+          <table><thead><tr><th>고객사</th><th>딜</th><th>금액(공급가)</th><th>수금액(VAT포함)</th><th>수금 기준</th><th>기준일</th><th>예상 수금일</th><th>세금계산서</th><th>상태</th><th>관리</th></tr></thead>
           <tbody id="recv-table-body"></tbody></table>
         </div>
       </div>
@@ -2460,19 +2460,15 @@ let CU = null; // current user
 // HELPERS
 // ══════════════════════════════════════════════
 const fmt = v => {
-  // 단위: 원(₩)
+  // 단위: 만원 (DB 저장 단위)
   if(!v || v === 0) return '₩0';
-  const a = Math.abs(v);
-  if(a >= 100000000000) {               // 1,000억 이상 → X,XXX억
-    return '₩' + Math.round(a/100000000).toLocaleString() + '억';
-  } else if(a >= 100000000) {           // 1억 이상 → X.X억
-    return '₩' + (a/100000000).toFixed(1) + '억';
-  } else if(a >= 10000000) {            // 1,000만 이상 → XX,000만
-    return '₩' + Math.round(a/10000).toLocaleString() + '만';
-  } else if(a >= 10000) {               // 1만 이상 → X,XXX만
-    return '₩' + Math.round(a/10000).toLocaleString() + '만';
-  } else {
-    return '₩' + a.toLocaleString() + '원';
+  const a = Math.abs(v); // a는 만원 단위
+  if(a >= 10000) {                      // 1억 이상 (10000만원~)
+    return '₩' + (a/10000).toFixed(1).replace(/\.0$/, '') + '억';
+  } else if(a >= 1000) {               // 1000만원 이상
+    return '₩' + Math.round(a).toLocaleString() + '만';
+  } else {                              // 999만원 이하
+    return '₩' + Math.round(a).toLocaleString() + '만';
   }
 };
 const sk = s => STAGE_KEYS[STAGES.indexOf(s)] || 'lead';
@@ -6027,11 +6023,11 @@ async function renderCashflow() {
   const overdue = recvList.filter(r=>r.status==='overdue');
   const thisMonthExp = expList.filter(e=>e.expense_date?.startsWith(thisMonth)).reduce((s,e)=>s+e.amount,0);
 
-  document.getElementById('fin-kpi-thismonth').textContent = fmt(inThisMonth);
+  document.getElementById('fin-kpi-thismonth').textContent = fmtMW(inThisMonth);
   document.getElementById('fin-kpi-thismonth-c').textContent = `${recvList.filter(r=>r.expected_date?.startsWith(thisMonth)).length}건`;
-  document.getElementById('fin-kpi-nextmonth').textContent = fmt(inNextMonth);
+  document.getElementById('fin-kpi-nextmonth').textContent = fmtMW(inNextMonth);
   document.getElementById('fin-kpi-nextmonth-c').textContent = `${recvList.filter(r=>r.expected_date?.startsWith(nm)).length}건`;
-  document.getElementById('fin-kpi-overdue').textContent = fmt(overdue.reduce((s,r)=>s+r.amount,0));
+  document.getElementById('fin-kpi-overdue').textContent = fmtMW(overdue.reduce((s,r)=>s+r.amount,0));
   document.getElementById('fin-kpi-overdue-c').textContent = `${overdue.length}건`;
   document.getElementById('fin-kpi-expense').textContent = fmt(thisMonthExp);
   document.getElementById('fin-kpi-expense-c').textContent = `이번 달`;
@@ -6103,6 +6099,7 @@ async function renderReceivables() {
       <td style="font-weight:600">${r.company_name}</td>
       <td style="color:var(--t2)">${r.deal_id?`딜 #${r.deal_id}`:'직접 등록'}</td>
       <td style="font-weight:700">${fmtMW(r.amount)}</td>
+      <td style="font-weight:700;color:var(--accent)">${fmtMW(Math.round(r.amount*1.1))}<span style="font-size:9px;color:var(--t3);font-weight:400"> (VAT)</span></td>
       <td>${PAY_BASIS[r.payment_basis]||r.payment_basis||'–'}</td>
       <td>${r.basis_date||'–'}</td>
       <td style="${r.status==='overdue'?'color:var(--red);font-weight:700':''}">${r.expected_date||'–'}</td>
@@ -6606,8 +6603,12 @@ async function onDealContractComplete(deal) {
     status: 'pending',
     note: cr?.note || `${deal.name} 계약 완료 자동 생성`
   };
-  if(sb) { const {data}=await sb.from('receivables').insert([recvData]).select().single(); if(data)recvList.push(data); }
-  else { recvList.push({id:Date.now(),...recvData}); }
+  // 중복 생성 방지: 이미 해당 deal_id의 수금 예정이 있으면 스킵
+  const existingRecv = recvList.find(r=>r.deal_id===deal.id);
+  if(!existingRecv) {
+    if(sb) { const {data}=await sb.from('receivables').insert([recvData]).select().single(); if(data)recvList.push(data); }
+    else { recvList.push({id:Date.now(),...recvData}); }
+  }
 
   // 3. 재고 출고 자동 연동 (BOM 기반)
   const finishedItem = invItems.find(i=>i.category==='finished'&&(i.name.includes(deal.prod)||deal.prod?.includes(i.name)));
@@ -7603,53 +7604,62 @@ async function createMassProjectFromDeal(deal, deliveryDate) {
     if(error) throw error;
     massProjects.unshift(d);
     showToast('🏭 양산 파이프라인 카드가 생성됐습니다');
+    // R&D 역할 알람 기록
+    notifyMassCreated(d);
   } catch(e) { console.error('createMassProjectFromDeal:', e); }
 }
 
 // ── 칸반 렌더 ──
 async function renderMassPipeline() {
   if(!massProjects.length) await loadMassData();
-  const board = document.getElementById('massBoardEl');
-  if(!board) return;
 
-  const dday = p => {
-    if(!p.delivery_date) return '';
-    const diff = Math.round((new Date(p.delivery_date) - new Date()) / 86400000);
-    const cls  = diff < 0 ? 'mass-dday-danger' : diff <= 14 ? 'mass-dday-warn' : 'mass-dday-ok';
-    const txt  = diff < 0 ? `D+${Math.abs(diff)} 초과` : diff === 0 ? 'D-day' : `D-${diff}`;
-    return `<span class="mass-dday ${cls}">${txt}</span>`;
-  };
+  const summaryEl = document.getElementById('mass-summary-text');
+  const listEl    = document.getElementById('mass-project-list');
+  if(!listEl) return;
 
-  board.innerHTML = MASS_STAGES.map((stage, si) => {
-    const cols = massProjects.filter(p => p.stage === stage);
-    return `<div class="rd-col">
-      <div class="rd-col-hd">
-        <div class="rd-col-dot" style="background:${MASS_DOTS[si]}"></div>
-        <div class="rd-col-name">${stage}</div>
-        <div class="rd-col-meta">${cols.length}</div>
+  if(summaryEl) summaryEl.textContent = `총 ${massProjects.length}개 프로젝트`;
+
+  // 상세 숨기고 목록 표시
+  const listSec   = document.getElementById('mass-list-section');
+  const detailSec = document.getElementById('mass-detail-section');
+  if(listSec)   listSec.style.display   = '';
+  if(detailSec) detailSec.style.display = 'none';
+
+  if(!massProjects.length) {
+    listEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--t3)">프로젝트가 없습니다<br><button class="btn btn-p" style="margin-top:12px" onclick="openNewMassModal()">+ 프로젝트 추가</button></div>';
+    return;
+  }
+
+  const stageColor = {'현장조사':'#3b82f6','제품준비':'#8b5cf6','현장설치':'#f59e0b','요구사항 반영':'#f97316','납품완료':'#10b981'};
+
+  listEl.innerHTML = massProjects.map(p => {
+    const diff = p.delivery_date ? Math.round((new Date(p.delivery_date)-new Date())/86400000) : null;
+    const ddayTxt   = diff===null ? '' : diff<0 ? `D+${Math.abs(diff)} 초과 ⚠️` : diff===0 ? 'D-day 🔴' : `D-${diff}`;
+    const ddayColor = diff===null ? '' : diff<=0 ? 'var(--red)' : diff<=14 ? 'var(--amber)' : 'var(--green)';
+    const pts  = massParts[p.id]||[];
+    const done = pts.filter(x=>x.status==='입고완료').length;
+    const sc   = stageColor[p.stage]||'#6b7280';
+    return `<div style="background:var(--surface);border:1px solid var(--bd);border-radius:var(--r-lg);padding:14px 16px;cursor:pointer;transition:box-shadow .15s" onclick="openMassDetail(${p.id})" onmouseenter="this.style.boxShadow='var(--sh-md)'" onmouseleave="this.style.boxShadow=''">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:${sc}18;color:${sc}">${p.stage}</span>
+          <span style="font-size:15px;font-weight:800">${p.co||'–'}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${diff!==null ? `<span style="font-size:11px;font-weight:700;color:${ddayColor}">${ddayTxt}</span>` : ''}
+          <span style="font-size:12px;color:var(--t2)">${p.qty||0}대</span>
+        </div>
       </div>
-      <div class="rd-col-body">
-        ${cols.map(p => `
-          <div class="mass-card" onclick="openMassDetail(${p.id})">
-            <div class="mass-card-top">
-              <div class="mass-card-name">${p.co}</div>
-              <div class="mass-card-qty">${p.qty}대</div>
-            </div>
-            <div class="mass-card-co">${p.prod||'–'} · ${p.person||'–'}</div>
-            <div class="mass-card-foot">
-              ${dday(p)}
-              ${p.delivery_date ? `<span style="font-size:10px;color:var(--t3)">${p.delivery_date}</span>` : ''}
-              ${(() => { const pts = massParts[p.id]||[]; const done = pts.filter(x=>x.status==='입고완료').length; return pts.length ? `<span class="chip chip-${done===pts.length?'green':'amber'}" style="font-size:10px">부품 ${done}/${pts.length}</span>` : ''; })()}
-            </div>
-          </div>`).join('')}
-      </div>
-      <div class="rd-col-foot">
-        <button class="add-btn" onclick="openNewMassModal(null,'${stage}')">+ 프로젝트 추가</button>
+      <div style="display:flex;align-items:center;gap:12px;font-size:12px;color:var(--t2)">
+        <span>${p.prod||'제품 미정'}</span>
+        ${p.person ? `<span>· ${p.person}</span>` : ''}
+        ${p.delivery_date ? `<span>· 납기 ${p.delivery_date}</span>` : ''}
+        ${pts.length ? `<span style="margin-left:auto;font-size:11px;font-weight:600;color:${done===pts.length?'var(--green)':'var(--amber)'}">부품 ${done}/${pts.length}</span>` : ''}
       </div>
     </div>`;
   }).join('');
-  initKanbanDrag();
 }
+
 
 // ── 상세 뷰 ──
 async function openMassDetail(id) {
@@ -7750,13 +7760,7 @@ function renderMassDetail(id) {
       <div class="pipe-section-body" style="padding:0">${partsHtml}</div>
     </div>
 
-    <div class="pipe-section">
-      <div class="pipe-section-hd">
-        <div style="font-size:14px;font-weight:700">🗓 주차별 설치 계획</div>
-        <button class="btn btn-s btn-sm" onclick="openMassScheduleEditor(${id})" style="margin-left:auto">편집</button>
-      </div>
-      <div class="pipe-section-body">${schedHtml}</div>
-    </div>
+    <div id="massGanttSection_${id}"></div>
 
     <div class="pipe-section">
       <div class="pipe-section-hd"><div style="font-size:14px;font-weight:700">📝 활동 로그</div></div>
@@ -7771,6 +7775,10 @@ function renderMassDetail(id) {
         </div>
       </div>
     </div>`;
+  // 양산 간트 주입
+  const _mgs = document.getElementById('massGanttSection_' + id);
+  if(_mgs) _mgs.innerHTML = buildMassGanttHtml(id);
+
 }
 
 async function changeMassStage(id, stage) {
@@ -8077,21 +8085,6 @@ async function renderRdPipeline() {
 }
 
 // ── 상세 뷰 ──
-async function openRdDetail(id) {
-  if(!rdTasks[id]) {
-    const [r1,r2] = await Promise.all([
-      sb.from('rd_tasks').select('*').eq('rd_project_id',id).order('sort_order'),
-      sb.from('rd_logs').select('*').eq('rd_project_id',id).order('created_at',{ascending:false}),
-    ]);
-    rdTasks[id] = r1.data||[];
-    rdLogs[id]  = r2.data||[];
-  }
-  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-  document.getElementById('view-rd-detail').classList.add('active');
-  document.getElementById('topTitle').textContent = '개발 프로젝트 상세';
-  document.getElementById('topActions').innerHTML = '';
-  renderRdDetail(id);
-}
 
 function renderRdDetail(id) {
   const p = rdProjects.find(x=>x.id===id); if(!p) return;
@@ -8201,6 +8194,8 @@ function renderRdDetail(id) {
       ${taskSectionsHtml}
     </div>
 
+    <div id="rdGanttSection"></div>
+
     <div class="pipe-section">
       <div class="pipe-section-hd"><div style="font-size:14px;font-weight:700">📝 개발 피드</div></div>
       <div class="pipe-section-body">
@@ -8214,8 +8209,10 @@ function renderRdDetail(id) {
         </div>
       </div>
     </div>`;
+  // 개발 간트 주입
+  const _rdgs = document.getElementById('rdGanttSection');
+  if(_rdgs) _rdgs.innerHTML = renderRdDetailContent(p, tasks, logs);
 }
-
 async function changeRdStage(id, stage) {
   const p = rdProjects.find(x=>x.id===id); if(!p) return;
   p.stage = stage;
@@ -9375,7 +9372,8 @@ async function openRdDetail(projectId) {
 
   document.getElementById('rd-list-section').style.display = 'none';
   document.getElementById('rd-detail-section').style.display = '';
-  renderRdDetailContent(p, tasks, logs);
+  const rdDC = document.getElementById('rd-detail-content');
+  if(rdDC) rdDC.innerHTML = renderRdDetailContent(p, tasks, logs);
 }
 
 function closeRdDetail() {
@@ -9574,13 +9572,10 @@ async function loadPipelineData() {
 // 현장설치 셀 클릭 — 수량 팝오버
 function massGanttCellClick(pid, stage, week) {
   const p = massProjects.find(x=>x.id===pid); if(!p) return;
-  const installMap = {};
-  massInstall.filter(r=>r.mass_project_id===pid).forEach(r=>{installMap[r.week_num]={qty:r.qty,label:r.label||'',id:r.id};});
-  const cur = installMap[week];
+  const schedule = massSchedule[pid]||[];
+  const cur = schedule.find(r=>r.week_num===week && !r.stage_name);
 
-  // 기존 팝오버 제거
   document.getElementById('massGanttPopover')?.remove();
-
   const ov = document.createElement('div');
   ov.id = 'massGanttPopover';
   ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:blur(3px);z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px';
@@ -9588,18 +9583,14 @@ function massGanttCellClick(pid, stage, week) {
     <div style="background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--sh-lg);padding:20px;width:100%;max-width:320px;animation:su .15s ease">
       <div style="font-size:14px;font-weight:800;margin-bottom:14px">📅 ${week}주차 현장설치</div>
       <div style="display:flex;flex-direction:column;gap:10px">
-        <div>
-          <label class="form-label">설치 수량 (대)</label>
-          <input class="form-input" id="mgp-qty" type="number" min="0" value="${cur?.qty||0}" style="margin-top:4px;font-size:16px;font-weight:700;text-align:center" autofocus>
-        </div>
-        <div>
-          <label class="form-label">비고</label>
-          <input class="form-input" id="mgp-label" value="${cur?.label||''}" placeholder="예: 2팀 하루 2대씩" style="margin-top:4px">
-        </div>
+        <div><label class="form-label">설치 수량 (대)</label>
+          <input class="form-input" id="mgp-qty" type="number" min="0" value="${cur?.qty||0}" style="margin-top:4px;font-size:16px;font-weight:700;text-align:center"></div>
+        <div><label class="form-label">비고</label>
+          <input class="form-input" id="mgp-label" value="${cur?.label||''}" placeholder="예: 2팀 하루 2대씩" style="margin-top:4px"></div>
       </div>
       <div style="display:flex;gap:8px;margin-top:16px">
         <button class="btn btn-p" style="flex:1;justify-content:center;padding:10px" onclick="saveMassGanttCell(${pid},${week})">저장</button>
-        ${cur?.qty||cur?.label ? `<button class="btn btn-danger" style="padding:10px 14px" onclick="deleteMassGanttCell(${pid},${week})">삭제</button>` : ''}
+        ${cur ? `<button class="btn btn-danger" style="padding:10px 14px" onclick="deleteMassGanttCell(${pid},${week})">삭제</button>` : ''}
         <button class="btn btn-s" style="padding:10px 14px" onclick="document.getElementById('massGanttPopover').remove()">취소</button>
       </div>
     </div>`;
@@ -9611,27 +9602,22 @@ function massGanttCellClick(pid, stage, week) {
 async function saveMassGanttCell(pid, week) {
   const qty   = parseInt(document.getElementById('mgp-qty')?.value)||0;
   const label = document.getElementById('mgp-label')?.value.trim()||'';
+  if(!qty && !label) { await deleteMassGanttCell(pid, week, true); return; }
 
-  if(!qty && !label) {
-    // 값이 없으면 삭제
-    await deleteMassGanttCell(pid, week, true);
-    return;
-  }
-
-  const existing = massInstall.find(r=>r.mass_project_id===pid && r.week_num===week);
+  if(!massSchedule[pid]) massSchedule[pid]=[];
+  const existing = massSchedule[pid].find(r=>r.week_num===week && !r.stage_name);
   if(sb) {
     if(existing) {
       await sb.from('mass_install_schedule').update({qty, label}).eq('id', existing.id);
-      existing.qty = qty; existing.label = label;
+      existing.qty=qty; existing.label=label;
     } else {
       const {data} = await sb.from('mass_install_schedule').insert([{mass_project_id:pid, week_num:week, qty, label}]).select().single();
-      if(data) massInstall.push(data);
+      if(data) massSchedule[pid].push(data);
     }
   } else {
     if(existing) { existing.qty=qty; existing.label=label; }
-    else massInstall.push({mass_project_id:pid, week_num:week, qty, label, id:Date.now()});
+    else massSchedule[pid].push({mass_project_id:pid, week_num:week, qty, label, id:Date.now()});
   }
-
   document.getElementById('massGanttPopover')?.remove();
   showToast(`${week}주차 저장됐습니다 ✓`);
   openMassDetail(pid);
@@ -9639,92 +9625,76 @@ async function saveMassGanttCell(pid, week) {
 
 async function deleteMassGanttCell(pid, week, silent=false) {
   if(!silent && !confirm('이 주차 데이터를 삭제할까요?')) return;
-  const existing = massInstall.find(r=>r.mass_project_id===pid && r.week_num===week);
+  if(!massSchedule[pid]) massSchedule[pid]=[];
+  const existing = massSchedule[pid].find(r=>r.week_num===week && !r.stage_name);
   if(existing) {
     if(sb) await sb.from('mass_install_schedule').delete().eq('id', existing.id);
-    massInstall = massInstall.filter(r=>!(r.mass_project_id===pid && r.week_num===week));
+    massSchedule[pid] = massSchedule[pid].filter(r=>!(r.week_num===week && !r.stage_name));
   }
   document.getElementById('massGanttPopover')?.remove();
   if(!silent) showToast('삭제됐습니다');
   openMassDetail(pid);
 }
 
-// 현장설치 외 단계 셀 클릭 — 시작/종료 주차 범위 설정
-let _massGanttStageStart = null; // { pid, stage, week }
-
 function massGanttStageClick(pid, stage, week) {
-  const ov = document.createElement('div');
-  ov.id = 'massGanttStagePopover';
-  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:blur(3px);z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px';
-
-  // 현재 설정된 범위
-  const curInstall = massInstall.filter(r=>r.mass_project_id===pid && r.stage_name===stage);
-  const curStart = curInstall.length ? Math.min(...curInstall.map(r=>r.week_num)) : week;
-  const curEnd   = curInstall.length ? Math.max(...curInstall.map(r=>r.week_num)) : week;
-
+  if(!massSchedule[pid]) massSchedule[pid]=[];
+  const curRows = massSchedule[pid].filter(r=>r.stage_name===stage);
+  const curStart = curRows.length ? Math.min(...curRows.map(r=>r.week_num)) : week;
+  const curEnd   = curRows.length ? Math.max(...curRows.map(r=>r.week_num)) : week;
   const p = massProjects.find(x=>x.id===pid);
   const totalWeeks = p?.total_weeks||16;
   const weekOpts = Array.from({length:totalWeeks},(_,i)=>`<option value="${i+1}">${i+1}주</option>`).join('');
 
+  document.getElementById('massGanttStagePopover')?.remove();
+  const ov = document.createElement('div');
+  ov.id = 'massGanttStagePopover';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:blur(3px);z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px';
   ov.innerHTML = `
     <div style="background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--sh-lg);padding:20px;width:100%;max-width:340px;animation:su .15s ease">
       <div style="font-size:14px;font-weight:800;margin-bottom:14px">📊 '${stage}' 단계 기간 설정</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-        <div>
-          <label class="form-label">시작 주차</label>
-          <select class="form-select" id="mgsp-start" style="margin-top:4px">${weekOpts}</select>
-        </div>
-        <div>
-          <label class="form-label">종료 주차</label>
-          <select class="form-select" id="mgsp-end" style="margin-top:4px">${weekOpts}</select>
-        </div>
+        <div><label class="form-label">시작 주차</label><select class="form-select" id="mgsp-start" style="margin-top:4px">${weekOpts}</select></div>
+        <div><label class="form-label">종료 주차</label><select class="form-select" id="mgsp-end" style="margin-top:4px">${weekOpts}</select></div>
       </div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-p" style="flex:1;justify-content:center;padding:10px" onclick="saveMassGanttStageRange(${pid},'${stage}')">저장</button>
-        ${curInstall.length ? `<button class="btn btn-danger" style="padding:10px 14px" onclick="clearMassGanttStage(${pid},'${stage}')">초기화</button>` : ''}
+        ${curRows.length ? `<button class="btn btn-danger" style="padding:10px 14px" onclick="clearMassGanttStage(${pid},'${stage}')">초기화</button>` : ''}
         <button class="btn btn-s" style="padding:10px 14px" onclick="document.getElementById('massGanttStagePopover').remove()">취소</button>
       </div>
     </div>`;
   document.body.appendChild(ov);
-
-  // 초기값 설정
-  const startSel = document.getElementById('mgsp-start');
-  const endSel   = document.getElementById('mgsp-end');
-  if(startSel) startSel.value = curInstall.length ? curStart : week;
-  if(endSel)   endSel.value   = curInstall.length ? curEnd   : week;
-
+  setTimeout(()=>{
+    const ss=document.getElementById('mgsp-start'); if(ss) ss.value=curStart;
+    const se=document.getElementById('mgsp-end');   if(se) se.value=curEnd;
+  }, 30);
   ov.addEventListener('click', e=>{if(e.target===ov)ov.remove();});
 }
 
 async function saveMassGanttStageRange(pid, stage) {
-  const start = parseInt(document.getElementById('mgsp-start')?.value)||1;
-  const end   = parseInt(document.getElementById('mgsp-end')?.value)||1;
-  const s = Math.min(start,end), e = Math.max(start,end);
-
-  // 기존 이 단계 데이터 삭제
+  const s = Math.min(parseInt(document.getElementById('mgsp-start')?.value)||1, parseInt(document.getElementById('mgsp-end')?.value)||1);
+  const e = Math.max(parseInt(document.getElementById('mgsp-start')?.value)||1, parseInt(document.getElementById('mgsp-end')?.value)||1);
   await clearMassGanttStage(pid, stage, true);
-
-  // 범위 내 각 주차에 stage_name으로 표시용 데이터 저장
+  if(!massSchedule[pid]) massSchedule[pid]=[];
   const rows = Array.from({length:e-s+1},(_,i)=>({mass_project_id:pid, week_num:s+i, qty:0, label:'', stage_name:stage}));
   if(sb && rows.length) {
     const {data} = await sb.from('mass_install_schedule').insert(rows).select();
-    if(data) massInstall.push(...data);
+    if(data) massSchedule[pid].push(...data);
   } else {
-    rows.forEach((r,i)=>massInstall.push({...r, id:Date.now()+i}));
+    rows.forEach((r,i)=>massSchedule[pid].push({...r, id:Date.now()+i}));
   }
-
   document.getElementById('massGanttStagePopover')?.remove();
-  showToast(`'${stage}' 단계 기간이 설정됐습니다 ✓`);
+  showToast(`'${stage}' 기간이 설정됐습니다 ✓`);
   openMassDetail(pid);
 }
 
 async function clearMassGanttStage(pid, stage, silent=false) {
   if(!silent && !confirm('이 단계 기간을 초기화할까요?')) return;
-  const existing = massInstall.filter(r=>r.mass_project_id===pid && r.stage_name===stage);
+  if(!massSchedule[pid]) massSchedule[pid]=[];
+  const existing = massSchedule[pid].filter(r=>r.stage_name===stage);
   if(existing.length && sb) {
     await Promise.all(existing.map(r=>sb.from('mass_install_schedule').delete().eq('id',r.id)));
   }
-  massInstall = massInstall.filter(r=>!(r.mass_project_id===pid && r.stage_name===stage));
+  massSchedule[pid] = massSchedule[pid].filter(r=>r.stage_name!==stage);
   if(!silent) {
     document.getElementById('massGanttStagePopover')?.remove();
     showToast('초기화됐습니다');
@@ -9926,4 +9896,269 @@ async function rdGanttTaskDelete(pid, taskId) {
   showToast('삭제됐습니다');
   renderRdDetail(pid);
 }
+</script>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// buildMassGanttHtml — 양산 간트 테이블 HTML 빌더
+// ══════════════════════════════════════════════════════════
+function buildMassGanttHtml(pid) {
+  const p = massProjects.find(x=>x.id===pid); if(!p) return '';
+  const schedule = (massSchedule[pid]||[]);
+  const totalWeeks = p.total_weeks||16;
+  const stageColor = {
+    '현장조사':'#3b82f6','제품준비':'#8b5cf6',
+    '현장설치':'#f59e0b','요구사항 반영':'#f97316','납품완료':'#10b981'
+  };
+
+  // 주차 헤더
+  // 시작 날짜 기준 주차→날짜 계산
+  const baseDate = p.start_date_actual ? new Date(p.start_date_actual) : 
+                   p.created_at ? new Date(p.created_at) : new Date();
+  // 월요일로 맞추기
+  const dayOfWeek = baseDate.getDay();
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  baseDate.setDate(baseDate.getDate() + mondayOffset);
+
+  // 주차 헤더: 월/일 표기
+  const weekDates = Array.from({length:totalWeeks}, (_,i) => {
+    const d = new Date(baseDate);
+    d.setDate(d.getDate() + i*7);
+    return d;
+  });
+
+  // 월 그룹핑
+  const monthGroups = [];
+  let curMonth = -1, curGroup = null;
+  weekDates.forEach((d, i) => {
+    const m = d.getMonth()+1;
+    if(m !== curMonth) {
+      curGroup = {month: m, weeks: [], startWeek: i};
+      monthGroups.push(curGroup);
+      curMonth = m;
+    }
+    curGroup.weeks.push({weekIdx: i, date: d});
+  });
+
+  const monthHeader = monthGroups.map(g=>
+    `<th colspan="${g.weeks.length}" style="text-align:center;padding:2px;font-size:9px;background:var(--s2);border:1px solid var(--bd);white-space:nowrap">${g.month}월</th>`
+  ).join('');
+
+  const weekHeaders = weekDates.map((d,i)=>`<th style="text-align:center;padding:1px;font-size:8px;color:var(--t3);border:1px solid var(--bd);background:var(--s2);width:16px;min-width:16px" title="${d.getMonth()+1}/${d.getDate()}">${(i%4)+1}</th>`).join('');
+
+  // 현장설치: week_num 기반 수량 맵
+  const installMap = {};
+  schedule.filter(r=>!r.stage_name).forEach(r=>{ installMap[r.week_num]={qty:r.qty,label:r.label||'',id:r.id}; });
+
+  // 단계별 범위 맵
+  const stageRange = {};
+  schedule.filter(r=>r.stage_name).forEach(r=>{
+    if(!stageRange[r.stage_name]) stageRange[r.stage_name]={start:r.week_num,end:r.week_num};
+    stageRange[r.stage_name].start = Math.min(stageRange[r.stage_name].start, r.week_num);
+    stageRange[r.stage_name].end   = Math.max(stageRange[r.stage_name].end,   r.week_num);
+  });
+
+  const ganttRows = MASS_STAGES.map(s=>{
+    const color = stageColor[s]||'#6b7280';
+    if(s==='현장설치') {
+      const cells = Array.from({length:totalWeeks},(_,i)=>{
+        const w=i+1; const d=installMap[w];
+        return d?.qty||d?.label
+          ? `<td style="border:1px solid var(--bd);padding:1px;cursor:pointer" onclick="massGanttCellClick(${pid},'${s}',${w})" title="${d.label||''}">
+               <div style="background:${color};border-radius:2px;height:18px;display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff;font-weight:700">${d.qty?d.qty+'대':''}</div>
+             </td>`
+          : `<td style="border:1px solid var(--bd);padding:1px;background:var(--s2);cursor:pointer;transition:background .1s"
+               onmouseenter="this.style.background='${color}30'" onmouseleave="this.style.background='var(--s2)'"
+               onclick="massGanttCellClick(${pid},'${s}',${w})"></td>`;
+      }).join('');
+      return `<tr><td style="padding:4px 8px;font-size:10px;font-weight:700;color:${color};background:${color}0d;border:1px solid var(--bd);white-space:nowrap">${s}</td>${cells}</tr>`;
+    }
+    const range = stageRange[s];
+    const cells = Array.from({length:totalWeeks},(_,i)=>{
+      const w=i+1;
+      const inRange = range && w>=range.start && w<=range.end;
+      const r = inRange ? (w===range.start&&w===range.end?'3px':w===range.start?'3px 0 0 3px':w===range.end?'0 3px 3px 0':'0') : '0';
+      return inRange
+        ? `<td style="border:1px solid var(--bd);padding:1px;cursor:pointer" onclick="massGanttStageClick(${pid},'${s}',${w})">
+             <div style="background:${color};border-radius:${r};height:18px;opacity:.85"></div>
+           </td>`
+        : `<td style="border:1px solid var(--bd);padding:1px;background:var(--s2);cursor:pointer;transition:background .1s"
+             onmouseenter="this.style.background='${color}22'" onmouseleave="this.style.background='var(--s2)'"
+             onclick="massGanttStageClick(${pid},'${s}',${w})"></td>`;
+    }).join('');
+    return `<tr><td style="padding:4px 8px;font-size:10px;font-weight:700;color:${color};background:${color}0d;border:1px solid var(--bd);white-space:nowrap">${s}</td>${cells}</tr>`;
+  }).join('');
+
+  return `
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:13px;font-weight:700">🗓 주차별 진행 계획</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:11px;color:var(--t3)">총</span>
+          <input type="number" min="4" max="52" value="${totalWeeks}" style="width:46px;border:1px solid var(--bd);border-radius:var(--r-sm);padding:2px 6px;font-size:12px;font-family:var(--font)" onchange="updateMassTotalWeeks(${pid},this.value)">
+          <span style="font-size:11px;color:var(--t3)">주</span>
+        </div>
+      </div>
+      <div class="card-body" style="padding:0;overflow-x:auto">
+        <div style="font-size:10px;color:var(--t3);padding:4px 10px;background:var(--al);border-bottom:1px solid var(--bd)">
+          💡 단계 행 클릭 → 기간 설정 / 현장설치 행 클릭 → 수량 입력
+        </div>
+        <table class="gantt-table" style="border-collapse:collapse;width:max-content;min-width:100%">
+          <thead>
+            <tr>
+              <th rowspan="2" style="padding:4px 8px;font-size:11px;border:1px solid var(--bd);background:var(--s2);white-space:nowrap;width:90px">단계</th>
+              ${monthHeader}
+            </tr>
+            <tr>
+              ${weekHeaders}
+            </tr>
+          </thead>
+          <tbody>${ganttRows}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+async function updateMassTotalWeeks(pid, val) {
+  const weeks = Math.max(4, Math.min(52, parseInt(val)||16));
+  if(sb) await sb.from('mass_projects').update({total_weeks:weeks}).eq('id',pid);
+  const p = massProjects.find(x=>x.id===pid);
+  if(p) p.total_weeks = weeks;
+  renderMassDetail(pid);
+}
+</script>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// 양산 프로젝트 생성 → R&D 알람
+// ══════════════════════════════════════════════════════════
+
+// 양산 알람 로컬스토리지 키
+const MASS_ALERT_KEY = 'sp_mass_alerts';
+
+function getMassAlerts() {
+  try { return JSON.parse(localStorage.getItem(MASS_ALERT_KEY)||'[]'); } catch { return []; }
+}
+function saveMassAlert(alert) {
+  const alerts = getMassAlerts();
+  alerts.unshift(alert);
+  // 최대 50개 유지
+  localStorage.setItem(MASS_ALERT_KEY, JSON.stringify(alerts.slice(0,50)));
+}
+function getMassAlertReadIds() {
+  try { return JSON.parse(localStorage.getItem('sp_mass_alert_read')||'[]'); } catch { return []; }
+}
+function markMassAlertRead(id) {
+  const ids = getMassAlertReadIds();
+  if(!ids.includes(id)) { ids.push(id); localStorage.setItem('sp_mass_alert_read', JSON.stringify(ids)); }
+}
+
+function notifyMassCreated(massProject) {
+  // 알람 저장
+  const alert = {
+    id: massProject.id || Date.now(),
+    type: 'mass_created',
+    co: massProject.co,
+    prod: massProject.prod,
+    qty: massProject.qty,
+    created_at: new Date().toISOString(),
+  };
+  saveMassAlert(alert);
+
+  // 현재 로그인 유저가 rd 역할이면 즉시 토스트
+  if(CU?.role === 'rd') {
+    showToast(`🏭 신규 양산 프로젝트: ${massProject.co} (${massProject.qty}대)`, 'success');
+  }
+
+  // 알람 벨 뱃지 업데이트
+  updateMassAlertBadge();
+}
+
+function updateMassAlertBadge() {
+  const alerts   = getMassAlerts();
+  const readIds  = getMassAlertReadIds();
+  const unread   = alerts.filter(a => !readIds.includes(a.id));
+
+  // 기존 딜 알람 벨 옆에 양산 뱃지 표시
+  let badge = document.getElementById('massAlertBadge');
+  if(!badge) {
+    // 알람 벨 버튼 찾기
+    const bellBtn = document.querySelector('[onclick="toggleDealAlertPanel()"]');
+    if(bellBtn) {
+      badge = document.createElement('span');
+      badge.id = 'massAlertBadge';
+      badge.style.cssText = 'position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;border-radius:10px;font-size:9px;font-weight:800;padding:1px 4px;min-width:14px;text-align:center;line-height:14px';
+      bellBtn.style.position = 'relative';
+      bellBtn.appendChild(badge);
+    }
+  }
+
+  if(badge) {
+    const totalUnread = unread.length;
+    badge.textContent = totalUnread;
+    badge.style.display = totalUnread > 0 ? '' : 'none';
+  }
+}
+
+// 알람 패널에 양산 알람 섹션 추가
+const _origToggleDealAlertPanel = window.toggleDealAlertPanel;
+window.toggleDealAlertPanel = function() {
+  _origToggleDealAlertPanel?.call(this);
+  // 패널 열린 후 양산 알람 섹션 삽입
+  setTimeout(() => {
+    const panel = document.getElementById('dealAlertPanel');
+    if(!panel || panel.style.display === 'none') return;
+    const existing = document.getElementById('massAlertSection');
+    if(existing) return;
+
+    const alerts  = getMassAlerts();
+    const readIds = getMassAlertReadIds();
+
+    if(!alerts.length) return;
+
+    const section = document.createElement('div');
+    section.id = 'massAlertSection';
+    section.style.cssText = 'border-top:2px solid var(--bd);margin-top:12px;padding-top:12px';
+    section.innerHTML = `
+      <div style="font-size:12px;font-weight:800;color:var(--t2);margin-bottom:8px;display:flex;align-items:center;gap:6px">
+        🏭 양산 프로젝트 알람
+        <span style="font-size:10px;font-weight:400;color:var(--t3)">${alerts.length}건</span>
+      </div>
+      ${alerts.slice(0,5).map(a => {
+        const unread = !readIds.includes(a.id);
+        const dt = new Date(a.created_at);
+        const dateStr = `${dt.getMonth()+1}/${dt.getDate()} ${dt.getHours()}:${String(dt.getMinutes()).padStart(2,'0')}`;
+        return `<div style="padding:8px 10px;border-radius:var(--r);margin-bottom:4px;background:${unread?'var(--al)':'var(--bg)'};border:1px solid ${unread?'var(--accent)40':'var(--bd)'};cursor:pointer" onclick="markMassAlertRead(${a.id});this.style.background='var(--bg)';this.style.border='1px solid var(--bd)';updateMassAlertBadge()">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
+            <span style="font-size:12px;font-weight:700">${a.co}</span>
+            <span style="font-size:10px;color:var(--t3)">${dateStr}</span>
+          </div>
+          <div style="font-size:11px;color:var(--t2)">${a.prod||'제품 미정'} · ${a.qty}대 · 계약완료 → 양산 등록</div>
+          ${unread ? '<span style="font-size:9px;font-weight:700;color:var(--accent)">NEW</span>' : ''}
+        </div>`;
+      }).join('')}`;
+    panel.appendChild(section);
+
+    // 읽음 처리
+    alerts.forEach(a => markMassAlertRead(a.id));
+    updateMassAlertBadge();
+  }, 50);
+};
+
+// 로그인 후 미읽은 알람 체크 — doLogin 이후
+const _origDoLoginComplete = window.enterDashboard;
+window.enterDashboard = function(section) {
+  _origDoLoginComplete?.call(this, section);
+  setTimeout(updateMassAlertBadge, 500);
+
+  // rd 역할이면 미읽은 양산 알람 토스트
+  if(CU?.role === 'rd') {
+    const alerts  = getMassAlerts();
+    const readIds = getMassAlertReadIds();
+    const unread  = alerts.filter(a => !readIds.includes(a.id));
+    if(unread.length > 0) {
+      setTimeout(() => showToast(`🏭 미확인 양산 프로젝트 ${unread.length}건이 있습니다`, 'success'), 1000);
+    }
+  }
+};
 </script>
