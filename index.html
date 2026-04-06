@@ -1570,6 +1570,17 @@ tbody tr:hover{background:var(--s2)}
           <div class="kpi-card"><div class="kpi-label">미수금 (연체)</div><div class="kpi-val" id="fin-kpi-overdue" style="color:var(--red)">₩0</div><span class="chip chip-red" id="fin-kpi-overdue-c"></span></div>
           <div class="kpi-card"><div class="kpi-label">이번 달 지출</div><div class="kpi-val" id="fin-kpi-expense">₩0</div><span class="chip chip-amber" id="fin-kpi-expense-c"></span></div>
         </div>
+        <!-- 연간 매출 현황 -->
+        <div class="card" style="margin-bottom:16px" id="annual-revenue-card">
+          <div class="card-hd" style="display:flex;align-items:center;justify-content:space-between">
+            <div class="card-title">올해 매출 현황</div>
+            <div id="annual-revenue-summary" style="font-size:12px;color:var(--t2)"></div>
+          </div>
+          <div class="card-body" style="padding:0">
+            <div id="annual-revenue-chart" style="padding:16px"></div>
+          </div>
+        </div>
+
         <!-- 6개월 캐시플로우 차트 -->
         <div class="card" style="margin-bottom:16px">
           <div class="card-hd"><div class="card-title">6개월 캐시플로우 전망</div></div>
@@ -1596,9 +1607,38 @@ tbody tr:hover{background:var(--s2)}
 
       <!-- FIN: 수금 관리 -->
       <div class="view" id="view-fin-receivables">
-        <div class="filter-bar">
-          <select class="f-select" id="recv-status-filter" onchange="renderReceivables()"><option value="">전체</option><option value="pending">수금대기</option><option value="invoiced">계산서발행</option><option value="received">수금완료</option><option value="overdue">연체</option></select>
-          <input class="f-input" type="month" id="recv-month-filter" onchange="renderReceivables()" style="flex:none;width:160px">
+        <div style="display:flex;flex-direction:column;gap:8px;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--bd)">
+          <!-- 1행: 검색 + 상태 필터 -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <input class="f-input" id="recv-search" placeholder="🔍 고객사 / 딜 번호 검색" oninput="renderReceivables()" style="flex:1;min-width:160px">
+            <select class="f-select" id="recv-status-filter" onchange="renderReceivables()" style="flex:none">
+              <option value="">전체 상태</option>
+              <option value="pending">수금대기</option>
+              <option value="invoiced">계산서발행</option>
+              <option value="received">수금완료</option>
+              <option value="overdue">연체</option>
+            </select>
+          </div>
+          <!-- 2행: 날짜 + 정렬 -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <div style="display:flex;align-items:center;gap:6px;flex:none">
+              <span style="font-size:11px;color:var(--t3);white-space:nowrap">기준일</span>
+              <input class="f-input" type="date" id="recv-date-from" onchange="renderReceivables()" style="width:130px;flex:none">
+              <span style="font-size:11px;color:var(--t3)">~</span>
+              <input class="f-input" type="date" id="recv-date-to" onchange="renderReceivables()" style="width:130px;flex:none">
+            </div>
+            <select class="f-select" id="recv-sort" onchange="renderReceivables()" style="flex:none">
+              <option value="basis_date_asc">기준일 빠른순 ↑</option>
+              <option value="basis_date_desc">기준일 늦은순 ↓</option>
+              <option value="company_asc">고객사 오름차순</option>
+              <option value="company_desc">고객사 내림차순</option>
+              <option value="amount_desc">금액 높은순</option>
+              <option value="amount_asc">금액 낮은순</option>
+            </select>
+            <button class="btn btn-s btn-sm" onclick="document.getElementById('recv-search').value='';document.getElementById('recv-status-filter').value='';document.getElementById('recv-date-from').value='';document.getElementById('recv-date-to').value='';document.getElementById('recv-sort').value='basis_date_asc';renderReceivables()">초기화</button>
+          </div>
+          <!-- 합계 표시 -->
+          <div id="recv-summary" style="display:flex;gap:16px;font-size:12px;padding:6px 10px;background:var(--s2);border-radius:var(--r);flex-wrap:wrap"></div>
         </div>
         <div class="table-wrap">
           <table><thead><tr><th>고객사</th><th>딜</th><th>금액(공급가)</th><th>수금액(VAT포함)</th><th>수금 기준</th><th>기준일</th><th>예상 수금일</th><th>세금계산서</th><th>상태</th><th>관리</th></tr></thead>
@@ -2460,16 +2500,15 @@ let CU = null; // current user
 // HELPERS
 // ══════════════════════════════════════════════
 const fmt = v => {
-  // 단위: 만원 (DB 저장 단위)
+  // 단위: 원 (deals.amount 등 원 단위 필드용)
   if(!v || v === 0) return '₩0';
-  const a = Math.abs(v); // a는 만원 단위
-  if(a >= 10000) {                      // 1억 이상 (10000만원~)
-    return '₩' + (a/10000).toFixed(1).replace(/\.0$/, '') + '억';
-  } else if(a >= 1000) {               // 1000만원 이상
-    return '₩' + Math.round(a).toLocaleString() + '만';
-  } else {                              // 999만원 이하
-    return '₩' + Math.round(a).toLocaleString() + '만';
-  }
+  const a = Math.abs(v);
+  if(a >= 100000000000) return '₩' + Math.round(a/100000000).toLocaleString() + '억';
+  if(a >= 10000000000)  return '₩' + (a/100000000).toFixed(1) + '억';
+  if(a >= 100000000)    return '₩' + (a/100000000).toFixed(1) + '억';
+  if(a >= 10000000)     return '₩' + Math.round(a/10000).toLocaleString() + '만';
+  if(a >= 10000)        return '₩' + Math.round(a/10000).toLocaleString() + '만';
+  return '₩' + a.toLocaleString() + '원';
 };
 const sk = s => STAGE_KEYS[STAGES.indexOf(s)] || 'lead';
 const spCls = s => STAGE_SP[STAGES.indexOf(s)] || 'sp-lead';
@@ -3073,12 +3112,12 @@ function renderSuperAdminKPI() {
   const v=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
   v('sa-backlog', fmt(backlog));
   v('sa-backlog-c', `${active.length}건 진행`);
-  v('sa-recv-month', fmt(recvThisMonth));
+  v('sa-recv-month', fmtMW(recvThisMonth));
   v('sa-recv-month-c', `${recvList.filter(r=>r.expected_date?.startsWith(thisMonth)).length}건`);
   const netEl=document.getElementById('sa-net-cash');
-  if(netEl){netEl.textContent=fmt(Math.abs(netCash3M));netEl.style.color=netCash3M>=0?'var(--green)':'var(--red)';}
+  if(netEl){netEl.textContent=fmtMW(Math.abs(netCash3M));netEl.style.color=netCash3M>=0?'var(--green)':'var(--red)';}
   const netChip=document.getElementById('sa-net-cash-c');
-  if(netChip){netChip.textContent=netCash3M>=0?`+${fmt(netCash3M)} 순유입`:`-${fmt(Math.abs(netCash3M))} 순유출`;netChip.className=`chip ${netCash3M>=0?'chip-green':'chip-red'}`;}
+  if(netChip){netChip.textContent=netCash3M>=0?`+${fmtMW(netCash3M)} 순유입`:`-${fmtMW(Math.abs(netCash3M))} 순유출`;netChip.className=`chip ${netCash3M>=0?'chip-green':'chip-red'}`;}
   v('sa-conv-rate', `${convRate}%`);
 
   // ── 액션 리스트 자동 생성 ──
@@ -5818,6 +5857,11 @@ function openTxEditModal(id) {
     </div>
     <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px">
       <div class="form-field">
+        <label class="form-label">입력 일시</label>
+        <input class="form-input" id="txe-date" type="datetime-local" value="${tx.created_at ? new Date(tx.created_at).toISOString().slice(0,16) : ''}" style="margin-top:4px">
+        <div style="font-size:11px;color:var(--t3);margin-top:4px">입력 일시를 수정할 수 있습니다</div>
+      </div>
+      <div class="form-field">
         <label class="form-label">수량 <span style="font-weight:400;color:var(--t3);font-size:10px">(현재: ${tx.qty})</span></label>
         <input class="form-input" id="txe-qty" type="number" value="${Math.abs(tx.qty)}" style="margin-top:4px" min="1">
         <div style="font-size:11px;color:var(--t3);margin-top:4px">수량 변경 시 재고에 차이분이 자동 반영됩니다</div>
@@ -5851,6 +5895,8 @@ async function saveTxEdit(id) {
   const reason = document.getElementById('txe-reason')?.value||'';
   const person = document.getElementById('txe-person')?.value||'';
   const note   = document.getElementById('txe-note')?.value||'';
+  const dateVal = document.getElementById('txe-date')?.value||'';
+  const newCreatedAt = dateVal ? new Date(dateVal).toISOString() : tx.created_at;
 
   // 수량 부호 유지 (출고면 음수)
   const newQty = tx.qty < 0 ? -newAbsQty : newAbsQty;
@@ -5864,7 +5910,7 @@ async function saveTxEdit(id) {
   }
 
   // DB 업데이트
-  const update = {qty:newQty, reason, person, note};
+  const update = {qty:newQty, reason, person, note, created_at:newCreatedAt};
   if(sb) await sb.from('stock_transactions').update(update).eq('id',id);
 
   // 로컬 반영
@@ -6081,6 +6127,9 @@ async function renderCashflow() {
       <span class="chip chip-amber">계산서 미발행</span>
     </div>`).join('') :
     `<div style="padding:24px;text-align:center;color:var(--t3);font-size:13px">✅ 미발행 세금계산서 없음</div>`;
+
+  // ── 연간 매출 현황 렌더 ──
+  renderAnnualRevenue();
 }
 
 // ══════════════════════════════════════════════════════════
@@ -6088,36 +6137,105 @@ async function renderCashflow() {
 // ══════════════════════════════════════════════════════════
 async function renderReceivables() {
   if(!recvList.length) await loadFinData();
-  const statusF = document.getElementById('recv-status-filter')?.value||'';
-  const monthF  = document.getElementById('recv-month-filter')?.value||'';
-  let data = [...recvList];
-  if(statusF) data = data.filter(r=>r.status===statusF);
-  if(monthF)  data = data.filter(r=>r.expected_date?.startsWith(monthF));
+  const statusF  = document.getElementById('recv-status-filter')?.value||'';
+  const searchF  = (document.getElementById('recv-search')?.value||'').trim().toLowerCase();
+  const dateFrom = document.getElementById('recv-date-from')?.value||'';
+  const dateTo   = document.getElementById('recv-date-to')?.value||'';
+  const sortV    = document.getElementById('recv-sort')?.value||'basis_date_asc';
 
-  document.getElementById('recv-table-body').innerHTML = data.length ?
-    data.map(r=>`<tr>
-      <td style="font-weight:600">${r.company_name}</td>
-      <td style="color:var(--t2)">${r.deal_id?`딜 #${r.deal_id}`:'직접 등록'}</td>
-      <td style="font-weight:700">${fmtMW(r.amount)}</td>
-      <td style="font-weight:700;color:var(--accent)">${fmtMW(Math.round(r.amount*1.1))}<span style="font-size:9px;color:var(--t3);font-weight:400"> (VAT)</span></td>
-      <td>${PAY_BASIS[r.payment_basis]||r.payment_basis||'–'}</td>
-      <td>${r.basis_date||'–'}</td>
-      <td style="${r.status==='overdue'?'color:var(--red);font-weight:700':''}">${r.expected_date||'–'}</td>
-      <td>
-        ${r.tax_invoice_issued
-          ? `<div style="display:flex;align-items:center;gap:5px">
-               <span class="chip chip-green">✓ ${r.tax_invoice_date||''}</span>
-               <button class="btn btn-danger btn-sm" onclick="cancelInvoice(${r.id})" title="발행 취소">취소</button>
-             </div>`
-          : `<button class="btn btn-s btn-sm" onclick="markInvoiceIssued(${r.id})">발행 처리</button>`}
-      </td>
-      <td><span class="chip ${RECV_STATUS_CLS[r.status]||'chip-gray'}">${RECV_STATUS[r.status]||r.status}</span></td>
-      <td style="display:flex;gap:4px">
-        ${r.status!=='received'?`<button class="btn btn-green btn-sm" onclick="markReceived(${r.id})">수금완료</button>`:''}
-        <button class="btn btn-s btn-sm" onclick="openRecvEdit(${r.id})">수정</button>
-      </td>
-    </tr>`).join('') :
-    `<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--t3)">수금 내역이 없습니다</td></tr>`;
+  let data = [...recvList];
+
+  // 필터
+  if(statusF) data = data.filter(r=>r.status===statusF);
+  if(searchF) data = data.filter(r=>
+    (r.company_name||'').toLowerCase().includes(searchF) ||
+    (r.deal_id ? `딜 #${r.deal_id}` : '').toLowerCase().includes(searchF) ||
+    (r.note||'').toLowerCase().includes(searchF)
+  );
+  if(dateFrom) data = data.filter(r=>(r.basis_date||'')>=dateFrom);
+  if(dateTo)   data = data.filter(r=>(r.basis_date||'')<=dateTo);
+
+  // 정렬
+  data.sort((a,b)=>{
+    if(sortV==='basis_date_asc')  return (a.basis_date||'').localeCompare(b.basis_date||'');
+    if(sortV==='basis_date_desc') return (b.basis_date||'').localeCompare(a.basis_date||'');
+    if(sortV==='company_asc')     return (a.company_name||'').localeCompare(b.company_name||'');
+    if(sortV==='company_desc')    return (b.company_name||'').localeCompare(a.company_name||'');
+    if(sortV==='amount_desc')     return (b.amount||0)-(a.amount||0);
+    if(sortV==='amount_asc')      return (a.amount||0)-(b.amount||0);
+    return 0;
+  });
+
+  // 합계 계산
+  const totalAmt   = data.reduce((s,r)=>s+r.amount,0);
+  const totalVat   = Math.round(totalAmt*1.1);
+  const cntByStatus = {};
+  data.forEach(r=>{ cntByStatus[r.status]=(cntByStatus[r.status]||0)+1; });
+  const sumEl = document.getElementById('recv-summary');
+  if(sumEl) {
+    const statusLbls = {pending:'수금대기',invoiced:'계산서발행',received:'수금완료',overdue:'연체'};
+    const statusColors = {pending:'var(--t2)',invoiced:'var(--accent)',received:'var(--green)',overdue:'var(--red)'};
+    sumEl.innerHTML = `
+      <span style="font-weight:700;color:var(--text)">${data.length}건</span>
+      <span style="color:var(--t3)">|</span>
+      <span>공급가 합계 <strong>${fmtMW(totalAmt)}</strong></span>
+      <span>VAT포함 합계 <strong style="color:var(--accent)">${fmtMW(totalVat)}</strong></span>
+      ${Object.entries(cntByStatus).map(([s,c])=>`<span style="color:${statusColors[s]||'var(--t2)'}">${statusLbls[s]||s} ${c}건</span>`).join('')}
+    `;
+  }
+
+  // 고객사별 그룹핑 표시 (company/amount 정렬일 때)
+  const isGrouped = sortV.startsWith('company');
+  let rows = '';
+  if(isGrouped && data.length) {
+    // 고객사별 소계 행 삽입
+    const groups = {};
+    data.forEach(r=>{ if(!groups[r.company_name]) groups[r.company_name]=[]; groups[r.company_name].push(r); });
+    const groupOrder = sortV==='company_asc'
+      ? Object.keys(groups).sort()
+      : Object.keys(groups).sort().reverse();
+    rows = groupOrder.map(co=>{
+      const items = groups[co];
+      const subTotal = items.reduce((s,r)=>s+r.amount,0);
+      return `
+        <tr style="background:var(--s2)">
+          <td colspan="10" style="padding:6px 10px;font-size:12px;font-weight:700;color:var(--t2)">
+            ${co} — ${items.length}건 · 공급가 합계 ${fmtMW(subTotal)} / VAT포함 ${fmtMW(Math.round(subTotal*1.1))}
+          </td>
+        </tr>
+        ${items.map(r=>recvRow(r)).join('')}`;
+    }).join('');
+  } else {
+    rows = data.map(r=>recvRow(r)).join('');
+  }
+
+  document.getElementById('recv-table-body').innerHTML = rows ||
+    `<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--t3)">수금 내역이 없습니다</td></tr>`;
+}
+
+function recvRow(r) {
+  return `<tr>
+    <td style="font-weight:600">${r.company_name}</td>
+    <td style="color:var(--t2)">${r.deal_id?`딜 #${r.deal_id}`:'직접 등록'}</td>
+    <td style="font-weight:700">${fmtMW(r.amount)}</td>
+    <td style="font-weight:700;color:var(--accent)">${fmtMW(Math.round(r.amount*1.1))}<span style="font-size:9px;color:var(--t3);font-weight:400"> (VAT)</span></td>
+    <td>${PAY_BASIS[r.payment_basis]||r.payment_basis||'–'}</td>
+    <td>${r.basis_date||'–'}</td>
+    <td style="${r.status==='overdue'?'color:var(--red);font-weight:700':''}">${r.expected_date||'–'}</td>
+    <td>
+      ${r.tax_invoice_issued
+        ? `<div style="display:flex;align-items:center;gap:5px">
+             <span class="chip chip-green">✓ ${r.tax_invoice_date||''}</span>
+             <button class="btn btn-danger btn-sm" onclick="cancelInvoice(${r.id})" title="발행 취소">취소</button>
+           </div>`
+        : `<button class="btn btn-s btn-sm" onclick="markInvoiceIssued(${r.id})">발행 처리</button>`}
+    </td>
+    <td><span class="chip ${RECV_STATUS_CLS[r.status]||'chip-gray'}">${RECV_STATUS[r.status]||r.status}</span></td>
+    <td style="display:flex;gap:4px">
+      ${r.status!=='received'?`<button class="btn btn-green btn-sm" onclick="markReceived(${r.id})">수금완료</button>`:''}
+      <button class="btn btn-s btn-sm" onclick="openRecvEdit(${r.id})">수정</button>
+    </td>
+  </tr>`;
 }
 
 async function markInvoiceIssued(id) {
@@ -9397,77 +9515,240 @@ function renderRdDetailContent(p, tasks, logs) {
   function weekIndex(month, week) { return (month - startMonth) * 4 + (week - 1); }
   const ganttRows = stages.map(stage => {
     const color = stageColor[stage] || '#6b7280';
-    const stageTasks = stageGroups[stage] || [];
-    const rowspan = Math.max(stageTasks.length,1)+1;
-    const stageHeaderTd = `<td style="padding:4px 6px;font-size:10px;font-weight:700;color:${color};background:${color}0d;border:1px solid var(--bd);white-space:nowrap;vertical-align:middle" rowspan="${rowspan}">${stage}</td>`;
-    const addCells = Array.from({length:ganttCols*4},(_,i)=>{
-      const m = startMonth + Math.floor(i/4);
-      const w = (i%4)+1;
-      return `<td class="rd-add-cell" data-pid="${p.id}" data-stage="${stage}" data-month="${m}" data-week="${w}" data-wi="${i}" style="border:1px solid var(--bd);padding:0;height:16px;background:var(--s2);cursor:crosshair" onmouseenter="rdGanttHover(this,'${color}')" onmouseleave="rdGanttLeave(this)" onmousedown="rdGanttDragStart(event,this,${p.id},'${stage}')"></td>`;
+    // 이 단계의 첫 번째 태스크만 사용 (1개 기준)
+    const t = stageGroups[stage]?.[0] || null;
+    const sm = t?.start_month, sw = t?.start_week||1;
+    const em = t?.end_month,   ew = t?.end_week||4;
+    const wiStart = sm ? weekIndex(sm,sw) : null;
+    const wiEnd   = em ? weekIndex(em,ew) : null;
+    const hasPeriod = wiStart!==null && wiEnd!==null;
+
+    const cells = Array.from({length:ganttCols*4},(_,i)=>{
+      const month = startMonth + Math.floor(i/4);
+      const week  = (i%4)+1;
+      const inBar = hasPeriod && i>=wiStart && i<=wiEnd;
+      const isFirst = inBar && i===wiStart;
+      const isLast  = inBar && i===wiEnd;
+      const r = isFirst&&isLast?'4px':isFirst?'4px 0 0 4px':isLast?'0 4px 4px 0':inBar?'0':'0';
+
+      if(inBar) {
+        return `<td style="border:1px solid var(--bd);padding:1px;cursor:pointer"
+            onclick="rdGanttTaskClick(${p.id},${t.id})"
+            title="${t.title}${t.description?' — '+t.description:''}">
+            <div style="background:${t.done?'#94a3b8':color};border-radius:${r};height:18px;
+              display:flex;align-items:center;justify-content:center;
+              font-size:9px;color:#fff;font-weight:700;overflow:hidden;padding:0 3px">
+              ${isFirst && (wiEnd-wiStart)>=3 ? `<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.title}</span>` : ''}
+            </div>
+          </td>`;
+      }
+      return `<td style="border:1px solid var(--bd);padding:1px;background:${hasPeriod?'var(--bg)':'var(--s2)'};
+          cursor:pointer;transition:background .08s"
+          onmouseenter="this.style.background='${color}20'"
+          onmouseleave="this.style.background='${hasPeriod?'var(--bg)':'var(--s2)'}'"
+          onclick="openAddRdTask(${p.id},'${stage}',${startMonth+Math.floor(i/4)},${(i%4)+1},${startMonth+Math.floor(i/4)},${(i%4)+1})">
+        </td>`;
     }).join('');
-    const addRow = `<tr title="드래그하여 추가"><td style="padding:2px 6px;font-size:9px;color:var(--accent);border:1px solid var(--bd);white-space:nowrap;cursor:pointer;background:var(--al)" onclick="openAddRdTask(${p.id},'${stage}')">+ 태스크</td><td style="border:1px solid var(--bd);background:var(--al)"></td>${addCells}</tr>`;
-    const taskRows = stageTasks.map(t => {
-      const sm = t.start_month, sw = t.start_week||1, em = t.end_month, ew = t.end_week||4;
-      const wiStart = sm ? weekIndex(sm,sw) : null;
-      const wiEnd   = em ? weekIndex(em,ew) : null;
-      const cells = Array.from({length:ganttCols*4},(_,i)=>{
-        const inBar = wiStart!==null && wiEnd!==null && i>=wiStart && i<=wiEnd;
-        const r = inBar ? (i===wiStart&&i===wiEnd?'3px':i===wiStart?'3px 0 0 3px':i===wiEnd?'0 3px 3px 0':'0') : '0';
-        return inBar
-          ? `<td style="border:1px solid var(--bd);padding:1px 0;cursor:pointer" onclick="rdGanttTaskClick(${p.id},${t.id})"><div style="background:${t.done?'#94a3b8':color};border-radius:${r};height:16px;opacity:${t.done?.5:1}"></div></td>`
-          : `<td style="border:1px solid var(--bd);padding:1px 0;background:var(--bg);cursor:pointer" onmouseenter="this.style.background='${color}18'" onmouseleave="this.style.background='var(--bg)'" onclick="rdGanttTaskClick(${p.id},${t.id})"></td>`;
-      }).join('');
-      return `<tr><td style="padding:3px 6px;font-size:10px;font-weight:600;border:1px solid var(--bd);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px" title="${t.title}">${t.done?'✓ ':''}<span style="${t.done?'text-decoration:line-through;color:var(--t3)':''}">${t.title}</span></td><td style="padding:3px 6px;font-size:9px;color:var(--t2);border:1px solid var(--bd);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px">${t.description||''}</td>${cells}</tr>`;
-    }).join('');
-    return `<tr>${stageHeaderTd}${addRow.replace(/^<tr>/,'').replace(/<\/tr>$/,'')}</tr>${taskRows}`;
+
+    // 개발 내용 + 설명 셀
+    const titleCell = t
+      ? `<td style="padding:4px 8px;font-size:11px;font-weight:600;border:1px solid var(--bd);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;cursor:pointer" onclick="rdGanttTaskClick(${p.id},${t.id})" title="${t.title}">${t.done?'✓ ':''}<span style="${t.done?'text-decoration:line-through;color:var(--t3)':''}">${t.title}</span></td>
+         <td style="padding:4px 8px;font-size:10px;color:var(--t2);border:1px solid var(--bd);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px;cursor:pointer" onclick="rdGanttTaskClick(${p.id},${t.id})">${t.description||''}</td>`
+      : `<td style="padding:4px 8px;font-size:10px;color:var(--accent);border:1px solid var(--bd);white-space:nowrap;cursor:pointer;background:var(--al)" colspan="2" onclick="openAddRdTask(${p.id},'${stage}')">+ 기간 추가</td>`;
+
+    return `<tr>
+      <td style="padding:5px 8px;font-size:11px;font-weight:700;color:${color};background:${color}0d;border:1px solid var(--bd);white-space:nowrap">${stage}</td>
+      ${titleCell}
+      ${cells}
+    </tr>`;
   }).join('');
-  const typeIcon = {메모:'💬',이슈:'⚠️',결정:'✅',시험결과:'🧪',설계변경:'📐'};
+
+const typeIcon = {메모:'💬',이슈:'⚠️',결정:'✅',시험결과:'🧪',설계변경:'📐'};
   const feedHtml = logs.length ? logs.map(l=>`<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--bd)"><div style="font-size:18px;flex-shrink:0">${typeIcon[l.type]||'💬'}</div><div style="flex:1"><div style="display:flex;gap:8px;margin-bottom:3px"><span style="font-size:12px;font-weight:700">${l.author||'익명'}</span><span style="font-size:11px;color:var(--t3)">${l.created_at?.slice(0,10)||''}</span></div><div style="font-size:13px;line-height:1.5">${l.content}</div></div><button class="btn btn-s btn-sm" onclick="deleteRdLog(${l.id},${p.id})">삭제</button></div>`).join('') : '<div style="text-align:center;color:var(--t3);padding:24px;font-size:13px">피드가 없습니다</div>';
-  return `<div class="card" style="margin-bottom:16px"><div class="card-header" style="display:flex;align-items:center;justify-content:space-between"><div style="font-size:14px;font-weight:700">📅 개발 일정 (간트)</div><div style="display:flex;gap:6px;align-items:center"><span style="font-size:11px;color:var(--t3)">시작월</span><input type="number" min="1" max="12" value="${p.start_month||1}" style="width:48px;border:1px solid var(--bd);border-radius:var(--r-sm);padding:3px 6px;font-size:12px;font-family:var(--font)" onchange="updateRdStartMonth(${p.id},this.value)"><span style="font-size:11px;color:var(--t3)">총</span><input type="number" min="12" max="24" value="${totalMonths}" style="width:52px;border:1px solid var(--bd);border-radius:var(--r-sm);padding:3px 6px;font-size:12px;font-family:var(--font)" onchange="updateRdTotalMonths(${p.id},this.value)"><span style="font-size:11px;color:var(--t3)">개월</span></div></div><div class="card-body" style="padding:0;overflow-x:auto"><div style="font-size:10px;color:var(--t3);padding:5px 10px;background:var(--al);border-bottom:1px solid var(--bd)">💡 회색 추가 행을 좌우 드래그 → 기간 설정. 색상 바 클릭 → 수정/삭제</div><table class="gantt-table" style="border-collapse:collapse;width:max-content;min-width:100%"><thead><tr><th style="padding:5px 6px;font-size:11px;border:1px solid var(--bd);background:var(--s2);white-space:nowrap;width:52px;max-width:52px">단계</th><th style="padding:5px 6px;font-size:11px;border:1px solid var(--bd);background:var(--s2);white-space:nowrap;width:90px;max-width:90px">개발 내용</th><th style="padding:5px 6px;font-size:11px;border:1px solid var(--bd);background:var(--s2);white-space:nowrap;width:110px;max-width:110px">설명</th>${ganttHeaderMonths}</tr><tr><th style="border:1px solid var(--bd);background:var(--s2)"></th><th style="border:1px solid var(--bd);background:var(--s2)"></th><th style="border:1px solid var(--bd);background:var(--s2)"></th>${ganttHeaderWeeks}</tr></thead><tbody>${ganttRows}</tbody></table></div></div><div class="card"><div class="card-header" style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:14px;font-weight:700">💬 개발 피드</div><button class="btn btn-p btn-sm" onclick="openAddRdLog(${p.id})">+ 피드 추가</button></div><div class="card-body feed-body">${feedHtml}</div></div>`;
+  return `
+  <!-- 프로젝트 헤더 -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+    <div>
+      <div style="font-size:22px;font-weight:800;letter-spacing:-.5px">${p.name}</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:4px;font-size:12px;color:var(--t2)">
+        ${p.person?`<span>👤 ${p.person}</span>`:''}
+        ${p.target_date?`<span>📅 목표 ${p.target_date}</span>`:''}
+        ${p.description?`<span style="color:var(--t3)">${p.description}</span>`:''}
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-shrink:0">
+      <button class="btn btn-s btn-sm" onclick="openEditRdProject(${p.id})" style="gap:4px">✏️ 수정</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteRdProject(${p.id})" style="gap:4px">🗑 삭제</button>
+    </div>
+  </div>
+  <!-- 단계 진행바 -->
+  <div style="display:flex;gap:4px;margin-bottom:20px">
+    ${['분석','설계','제작','시험','기타'].map((s,i)=>{
+      const idx = ['분석','설계','제작','시험','기타'].indexOf(p.stage||'분석');
+      const sc = {'분석':'#3b82f6','설계':'#8b5cf6','제작':'#f59e0b','시험':'#10b981','기타':'#6b7280'};
+      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer" onclick="changeRdStage(${p.id},'${s}')">
+        <div style="width:100%;height:5px;border-radius:3px;background:${i<=idx?(sc[s]||'#6b7280'):'var(--bd)'}"></div>
+        <div style="font-size:10px;font-weight:${i===idx?'800':'400'};color:${i===idx?(sc[s]||'#6b7280'):'var(--t3)'}">${s}</div>
+      </div>`;
+    }).join('')}
+  </div>
+  <div class="card" style="margin-bottom:16px"><div class="card-header" style="display:flex;align-items:center;justify-content:space-between"><div style="font-size:14px;font-weight:700">📅 개발 일정 (간트)</div><div style="display:flex;gap:6px;align-items:center"><span style="font-size:11px;color:var(--t3)">시작월</span><input type="number" min="1" max="12" value="${p.start_month||1}" style="width:48px;border:1px solid var(--bd);border-radius:var(--r-sm);padding:3px 6px;font-size:12px;font-family:var(--font)" onchange="updateRdStartMonth(${p.id},this.value)"><span style="font-size:11px;color:var(--t3)">총</span><input type="number" min="12" max="24" value="${totalMonths}" style="width:52px;border:1px solid var(--bd);border-radius:var(--r-sm);padding:3px 6px;font-size:12px;font-family:var(--font)" onchange="updateRdTotalMonths(${p.id},this.value)"><span style="font-size:11px;color:var(--t3)">개월</span></div></div><div class="card-body" style="padding:0;overflow-x:auto"><div style="font-size:10px;color:var(--t3);padding:5px 10px;background:var(--al);border-bottom:1px solid var(--bd)">💡 회색 추가 행을 좌우 드래그 → 기간 설정. 색상 바 클릭 → 수정/삭제</div><table class="gantt-table" style="border-collapse:collapse;width:max-content;min-width:100%"><thead><tr><th style="padding:5px 6px;font-size:11px;border:1px solid var(--bd);background:var(--s2);white-space:nowrap;width:52px;max-width:52px">단계</th><th style="padding:5px 6px;font-size:11px;border:1px solid var(--bd);background:var(--s2);white-space:nowrap;width:90px;max-width:90px">개발 내용</th><th style="padding:5px 6px;font-size:11px;border:1px solid var(--bd);background:var(--s2);white-space:nowrap;width:110px;max-width:110px">설명</th>${ganttHeaderMonths}</tr><tr><th style="border:1px solid var(--bd);background:var(--s2)"></th><th style="border:1px solid var(--bd);background:var(--s2)"></th><th style="border:1px solid var(--bd);background:var(--s2)"></th>${ganttHeaderWeeks}</tr></thead><tbody>${ganttRows}</tbody></table></div></div><div class="card"><div class="card-header" style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:14px;font-weight:700">💬 개발 피드</div><button class="btn btn-p btn-sm" onclick="openAddRdLog(${p.id})">+ 피드 추가</button></div><div class="card-body feed-body">${feedHtml}</div></div>`;
 }
 
 
 
-function openAddRdTask(projectId, preStage) {
+function openAddRdTask(projectId, preStage, preSM, preSW, preEM, preEW) {
   const stages = ['분석','설계','제작','시험','기타'];
+  const stageColors = {'분석':'#3b82f6','설계':'#8b5cf6','제작':'#f59e0b','시험':'#10b981','기타':'#6b7280'};
   const stageOpts = stages.map(s=>`<option value="${s}"${s===preStage?' selected':''}>${s}</option>`).join('');
   const p = rdProjects.find(x=>x.id===projectId);
   const months = Math.max(p?.total_months||12,12);
   const startM = p?.start_month||1;
-  const monthOpts = Array.from({length:months},(_,i)=>`<option value="${startM+i}">${startM+i}월</option>`).join('');
+
+  // 월 옵션 (시작월~총개월수)
+  const monthOpts = Array.from({length:months},(_,i)=>{
+    const m = startM+i;
+    return `<option value="${m}">${m}월</option>`;
+  }).join('');
   const weekOpts = [1,2,3,4].map(w=>`<option value="${w}">${w}주</option>`).join('');
 
   document.getElementById('rdTaskOverlay')?.remove();
   const ov = document.createElement('div');
   ov.id = 'rdTaskOverlay';
-  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px';
   ov.innerHTML = `
-    <div style="background:var(--surface);border-radius:var(--r-xl);width:100%;max-width:460px;box-shadow:var(--sh-lg)">
-      <div style="padding:18px 22px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between">
+    <div style="background:var(--surface);border-radius:var(--r-xl);width:100%;max-width:500px;box-shadow:var(--sh-lg);max-height:90vh;overflow-y:auto">
+      <div style="padding:18px 22px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1">
         <div style="font-size:15px;font-weight:800">태스크 추가</div>
-        <button onclick="document.getElementById('rdTaskOverlay').remove()" style="width:28px;height:28px;border-radius:50%;background:var(--s2);border:none;cursor:pointer;font-size:16px">×</button>
+        <button onclick="document.getElementById('rdTaskOverlay').remove()" style="width:28px;height:28px;border-radius:50%;background:var(--s2);border:none;cursor:pointer;font-size:18px;line-height:1">×</button>
       </div>
-      <div style="padding:18px 22px;display:flex;flex-direction:column;gap:12px">
+      <div style="padding:18px 22px;display:flex;flex-direction:column;gap:14px">
         <input type="hidden" id="rdt-pid" value="${projectId}">
         <input type="hidden" id="rdt-tid" value="">
-        <div><label class="form-label">단계</label><select class="form-select" id="rdt-stage" style="margin-top:4px">${stageOpts}</select></div>
-        <div><label class="form-label">개발 내용 (타이틀) *</label><input class="form-input" id="rdt-title" placeholder="예: 회로 설계" style="margin-top:4px"></div>
-        <div><label class="form-label">세부 설명</label><input class="form-input" id="rdt-desc" placeholder="예: 1차 설계" style="margin-top:4px"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px">
-          <div><label class="form-label" style="font-size:10px">시작 월</label><select class="form-select" id="rdt-sm" style="margin-top:2px;font-size:12px">${monthOpts}</select></div>
-          <div><label class="form-label" style="font-size:10px">시작 주</label><select class="form-select" id="rdt-sw" style="margin-top:2px;font-size:12px">${weekOpts}</select></div>
-          <div><label class="form-label" style="font-size:10px">종료 월</label><select class="form-select" id="rdt-em" style="margin-top:2px;font-size:12px">${monthOpts}</select></div>
-          <div><label class="form-label" style="font-size:10px">종료 주</label><select class="form-select" id="rdt-ew" style="margin-top:2px;font-size:12px">${weekOpts}</select></div>
+
+        <!-- 단계 선택 -->
+        <div>
+          <label class="form-label" style="margin-bottom:6px">단계</label>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${stages.map(s=>`<button type="button" id="rdt-stage-btn-${s}"
+              onclick="rdTaskStageSelect('${s}')"
+              style="padding:6px 14px;border-radius:20px;border:2px solid ${stageColors[s]};background:${s===preStage?stageColors[s]:'transparent'};color:${s===preStage?'#fff':stageColors[s]};font-size:12px;font-weight:700;cursor:pointer;transition:all .15s"
+              >${s}</button>`).join('')}
+          </div>
+          <input type="hidden" id="rdt-stage" value="${preStage||'분석'}">
         </div>
-        <div style="display:flex;gap:8px;margin-top:4px">
-          <button class="btn btn-p" style="flex:1;justify-content:center;padding:11px" onclick="saveRdTask()">추가</button>
-          <button class="btn btn-s" style="flex:1;justify-content:center;padding:11px" onclick="document.getElementById('rdTaskOverlay').remove()">취소</button>
+
+        <!-- 타이틀 -->
+        <div>
+          <label class="form-label">개발 내용 *</label>
+          <input class="form-input" id="rdt-title" placeholder="예: 회로 설계, PCB 제작, 시험 평가..." style="margin-top:4px;font-size:14px">
+        </div>
+
+        <!-- 설명 -->
+        <div>
+          <label class="form-label">세부 설명 <span style="color:var(--t3);font-weight:400">(선택)</span></label>
+          <input class="form-input" id="rdt-desc" placeholder="예: 1차 설계 완료 후 검토" style="margin-top:4px">
+        </div>
+
+        <!-- 기간 설정 — 직관적 범위 선택 -->
+        <div style="background:var(--s2);border-radius:var(--r-lg);padding:14px">
+          <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:10px">📅 일정 기간</div>
+          <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center">
+            <!-- 시작 -->
+            <div>
+              <div style="font-size:10px;color:var(--t3);margin-bottom:4px;font-weight:600">시작</div>
+              <div style="display:flex;gap:4px">
+                <select class="form-select" id="rdt-sm" style="flex:1;font-size:12px;padding:6px 4px"
+                  onchange="rdTaskUpdateDuration()">${monthOpts}</select>
+                <select class="form-select" id="rdt-sw" style="width:52px;font-size:12px;padding:6px 4px"
+                  onchange="rdTaskUpdateDuration()">${weekOpts}</select>
+              </div>
+            </div>
+            <!-- 화살표 -->
+            <div style="font-size:16px;color:var(--t3);text-align:center;padding-top:16px">→</div>
+            <!-- 종료 -->
+            <div>
+              <div style="font-size:10px;color:var(--t3);margin-bottom:4px;font-weight:600">종료</div>
+              <div style="display:flex;gap:4px">
+                <select class="form-select" id="rdt-em" style="flex:1;font-size:12px;padding:6px 4px"
+                  onchange="rdTaskUpdateDuration()">${monthOpts}</select>
+                <select class="form-select" id="rdt-ew" style="width:52px;font-size:12px;padding:6px 4px"
+                  onchange="rdTaskUpdateDuration()">${weekOpts}</select>
+              </div>
+            </div>
+          </div>
+          <!-- 기간 요약 -->
+          <div id="rdt-duration-summary" style="margin-top:8px;text-align:center;font-size:11px;color:var(--accent);font-weight:700"></div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:2px">
+          <button class="btn btn-p" style="flex:1;justify-content:center;padding:12px;font-size:14px" onclick="saveRdTask()">추가</button>
+          <button class="btn btn-s" style="padding:12px 16px" onclick="document.getElementById('rdTaskOverlay').remove()">취소</button>
         </div>
       </div>
     </div>`;
   document.body.appendChild(ov);
   ov.addEventListener('click', e=>{ if(e.target===ov) ov.remove(); });
-  setTimeout(()=>document.getElementById('rdt-title')?.focus(), 80);
+
+  // 초기값 설정
+  setTimeout(()=>{
+    const sm = document.getElementById('rdt-sm');
+    const sw = document.getElementById('rdt-sw');
+    const em = document.getElementById('rdt-em');
+    const ew = document.getElementById('rdt-ew');
+    if(sm) sm.value = preSM||startM;
+    if(sw) sw.value = preSW||1;
+    if(em) em.value = preEM||startM;
+    if(ew) ew.value = preEW||4;
+    // 단계 버튼 초기 선택
+    const stage = preStage||'분석';
+    document.getElementById('rdt-stage').value = stage;
+    rdTaskUpdateDuration();
+    document.getElementById('rdt-title')?.focus();
+  }, 60);
+}
+
+function rdTaskStageSelect(stage) {
+  const stageColors = {'분석':'#3b82f6','설계':'#8b5cf6','제작':'#f59e0b','시험':'#10b981','기타':'#6b7280'};
+  document.getElementById('rdt-stage').value = stage;
+  ['분석','설계','제작','시험','기타'].forEach(s=>{
+    const btn = document.getElementById(`rdt-stage-btn-${s}`);
+    if(btn) {
+      btn.style.background = s===stage ? stageColors[s] : 'transparent';
+      btn.style.color = s===stage ? '#fff' : stageColors[s];
+    }
+  });
+}
+
+function rdTaskUpdateDuration() {
+  const sm = parseInt(document.getElementById('rdt-sm')?.value)||1;
+  const sw = parseInt(document.getElementById('rdt-sw')?.value)||1;
+  const em = parseInt(document.getElementById('rdt-em')?.value)||1;
+  const ew = parseInt(document.getElementById('rdt-ew')?.value)||4;
+  const summary = document.getElementById('rdt-duration-summary');
+  if(!summary) return;
+
+  // 기간 계산 (주 단위)
+  const startWeeks = (sm-1)*4 + (sw-1);
+  const endWeeks   = (em-1)*4 + (ew-1);
+  const duration   = endWeeks - startWeeks + 1;
+
+  if(duration <= 0) {
+    summary.textContent = '⚠️ 종료가 시작보다 앞입니다';
+    summary.style.color = 'var(--red)';
+    // 자동 보정: 종료를 시작과 같게
+    const emSel = document.getElementById('rdt-em');
+    const ewSel = document.getElementById('rdt-ew');
+    if(emSel) emSel.value = sm;
+    if(ewSel) ewSel.value = sw;
+    summary.textContent = `${sm}월 ${sw}주 (1주)`;
+    summary.style.color = 'var(--accent)';
+  } else {
+    const weeks = duration;
+    const label = weeks <= 4 ? `${weeks}주` : `약 ${Math.round(weeks/4*10)/10}개월 (${weeks}주)`;
+    summary.textContent = `${sm}월 ${sw}주 ~ ${em}월 ${ew}주 · ${label}`;
+    summary.style.color = 'var(--accent)';
+  }
 }
 
 async function saveRdTask() {
@@ -9483,28 +9764,37 @@ async function saveRdTask() {
   const data = {
     rd_project_id: projId, stage, title,
     description: document.getElementById('rdt-desc')?.value.trim()||'',
-    start_month: sm, start_week: sw,
-    end_month:   em, end_week:   ew,
-    sort_order: (rdTasks[projId]||[]).length * 10
+    start_month: sm, start_week: sw, end_month: em, end_week: ew,
+    sort_order: (rdTasks.filter?rdTasks.filter(t=>t.rd_project_id===projId):rdTasks[projId]||[]).length * 10
   };
-  if(!rdTasks[projId]) rdTasks[projId] = [];
+  // rdTasks 구조 통일 (배열 or 객체)
+  const taskArr = Array.isArray(rdTasks) ? rdTasks.filter(t=>t.rd_project_id===projId) : (rdTasks[projId]||[]);
   if(taskId) {
     if(sb) await sb.from('rd_tasks').update(data).eq('id', taskId);
-    const idx = rdTasks[projId].findIndex(t=>t.id===taskId);
-    if(idx>=0) rdTasks[projId][idx] = {...rdTasks[projId][idx], ...data};
+    if(Array.isArray(rdTasks)) {
+      const i = rdTasks.findIndex(t=>t.id===taskId);
+      if(i>=0) rdTasks[i] = {...rdTasks[i],...data};
+    } else {
+      const i = (rdTasks[projId]||[]).findIndex(t=>t.id===taskId);
+      if(i>=0) rdTasks[projId][i] = {...rdTasks[projId][i],...data};
+    }
   } else {
     if(sb) {
       const {data:d} = await sb.from('rd_tasks').insert([{...data, done:false}]).select().single();
-      if(d) rdTasks[projId].push(d);
+      if(d) {
+        if(Array.isArray(rdTasks)) rdTasks.push(d);
+        else { if(!rdTasks[projId]) rdTasks[projId]=[]; rdTasks[projId].push(d); }
+      }
     } else {
-      rdTasks[projId].push({id:Date.now(), done:false, ...data});
+      const newTask = {id:Date.now(), done:false, ...data};
+      if(Array.isArray(rdTasks)) rdTasks.push(newTask);
+      else { if(!rdTasks[projId]) rdTasks[projId]=[]; rdTasks[projId].push(newTask); }
     }
   }
   document.getElementById('rdTaskOverlay')?.remove();
   showToast('저장됐습니다 ✓');
-  renderRdDetail(projId);
+  openRdDetail(projId);
 }
-
 
 
 async function toggleRdTask(projId, taskId) {
@@ -9760,27 +10050,8 @@ function rdGanttDragStart(e, td, pid, stage) {
     const em = startMonth + Math.floor(hi/4);
     const ew = (hi%4)+1;
 
-    // 타이틀 입력 팝오버
-    const ov = document.createElement('div');
-    ov.id = 'rdDragNameOv';
-    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(3px);z-index:3100;display:flex;align-items:center;justify-content:center;padding:20px';
-    ov.innerHTML = `
-      <div style="background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--sh-lg);padding:20px;width:100%;max-width:340px;animation:su .15s ease">
-        <div style="font-size:13px;font-weight:800;margin-bottom:4px">${stage} — ${sm}월 ${sw}주 ~ ${em}월 ${ew}주</div>
-        <div style="font-size:11px;color:var(--t3);margin-bottom:12px">태스크 이름을 입력하세요</div>
-        <input class="form-input" id="rdDragTitle" placeholder="예: 회로 설계" autofocus>
-        <input class="form-input" id="rdDragDesc" placeholder="세부 설명 (선택)" style="margin-top:8px">
-        <div style="display:flex;gap:8px;margin-top:14px">
-          <button class="btn btn-p" style="flex:1;justify-content:center" onclick="rdGanttDragSave(${pid},'${stage}',${sm},${sw},${em},${ew})">추가</button>
-          <button class="btn btn-s" style="padding:8px 14px" onclick="document.getElementById('rdDragNameOv').remove()">취소</button>
-        </div>
-      </div>`;
-    document.body.appendChild(ov);
-    ov.addEventListener('click', ev=>{ if(ev.target===ov) ov.remove(); });
-    setTimeout(()=>document.getElementById('rdDragTitle')?.focus(), 60);
-    document.getElementById('rdDragTitle')?.addEventListener('keydown', ev=>{
-      if(ev.key==='Enter') rdGanttDragSave(pid, stage, sm, sw, em, ew);
-    });
+    // 기존 openAddRdTask 모달 재사용 (기간 미리 설정)
+    openAddRdTask(pid, stage, sm, sw, em, ew);
   }
 
   document.addEventListener('mousemove', onMove);
@@ -9806,96 +10077,90 @@ async function rdGanttDragSave(pid, stage, sm, sw, em, ew) {
 
 // 기간 바 클릭 → 수정/삭제 팝오버
 function rdGanttTaskClick(pid, taskId) {
-  const task = (rdTasks[pid]||[]).find(t=>t.id===taskId);
+  // rdTasks 구조 통일
+  const taskArr = Array.isArray(rdTasks) ? rdTasks : (rdTasks[pid]||[]);
+  const task = taskArr.find(t=>t.id===taskId);
   if(!task) return;
   const p = rdProjects.find(x=>x.id===pid);
-  const months = Math.max(p?.total_months||12,12);
   const startM = p?.start_month||1;
-  const monthOpts = Array.from({length:months},(_,i)=>`<option value="${startM+i}">${startM+i}월</option>`).join('');
-  const weekOpts = [1,2,3,4].map(w=>`<option value="${w}">${w}주</option>`).join('');
 
-  document.getElementById('rdTaskEditOv')?.remove();
-  const ov = document.createElement('div');
-  ov.id = 'rdTaskEditOv';
-  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(3px);z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px';
-  ov.innerHTML = `
-    <div style="background:var(--surface);border-radius:var(--r-xl);width:100%;max-width:460px;box-shadow:var(--sh-lg);animation:su .15s ease">
-      <div style="padding:16px 20px 10px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center">
-        <div style="font-size:14px;font-weight:800">태스크 수정</div>
-        <button onclick="document.getElementById('rdTaskEditOv').remove()" style="width:26px;height:26px;border-radius:50%;background:var(--s2);border:none;cursor:pointer">×</button>
-      </div>
-      <div style="padding:16px 20px;display:flex;flex-direction:column;gap:10px">
-        <div><label class="form-label">개발 내용</label><input class="form-input" id="rte-title" value="${task.title}" style="margin-top:4px"></div>
-        <div><label class="form-label">세부 설명</label><input class="form-input" id="rte-desc" value="${task.description||''}" style="margin-top:4px"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px">
-          <div><label class="form-label" style="font-size:10px">시작 월</label>
-            <select class="form-select" id="rte-sm" style="margin-top:2px;font-size:12px">${monthOpts.replace(`value="${task.start_month||startM}"`,`value="${task.start_month||startM}" selected`)}</select>
-          </div>
-          <div><label class="form-label" style="font-size:10px">시작 주</label>
-            <select class="form-select" id="rte-sw" style="margin-top:2px;font-size:12px">${weekOpts.replace(`value="${task.start_week||1}"`,`value="${task.start_week||1}" selected`)}</select>
-          </div>
-          <div><label class="form-label" style="font-size:10px">종료 월</label>
-            <select class="form-select" id="rte-em" style="margin-top:2px;font-size:12px">${monthOpts.replace(`value="${task.end_month||startM}"`,`value="${task.end_month||startM}" selected`)}</select>
-          </div>
-          <div><label class="form-label" style="font-size:10px">종료 주</label>
-            <select class="form-select" id="rte-ew" style="margin-top:2px;font-size:12px">${weekOpts.replace(`value="${task.end_week||4}"`,`value="${task.end_week||4}" selected`)}</select>
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:4px">
-          <button class="btn btn-p" style="flex:1;justify-content:center" onclick="rdGanttTaskSave(${pid},${taskId})">저장</button>
-          <button class="btn btn-s" style="flex:1;justify-content:center" onclick="rdGanttTaskToggleDone(${pid},${taskId})">완료 ${task.done?'취소':'처리'}</button>
-          <button class="btn btn-danger" style="padding:8px 14px" onclick="rdGanttTaskDelete(${pid},${taskId})">삭제</button>
-        </div>
-      </div>
-    </div>`;
-  document.body.appendChild(ov);
-  ov.addEventListener('click', ev=>{ if(ev.target===ov) ov.remove(); });
-  // select 초기값 직접 설정
+  // openAddRdTask 모달 재활용 (수정 모드)
+  openAddRdTask(pid, task.stage, task.start_month, task.start_week, task.end_month, task.end_week);
+
+  // 수정 모드로 전환 (타이틀/설명 채우기 + 헤더 변경 + 삭제 버튼 추가)
   setTimeout(()=>{
-    const sm = document.getElementById('rte-sm'); if(sm) sm.value = task.start_month||startM;
-    const sw = document.getElementById('rte-sw'); if(sw) sw.value = task.start_week||1;
-    const em = document.getElementById('rte-em'); if(em) em.value = task.end_month||startM;
-    const ew = document.getElementById('rte-ew'); if(ew) ew.value = task.end_week||4;
-  }, 30);
-}
+    const ov = document.getElementById('rdTaskOverlay');
+    if(!ov) return;
 
-async function rdGanttTaskSave(pid, taskId) {
-  const title = document.getElementById('rte-title')?.value.trim();
-  if(!title) { showToast('이름을 입력해주세요','warn'); return; }
-  const data = {
-    title, description: document.getElementById('rte-desc')?.value.trim()||'',
-    start_month: parseInt(document.getElementById('rte-sm')?.value)||null,
-    start_week:  parseInt(document.getElementById('rte-sw')?.value)||1,
-    end_month:   parseInt(document.getElementById('rte-em')?.value)||null,
-    end_week:    parseInt(document.getElementById('rte-ew')?.value)||4,
-  };
-  if(sb) await sb.from('rd_tasks').update(data).eq('id', taskId);
-  const idx = (rdTasks[pid]||[]).findIndex(t=>t.id===taskId);
-  if(idx>=0) rdTasks[pid][idx] = {...rdTasks[pid][idx], ...data};
-  document.getElementById('rdTaskEditOv')?.remove();
-  showToast('저장됐습니다 ✓');
-  renderRdDetail(pid);
+    // hidden tid 채우기
+    const tidEl = document.getElementById('rdt-tid');
+    if(tidEl) tidEl.value = taskId;
+
+    // 헤더 변경
+    const hdr = ov.querySelector('[style*="font-size:15px"]');
+    if(hdr) hdr.textContent = '태스크 수정';
+
+    // 타이틀/설명 채우기
+    const titleEl = document.getElementById('rdt-title');
+    const descEl  = document.getElementById('rdt-desc');
+    if(titleEl) titleEl.value = task.title||'';
+    if(descEl)  descEl.value  = task.description||'';
+
+    // 추가 버튼 → 저장으로 변경
+    const addBtn = ov.querySelector('.btn.btn-p');
+    if(addBtn) addBtn.textContent = '저장';
+
+    // 삭제 + 완료 버튼 추가
+    const btnRow = addBtn?.parentElement;
+    if(btnRow) {
+      const doneBtn = document.createElement('button');
+      doneBtn.className = 'btn btn-s';
+      doneBtn.style.padding = '12px 14px';
+      doneBtn.textContent = task.done ? '✓ 완료됨' : '완료 처리';
+      doneBtn.style.color = task.done ? 'var(--green)' : '';
+      doneBtn.onclick = () => rdGanttTaskToggleDone(pid, taskId);
+      btnRow.insertBefore(doneBtn, addBtn.nextSibling);
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn btn-danger';
+      delBtn.style.padding = '12px 14px';
+      delBtn.textContent = '삭제';
+      delBtn.onclick = () => rdGanttTaskDelete(pid, taskId);
+      btnRow.appendChild(delBtn);
+    }
+
+    // 기간 요약 업데이트
+    rdTaskUpdateDuration();
+  }, 80);
 }
 
 async function rdGanttTaskToggleDone(pid, taskId) {
-  const task = (rdTasks[pid]||[]).find(t=>t.id===taskId);
+  const taskArr = Array.isArray(rdTasks) ? rdTasks : (rdTasks[pid]||[]);
+  const task = taskArr.find(t=>t.id===taskId);
   if(!task) return;
-  const done = !task.done;
-  if(sb) await sb.from('rd_tasks').update({done}).eq('id', taskId);
-  task.done = done;
+  task.done = !task.done;
+  if(sb) await sb.from('rd_tasks').update({done:task.done}).eq('id', taskId);
+  document.getElementById('rdTaskOverlay')?.remove();
   document.getElementById('rdTaskEditOv')?.remove();
-  showToast(done?'완료 처리됐습니다':'완료 취소됐습니다');
-  renderRdDetail(pid);
+  showToast(task.done ? '완료 처리됐습니다 ✓' : '완료 취소됐습니다');
+  openRdDetail(pid);
 }
 
 async function rdGanttTaskDelete(pid, taskId) {
   if(!confirm('이 태스크를 삭제할까요?')) return;
   if(sb) await sb.from('rd_tasks').delete().eq('id', taskId);
-  rdTasks[pid] = (rdTasks[pid]||[]).filter(t=>t.id!==taskId);
+  if(Array.isArray(rdTasks)) {
+    rdTasks = rdTasks.filter(t=>t.id!==taskId);
+  } else {
+    rdTasks[pid] = (rdTasks[pid]||[]).filter(t=>t.id!==taskId);
+  }
+  document.getElementById('rdTaskOverlay')?.remove();
   document.getElementById('rdTaskEditOv')?.remove();
   showToast('삭제됐습니다');
-  renderRdDetail(pid);
+  openRdDetail(pid);
 }
+
+
 </script>
 
 <script>
@@ -10161,4 +10426,225 @@ window.enterDashboard = function(section) {
     }
   }
 };
+</script>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// 연간 매출 현황 — 캐시플로우 뷰 내 카드
+// 올 1/1 ~ 오늘까지 수금 완료(received) 기준 월별 매출
+// ══════════════════════════════════════════════════════════
+function renderAnnualRevenue() {
+  const chart = document.getElementById('annual-revenue-chart');
+  const summary = document.getElementById('annual-revenue-summary');
+  if(!chart) return;
+
+  const today = new Date();
+  const year = today.getFullYear();
+  const todayStr = today.toISOString().slice(0, 10);
+  const startStr = `${year}-01-01`;
+
+  const yearData = recvList.filter(r => {
+    if(r.status !== 'received') return false;
+    const d = r.received_date || r.expected_date || '';
+    return d >= startStr && d <= todayStr;
+  });
+
+  const curMonth = today.getMonth() + 1;
+  const months = Array.from({length: curMonth}, (_, i) => i + 1);
+
+  const byMonth = months.map(m => {
+    const mStr = `${year}-${String(m).padStart(2, '0')}`;
+    const items = yearData.filter(r => (r.received_date || r.expected_date || '').startsWith(mStr));
+    return { month: m, total: items.reduce((s,r)=>s+r.amount,0), count: items.length, items };
+  });
+
+  const yearTotal = byMonth.reduce((s, m) => s + m.total, 0);
+  const todayLabel = `${today.getMonth()+1}/${today.getDate()}`;
+
+  if(summary) {
+    summary.innerHTML = `<span style="font-weight:800;color:var(--accent);font-size:15px">${fmtMW(yearTotal)}</span>
+      <span style="margin-left:8px;color:var(--t3);font-size:11px">${year}/1/1 ~ ${year}/${todayLabel}</span>`;
+  }
+
+  if(!yearTotal) {
+    chart.innerHTML = `<div style="text-align:center;padding:32px;color:var(--t3);font-size:13px">올해 수금 완료 내역이 없습니다</div>`;
+    return;
+  }
+
+  chart.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-bottom:16px">
+      ${byMonth.map(({month, total, count, items}) => {
+        const isCur = month === curMonth;
+        const isEmpty = total === 0;
+        return `<div onclick="toggleAnnualMonthDetail(${month},${year})"
+          style="border-radius:var(--r-lg);padding:12px 14px;background:${isCur?'var(--accent)':'var(--s2)'};
+            border:${isCur?'none':'1px solid var(--bd)'};cursor:${isEmpty?'default':'pointer'};
+            transition:box-shadow .15s;position:relative"
+          ${!isEmpty?`onmouseenter="this.style.boxShadow='var(--sh-md)'" onmouseleave="this.style.boxShadow=''"`:''}
+          >
+          <div style="font-size:11px;font-weight:700;color:${isCur?'rgba(255,255,255,.7)':'var(--t3)'};margin-bottom:6px">
+            ${month}월${isCur?` <span style="font-size:9px">~${todayLabel}</span>`:''}
+          </div>
+          <div style="font-size:${total>=10000?'13px':'15px'};font-weight:800;color:${isCur?'#fff':isEmpty?'var(--bd)':'var(--text)'}">
+            ${isEmpty ? '–' : fmtMW(total)}
+          </div>
+          ${count>0?`<div style="font-size:10px;color:${isCur?'rgba(255,255,255,.6)':'var(--t3)'};margin-top:3px">${count}건 ${!isEmpty?'▾':''}</div>`:''}
+        </div>`;
+      }).join('')}
+    </div>
+    <!-- 월별 상세 펼침 영역 -->
+    <div id="annual-month-detail" style="border-top:1px solid var(--bd);padding-top:0;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease"></div>
+  `;
+
+  // 전체 내역 하단
+  if(yearData.length) {
+    const el = document.createElement('div');
+    el.style.cssText = 'border-top:1px solid var(--bd);padding-top:12px;margin-top:4px';
+    el.innerHTML = `<div style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:8px">
+        총 ${yearData.length}건 · ${fmtMW(yearTotal)} (VAT포함 ${fmtMW(Math.round(yearTotal*1.1))})
+      </div>`;
+    chart.appendChild(el);
+  }
+
+  // 월별 데이터 저장 (클릭 핸들러용)
+  window._annualByMonth = byMonth;
+}
+
+function toggleAnnualMonthDetail(month, year) {
+  const detailEl = document.getElementById('annual-month-detail');
+  if(!detailEl) return;
+
+  const data = (window._annualByMonth||[]).find(m=>m.month===month);
+  if(!data || !data.items.length) return;
+
+  // 이미 같은 달 열려있으면 닫기
+  if(detailEl.dataset.openMonth === String(month) && detailEl.style.maxHeight !== '0px' && detailEl.style.maxHeight !== '') {
+    detailEl.style.maxHeight = '0';
+    detailEl.style.paddingTop = '0';
+    detailEl.dataset.openMonth = '';
+    return;
+  }
+
+  // 내역 렌더
+  const mStr = `${year}-${String(month).padStart(2,'0')}`;
+  const sorted = [...data.items].sort((a,b)=>(b.received_date||b.expected_date||'').localeCompare(a.received_date||a.expected_date||''));
+
+  detailEl.innerHTML = `
+    <div style="padding:14px 0 8px;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:13px;font-weight:800">${month}월 수금 내역</div>
+      <div style="font-size:12px;color:var(--accent);font-weight:700">${fmtMW(data.total)} (VAT ${fmtMW(Math.round(data.total*1.1))})</div>
+    </div>
+    ${sorted.map(r=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-top:1px solid var(--bd)">
+        <div>
+          <span style="font-size:13px;font-weight:600">${r.company_name}</span>
+          ${r.deal_id?`<span style="font-size:10px;color:var(--t3);margin-left:6px">딜 #${r.deal_id}</span>`:''}
+          <div style="font-size:11px;color:var(--t3);margin-top:1px">수금일 ${r.received_date||r.expected_date||'–'}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:14px;font-weight:800;color:var(--green)">${fmtMW(r.amount)}</div>
+          <div style="font-size:10px;color:var(--t3)">VAT ${fmtMW(Math.round(r.amount*1.1))}</div>
+        </div>
+      </div>`).join('')}
+  `;
+  detailEl.dataset.openMonth = String(month);
+  detailEl.style.paddingTop = '0';
+  detailEl.style.maxHeight = (detailEl.scrollHeight + 40) + 'px';
+}
+
+</script>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// 개발 프로젝트 수정 모달
+// ══════════════════════════════════════════════════════════
+function openEditRdProject(pid) {
+  const p = rdProjects.find(x=>x.id===pid); if(!p) return;
+
+  document.getElementById('rdProjEditOv')?.remove();
+  const ov = document.createElement('div');
+  ov.id = 'rdProjEditOv';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px';
+
+  const memberOpts = allMembers().map(m=>`<option value="${m.name}"${m.name===p.person?' selected':''}>${m.name}</option>`).join('');
+
+  ov.innerHTML = `
+    <div style="background:var(--surface);border-radius:var(--r-xl);width:100%;max-width:460px;box-shadow:var(--sh-lg)">
+      <div style="padding:18px 22px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:15px;font-weight:800">개발 프로젝트 수정</div>
+        <button onclick="document.getElementById('rdProjEditOv').remove()" style="width:28px;height:28px;border-radius:50%;background:var(--s2);border:none;cursor:pointer;font-size:18px">×</button>
+      </div>
+      <div style="padding:18px 22px;display:flex;flex-direction:column;gap:12px">
+        <div>
+          <label class="form-label">프로젝트명 *</label>
+          <input class="form-input" id="rpe-name" value="${p.name||''}" style="margin-top:4px">
+        </div>
+        <div>
+          <label class="form-label">설명</label>
+          <input class="form-input" id="rpe-desc" value="${p.description||''}" placeholder="프로젝트 설명" style="margin-top:4px">
+        </div>
+        <div>
+          <label class="form-label">담당자</label>
+          <select class="form-select" id="rpe-person" style="margin-top:4px">
+            <option value="">담당자 선택</option>
+            ${memberOpts}
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label class="form-label">목표 완료일</label>
+            <input class="form-input" id="rpe-target" type="date" value="${p.target_date||''}" style="margin-top:4px">
+          </div>
+          <div>
+            <label class="form-label">시작 월 (간트)</label>
+            <input class="form-input" id="rpe-startm" type="number" min="1" max="12" value="${p.start_month||1}" style="margin-top:4px">
+          </div>
+        </div>
+        <div>
+          <label class="form-label">총 개월 수 (간트)</label>
+          <input class="form-input" id="rpe-months" type="number" min="12" max="24" value="${Math.max(p.total_months||12,12)}" style="margin-top:4px">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button class="btn btn-p" style="flex:1;justify-content:center;padding:12px" onclick="saveEditRdProject(${pid})">저장</button>
+          <button class="btn btn-s" style="padding:12px 16px" onclick="document.getElementById('rdProjEditOv').remove()">취소</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', e=>{ if(e.target===ov) ov.remove(); });
+  setTimeout(()=>document.getElementById('rpe-name')?.focus(), 60);
+}
+
+async function saveEditRdProject(pid) {
+  const name = document.getElementById('rpe-name')?.value.trim();
+  if(!name) { showToast('프로젝트명을 입력해주세요','warn'); return; }
+  const data = {
+    name,
+    description:  document.getElementById('rpe-desc')?.value.trim()||'',
+    person:       document.getElementById('rpe-person')?.value||null,
+    target_date:  document.getElementById('rpe-target')?.value||null,
+    start_month:  parseInt(document.getElementById('rpe-startm')?.value)||1,
+    total_months: Math.max(parseInt(document.getElementById('rpe-months')?.value)||12, 12),
+    updated_at:   new Date().toISOString(),
+  };
+  if(sb) await sb.from('rd_projects').update(data).eq('id', pid);
+  const p = rdProjects.find(x=>x.id===pid);
+  if(p) Object.assign(p, data);
+  document.getElementById('rdProjEditOv')?.remove();
+  showToast('수정됐습니다 ✓');
+  openRdDetail(pid);
+}
+
+async function deleteRdProject(pid) {
+  if(!confirm('이 개발 프로젝트를 삭제할까요?\n관련 태스크와 피드도 모두 삭제됩니다.')) return;
+  if(sb) {
+    await sb.from('rd_tasks').delete().eq('rd_project_id', pid);
+    await sb.from('rd_logs').delete().eq('rd_project_id', pid);
+    await sb.from('rd_projects').delete().eq('id', pid);
+  }
+  rdProjects = rdProjects.filter(x=>x.id!==pid);
+  rdTasks = Array.isArray(rdTasks) ? rdTasks.filter(t=>t.rd_project_id!==pid) : Object.fromEntries(Object.entries(rdTasks).filter(([k])=>parseInt(k)!==pid));
+  showToast('삭제됐습니다');
+  closeRdDetail();
+}
 </script>
