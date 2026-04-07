@@ -976,6 +976,12 @@ tbody tr:hover{background:var(--s2)}
           <svg viewBox="0 0 16 16" fill="none"><path d="M2 2h2l2 8h6l2-6H5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="13.5" r="1" fill="currentColor"/><circle cx="12" cy="13.5" r="1" fill="currentColor"/></svg>
           발주 관리
         </div>
+        <!-- 주문 관리 -->
+        <div class="nav-section" style="color:#ea580c;padding-top:4px">🛒 주문 관리</div>
+        <div class="nav-item" onclick="goToOrdersList()" id="ni-orders-list">
+          <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.3"/><line x1="5" y1="6" x2="11" y2="6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="5" y1="9" x2="9" y2="9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          주문 목록
+        </div>
       </div>
 
       <!-- 양산 파이프라인 컨텍스트 메뉴 -->
@@ -1130,6 +1136,9 @@ tbody tr:hover{background:var(--s2)}
               </button>
               <button onclick="enterDashboard('fin')" style="display:flex;align-items:center;gap:7px;padding:8px 16px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:var(--r-sm);color:#fff;cursor:pointer;font-size:13px;font-weight:600;font-family:var(--font);transition:all .15s" onmouseenter="this.style.background='rgba(255,255,255,.22)'" onmouseleave="this.style.background='rgba(255,255,255,.12)'">
                 <span>💰</span> 재무 운영툴
+              </button>
+             <button onclick="enterDashboard('inv',true);showView('orders-list',document.getElementById('ni-orders-list'))" style="display:flex;align-items:center;gap:7px;padding:8px 16px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:var(--r-sm);color:#fff;cursor:pointer;font-size:13px;font-weight:600;font-family:var(--font);transition:all .15s" onmouseenter="this.style.background='rgba(255,255,255,.22)'" onmouseleave="this.style.background='rgba(255,255,255,.12)'">
+                <span>🛒</span> 주문 관리
               </button>
               <button onclick="enterDashboard('rd')" style="display:flex;align-items:center;gap:7px;padding:8px 16px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:var(--r-sm);color:#fff;cursor:pointer;font-size:13px;font-weight:600;font-family:var(--font);transition:all .15s" onmouseenter="this.style.background='rgba(255,255,255,.22)'" onmouseleave="this.style.background='rgba(255,255,255,.12)'">
                 <span>🔬</span> 개발 운영툴
@@ -1740,7 +1749,50 @@ tbody tr:hover{background:var(--s2)}
         <div style="margin-bottom:14px"><button class="btn btn-s btn-sm" onclick="enterDashboard('mass')">← 양산 파이프라인</button></div>
         <div id="massDetailContent" class="pipe-detail-wrap"></div>
       </div>
-      <!-- RD PIPELINE -->
+      <!-- ORDERS -->
+      <div class="view" id="view-orders-list">
+        <!-- 필터 + 통계 -->
+        <div style="display:flex;flex-direction:column;gap:8px;padding:12px 16px;background:var(--surface);border:1px solid var(--bd);border-radius:var(--r-lg);margin-bottom:16px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <input class="f-input" id="order-search" placeholder="🔍 고객사 / 주문번호 검색" oninput="renderOrdersList()" style="flex:1;min-width:160px">
+            <select class="f-select" id="order-status-filter" onchange="renderOrdersList()">
+              <option value="">전체 상태</option>
+              <option value="pending">대기</option>
+              <option value="shipped">출고완료</option>
+              <option value="completed">완료</option>
+              <option value="cancelled">취소</option>
+            </select>
+            <input class="f-input" type="date" id="order-date-from" onchange="renderOrdersList()" style="width:130px;flex:none">
+            <span style="font-size:11px;color:var(--t3)">~</span>
+            <input class="f-input" type="date" id="order-date-to" onchange="renderOrdersList()" style="width:130px;flex:none">
+          </div>
+          <div id="order-summary" style="font-size:12px;color:var(--t2);padding:4px 0"></div>
+        </div>
+
+        <!-- 주문 목록 -->
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>주문번호</th><th>고객사</th><th>품목</th>
+              <th>수량</th><th>금액(공급가)</th><th>VAT포함</th>
+              <th>주문일</th><th>상태</th><th>배송</th><th>관리</th>
+            </tr></thead>
+            <tbody id="orders-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ORDER DETAIL -->
+      <div class="view" id="view-order-detail">
+        <div style="margin-bottom:14px;display:flex;align-items:center;gap:12px">
+          <button class="btn btn-s btn-sm" onclick="showView('orders-list',document.getElementById('ni-orders-list'))">← 목록으로</button>
+          <div id="order-detail-title" style="font-size:18px;font-weight:800"></div>
+          <div id="order-detail-actions" style="margin-left:auto;display:flex;gap:8px"></div>
+        </div>
+        <div id="order-detail-content"></div>
+      </div>
+
+<!-- RD PIPELINE -->
             <div class="view" id="view-rd-pipeline">
         <!-- 개발 운영툴: 프로젝트 목록 / 상세 2단계 -->
         <div id="rd-list-section">
@@ -1805,6 +1857,7 @@ tbody tr:hover{background:var(--s2)}
         <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-p" style="flex:1;justify-content:center;padding:11px" onclick="saveDealEdit()">저장</button>
           <button class="btn btn-green" onclick="createProjectFromDeal()" id="linkProjBtn">프로젝트 연결/생성</button>
+          <button class="btn btn-danger" onclick="deleteDeal(curDealId)" style="padding:11px 14px">🗑 삭제</button>
         </div>
       </div>
       <div class="mtc" id="deal-tab-log">
@@ -1823,84 +1876,98 @@ tbody tr:hover{background:var(--s2)}
 
 <!-- New Deal Modal -->
 <div class="overlay" id="newDealModal">
-  <div class="modal modal-sm">
+  <div class="modal modal-md">
     <div class="modal-hd">
-      <div class="modal-hd-info"><div class="modal-title" style="display:flex;align-items:center;gap:8px">새 딜 추가 <button class="help-btn" onclick="showHelp('newDeal')">?</button></div><div class="modal-sub">고객사·제품명 입력 시 딜명이 자동 생성됩니다</div></div>
+      <div class="modal-hd-info">
+        <div class="modal-title" style="display:flex;align-items:center;gap:8px">새 딜 추가 <button class="help-btn" onclick="showHelp('newDeal')">?</button></div>
+        <div class="modal-sub">고객사·제품명 입력 시 딜명이 자동 생성됩니다</div>
+      </div>
       <button class="modal-close" onclick="closeModal('newDealModal')"><svg viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
     </div>
     <div class="modal-body">
       <div class="form-grid">
+        <!-- 고객사 -->
         <div class="form-field full">
           <label class="form-label">고객사 *</label>
           <input class="form-input" id="nd-co" placeholder="예: 현대중공업" oninput="autoNdName()">
         </div>
+
+        <!-- 다중 제품 섹션 -->
         <div class="form-field full">
-          <label class="form-label">제품 *</label>
-          <select class="form-select" id="nd-prod" onchange="autoNdName()"></select>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <label class="form-label" style="margin-bottom:0">제품 * <span style="font-weight:400;color:var(--t3);font-size:10px">(여러 제품 추가 가능)</span></label>
+            <button type="button" class="btn btn-s btn-sm" onclick="addNdProductRow()">+ 제품 추가</button>
+          </div>
+          <div id="nd-product-rows" style="display:flex;flex-direction:column;gap:8px"></div>
+          <div style="margin-top:8px;padding:8px 12px;background:var(--s2);border-radius:var(--r);display:flex;justify-content:space-between;font-size:12px">
+            <span style="color:var(--t2);font-weight:600">예상 총금액</span>
+            <span id="nd-total-preview" style="font-weight:800;color:var(--accent)">₩0</span>
+          </div>
         </div>
+
+        <!-- 딜명 자동생성 -->
         <div class="form-field full">
           <label class="form-label">딜명 — 자동생성</label>
           <input class="form-input auto" id="nd-name" placeholder="고객사 | 제품명" readonly style="cursor:default">
         </div>
+
+        <!-- 옵션 품목 -->
         <div class="form-field full">
-          <label class="form-label">옵션 품목 <span style="font-weight:400;color:var(--t3)">(예: 전방 카메라 추가, 경보음 업그레이드)</span></label>
+          <label class="form-label">옵션 품목 <span style="font-weight:400;color:var(--t3)">(예: 전방 카메라 추가)</span></label>
           <input class="form-input" id="nd-option" placeholder="옵션 없으면 비워두세요">
         </div>
+
+        <!-- 유입 경로 -->
         <div class="form-field full">
           <label class="form-label">유입 경로 *</label>
           <div id="nd-inflow-btns" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"></div>
           <input type="hidden" id="nd-inflow" value="direct">
         </div>
-        <div class="form-field"><label class="form-label">수량 *</label><input class="form-input" id="nd-qty" type="number" min="1" value="1" placeholder="0" oninput="calcNdAmt()"></div>
+
+        <!-- 담당자 / 단계 -->
         <div class="form-field">
-          <label class="form-label">대당 단가 (원)</label>
-          <div class="amt-wrap">
-            <input class="form-input" id="nd-unit" type="number" min="0" placeholder="예: 75,000,000" oninput="calcNdAmt();updateAmtPreview('nd-unit','nd-unit-preview')">
-            <div class="amt-preview" id="nd-unit-preview"></div>
-            <div class="amt-btns">
-              <button type="button" class="amt-btn" onclick="addAmt('nd-unit',100000000)">+1억</button>
-              <button type="button" class="amt-btn" onclick="addAmt('nd-unit',10000000)">+1천만</button>
-              <button type="button" class="amt-btn" onclick="addAmt('nd-unit',1000000)">+100만</button>
-              <button type="button" class="amt-btn" onclick="addAmt('nd-unit',100000)">+10만</button>
-              <button type="button" class="amt-btn minus" onclick="addAmt('nd-unit',-1000000)">-100만</button>
-            </div>
-          </div>
+          <label class="form-label">담당자</label>
+          <select class="form-select" id="nd-person"></select>
         </div>
-        <div class="form-field full">
-          <label class="form-label">예상 총금액 (원) — 수량 × 단가 자동계산</label>
-          <div class="amt-wrap">
-            <input class="form-input auto" id="nd-amt" type="number" placeholder="자동 계산 또는 직접 입력" oninput="updateAmtPreview('nd-amt','nd-amt-preview')">
-            <div class="amt-preview" id="nd-amt-preview"></div>
-            <div class="amt-btns">
-              <button type="button" class="amt-btn" onclick="addAmt('nd-amt',100000000);calcNdAmtReverse()">+1억</button>
-              <button type="button" class="amt-btn" onclick="addAmt('nd-amt',10000000);calcNdAmtReverse()">+1천만</button>
-              <button type="button" class="amt-btn" onclick="addAmt('nd-amt',1000000);calcNdAmtReverse()">+100만</button>
-              <button type="button" class="amt-btn" onclick="addAmt('nd-amt',100000);calcNdAmtReverse()">+10만</button>
-              <button type="button" class="amt-btn minus" onclick="addAmt('nd-amt',-1000000);calcNdAmtReverse()">-100만</button>
-            </div>
-          </div>
-        </div>
-        <div class="form-field"><label class="form-label">영업 담당자</label><select class="form-select" id="nd-person"></select></div>
-        <div class="form-field"><label class="form-label">현재 영업 단계</label>
+        <div class="form-field">
+          <label class="form-label">현재 단계</label>
           <select class="form-select" id="nd-stage">
-            <option>잠재 발굴</option><option>미팅·접촉</option><option>제안·견적</option><option>협상·검토</option><option>구두합의</option>
+            <option>잠재 발굴</option><option>미팅·접촉</option><option>제안·견적</option><option>협상·검토</option><option>구두합의</option><option>계약 완료</option>
           </select>
         </div>
+
+        <!-- 예상 마감일 / 납품일 -->
         <div class="form-field">
-          <label class="form-label">계약 목표일 <span style="font-weight:400;color:var(--t3);font-size:10px">영업 클로징 기준</span></label>
+          <label class="form-label">예상 마감일</label>
           <input class="form-input" id="nd-date" type="date">
         </div>
         <div class="form-field">
-          <label class="form-label">납품 완료 기한 <span style="font-weight:400;color:var(--t3);font-size:10px">고객사 납기 기준</span></label>
+          <label class="form-label">납품 예정일</label>
           <input class="form-input" id="nd-delivery" type="date">
         </div>
-        <div class="form-field"><label class="form-label">우선순위</label><select class="form-select" id="nd-pri"><option value="0">보통</option><option value="1">중요 🔴</option></select></div>
+
+        <!-- 우선순위 -->
+        <div class="form-field">
+          <label class="form-label">우선순위</label>
+          <select class="form-select" id="nd-pri">
+            <option value="0">보통</option><option value="1">중요</option>
+          </select>
+        </div>
+
+        <!-- 메모 -->
         <div class="form-field full">
           <label class="form-label">메모 <span style="font-weight:400;color:var(--t3)">(미팅 내용, 고객 요청사항 등)</span></label>
           <textarea class="form-textarea" id="nd-memo" rows="2" placeholder="예: 담당자 김부장 요청 — 5월 납기 필수, 브라켓 포함 견적 요망"></textarea>
         </div>
       </div>
-      <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px;margin-top:16px" onclick="createDeal()">딜 추가하기</button>
+
+      <!-- hidden inputs -->
+      <input type="hidden" id="nd-amt">
+      <input type="hidden" id="nd-prod">
+      <input type="hidden" id="nd-qty">
+      <input type="hidden" id="nd-unit">
+
+      <button class="btn btn-p" style="width:100%;justify-content:center;padding:12px;margin-top:16px;font-size:14px" onclick="createDeal()">딜 추가하기</button>
     </div>
   </div>
 </div>
@@ -2847,7 +2914,7 @@ const VIEW_TITLES = {
   dashboard:'대시보드', pipeline:'파이프라인', deals:'딜 목록', customers:'고객사',
   projects:'프로젝트', 'project-detail':'프로젝트 상세',
   'inv-overview':'재고 현황', 'inv-transactions':'입출고 이력', 'inv-bom':'BOM 관리', 'inv-orders':'발주 관리',
-  'fin-cashflow':'캐시플로우', 'fin-receivables':'수금 관리', 'fin-expenses':'지출 기록', 'fin-terms':'수금 조건 관리',
+  'fin-cashflow':'캐시플로우', 'fin-receivables':'수금 관리', 'fin-expenses':'지출 기록', 'fin-terms':'수금 조건 관리', 'orders-list':'주문 목록', 'order-detail':'주문 상세',
   team:'팀 현황', admin:'팀 관리', stats:'통계', settings:'계정 설정'
 };
 const PLUS_BTN = (label, fn) => `<button class="btn btn-p" onclick="${fn}()"><svg viewBox="0 0 14 14" fill="none"><line x1="7" y1="2" x2="7" y2="12" stroke="white" stroke-width="1.8" stroke-linecap="round"/><line x1="2" y1="7" x2="12" y2="7" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>${label}</button>`;
@@ -2876,6 +2943,7 @@ const VIEW_ACTIONS = {
   'inv-bom':          '',
   'fin-cashflow':     PLUS_BTN('수금 등록', "openRecvModal"),
   'fin-receivables':  PLUS_BTN('수금 등록', "openRecvModal") + `<button class="help-btn" onclick="showHelp('finReceivables')" style="margin-left:4px">?</button>`,
+  'orders-list': PLUS_BTN('+ 주문 등록', "openOrderModal"),
   'fin-expenses':     PLUS_BTN('지출 등록', "openExpModal") + `<button class="help-btn" onclick="showHelp('finExpenses')" style="margin-left:4px">?</button>`,
   'fin-terms':        PLUS_BTN('조건 추가', 'openTermsModal'),
   'mass-pipeline': `<button class="btn btn-p btn-sm" onclick="openNewMassModal()">
@@ -2910,7 +2978,7 @@ function showHome(el) {
   renderHome();
 }
 
-function enterDashboard(ctx) {
+function enterDashboard(ctx, skipDefaultView) {
   currentDashContext = ctx;
   document.getElementById('nav-home-section').style.display='none';
   document.getElementById('nav-sales-ctx').style.display = ctx==='sales' ? '' : 'none';
@@ -2919,6 +2987,7 @@ function enterDashboard(ctx) {
   document.getElementById('nav-mass-ctx').style.display  = ctx==='mass'  ? '' : 'none';
   document.getElementById('nav-rd-ctx').style.display    = ctx==='rd'    ? '' : 'none';
   updateSwitcher(ctx);
+  if(skipDefaultView) return; // 기본 뷰 열지 않고 ctx만 세팅
   if(ctx==='sales') showView('dashboard', document.getElementById('ni-dashboard'));
   if(ctx==='inv')   showView('inv-overview', document.getElementById('ni-inv-overview'));
   if(ctx==='fin')   showView('fin-cashflow', document.getElementById('ni-fin-cashflow'));
@@ -2973,6 +3042,12 @@ function showView(name, navEl) {
   if(name==='fin-receivables') renderReceivables();
   if(name==='fin-expenses') renderExpenses();
   if(name==='fin-terms') renderTerms();
+  if(name==='orders-list') {
+    if(!document.getElementById('nav-inv-ctx')?.style.display || document.getElementById('nav-inv-ctx').style.display==='none') {
+      enterDashboard('inv', true); // true = ctx만 세팅, 기본뷰 열지 않음
+    }
+    renderOrdersList();
+  }
   if(name==='orgchart') { orgInitView(); }
   if(name==='mass-pipeline') { renderMassPipeline(); initKanbanDrag(); }
   if(name==='rd-pipeline') { renderRdPipeline(); initKanbanDrag(); }
@@ -4066,12 +4141,16 @@ function calcNdAmtReverse(){
   updateAmtPreview('nd-amt','nd-amt-preview');
 }
 function openNewDealModal(ds){
-  // Populate product dropdown
+  // Populate product dropdown (nd-prod는 이제 hidden input — 다중 제품 행에서 처리)
   const prodSel=document.getElementById('nd-prod');
-  // 완제품 재고가 있으면 재고 기준, 없으면 PRODUCTS 기준
   const finishedNames = invItems.filter(i=>i.category==='finished').map(i=>i.name);
   const prodList = finishedNames.length > 0 ? finishedNames : PRODUCTS;
-  prodSel.innerHTML=prodList.map(p=>`<option>${p}</option>`).join('');
+  // prodSel이 select 타입일 때만 innerHTML 설정
+  if(prodSel && prodSel.tagName === 'SELECT') {
+    prodSel.innerHTML=prodList.map(p=>`<option>${p}</option>`).join('');
+  }
+  // 다중 제품 행용 전역 목록 저장
+  window._ndProdList = prodList;
   // Populate person dropdown
   document.getElementById('nd-person').innerHTML=salesMembers().map(m=>`<option>${m.name}</option>`).join('');
   // Pre-select logged-in user if sales
@@ -4085,10 +4164,14 @@ function openNewDealModal(ds){
   // Reset fields
   ['nd-co','nd-option','nd-amt','nd-memo','nd-date'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
   document.getElementById('nd-name').value='';
-  document.getElementById('nd-qty').value='1';
-  document.getElementById('nd-unit').value='';
+  // nd-qty, nd-unit은 다중 제품 행에서 관리
   autoNdName();
   openModal('newDealModal');
+  // 다중 제품 행 초기화
+  setTimeout(()=>{
+    const rows = document.getElementById('nd-product-rows');
+    if(rows){ rows.innerHTML=''; addNdProductRow(); }
+  }, 50);
 }
 
 function renderInflowChips(containerId, hiddenId, defaultId){
@@ -4117,35 +4200,66 @@ function inflowStyle(id){
   return s?`background:${s.bg};color:${s.color}`:'background:#f3f4f6;color:#374151';
 }
 async function createDeal(){
-  const co=document.getElementById('nd-co').value.trim();
-  const prod=document.getElementById('nd-prod').value;
-  if(!co){alert('고객사는 필수입니다.');return;}
-  const name=document.getElementById('nd-name').value.trim()||(co&&prod?`${co} | ${prod}`:co);
-  const qty=parseInt(document.getElementById('nd-qty').value)||1;
-  const unit=parseInt(document.getElementById('nd-unit').value)||0; // 원 단위 그대로
-  const amt=parseInt(document.getElementById('nd-amt').value)||0;  // 원 단위 그대로
-  const memo=document.getElementById('nd-memo').value.trim();
-  const option=document.getElementById('nd-option').value.trim();
-  const inflow=document.getElementById('nd-inflow')?.value||'direct';
+  const co = document.getElementById('nd-co').value.trim();
+  if(!co){ alert('고객사는 필수입니다.'); return; }
+
+  // ── 다중 제품 수집 ──
+  const productRows = document.querySelectorAll('.nd-prod-row');
+  if(!productRows.length){ showToast('제품을 1개 이상 추가해주세요','warn'); return; }
+
+  const products = [...productRows].map(row=>({
+    prod:      row.querySelector('.nd-prod-sel')?.value||'',
+    qty:       parseInt(row.querySelector('.nd-prod-qty')?.value)||1,
+    unitPrice: parseInt(row.querySelector('.nd-prod-unit')?.value)||0,
+  })).filter(p=>p.prod);
+
+  if(!products.length){ showToast('제품을 선택해주세요','warn'); return; }
+
+  // 대표값 (첫 번째 제품 기준 — 딜 카드/파이프라인 표시용)
+  const prodLabel = products.map(p=>`${p.prod} ${p.qty}대`).join(', ');
+  const totalAmt  = products.reduce((s,p)=>s+p.qty*p.unitPrice, 0);
+  const totalQty  = products.reduce((s,p)=>s+p.qty, 0);
+
+  const name    = document.getElementById('nd-name').value.trim()||(co ? `${co} | ${prodLabel}` : co);
+  const memo    = document.getElementById('nd-memo').value.trim();
+  const option  = document.getElementById('nd-option').value.trim();
+  const inflow  = document.getElementById('nd-inflow')?.value||'direct';
+
   let newDeal = {
-    id: dealIdCnt++, name, co, prod, option, inflow,
-    qty, unit, amt: amt,  // 원→만원 변환된 값 사용
+    id: dealIdCnt++, name, co,
+    prod: prodLabel,
+    option, inflow,
+    qty: totalQty,
+    unit: products[0].unitPrice,
+    amt: totalAmt,
     person: document.getElementById('nd-person').value,
     stage: document.getElementById('nd-stage').value,
     closeDate: document.getElementById('nd-date').value,
     deliveryDate: document.getElementById('nd-delivery')?.value||'',
     priority: document.getElementById('nd-pri').value==='1',
-    createdAt: new Date().toISOString().slice(0,10), linkedProject: null,
+    createdAt: new Date().toISOString().slice(0,10),
+    linkedProject: null,
     logs: memo ? [{type:'메모',text:memo,time:nowStr(),person:CU?.name||'',dept:CU?.role||'sales'}] : []
   };
-  // Save to Supabase (returns deal with real DB id)
+
   newDeal = await saveDealToDB(newDeal);
   deals.unshift(newDeal);
+
+  // 다중 제품 DB 저장
+  if(sb && newDeal?.id && products.length > 0){
+    const rows = products.map(p=>({
+      deal_id: newDeal.id, prod: p.prod,
+      qty: p.qty, unit_price: p.unitPrice
+    }));
+    await sb.from('deal_products').insert(rows);
+    newDeal._products = products;
+  }
+
   showToast('딜이 추가됐습니다 ✓');
   closeModal('newDealModal');
   renderDashboard();
-  if(document.getElementById('view-pipeline').classList.contains('active'))renderPipeline();
-  if(document.getElementById('view-deals').classList.contains('active'))renderDeals();
+  if(document.getElementById('view-pipeline').classList.contains('active')) renderPipeline();
+  if(document.getElementById('view-deals').classList.contains('active')) renderDeals();
 }
 
 // ══════════════════════════════════════════════
@@ -10824,4 +10938,670 @@ function disableBackdropClose(id) {
 // openModal 함수 override — 배경 클릭 비활성화
 // openModal override 제거 — 기본 openModal 사용 (X버튼 정상 작동)
 // 배경 클릭 닫기는 DOMContentLoaded에서 비활성화
+</script>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// 🛒 주문 관리 (Orders)
+// ══════════════════════════════════════════════════════════════════
+let orders = [];
+let orderItems = {};   // { order_id: [...items] }
+let orderPayments = {}; // { order_id: [...payments] }
+
+const ORDER_STATUS = { pending:'대기', shipped:'출고완료', completed:'완료', cancelled:'취소' };
+const ORDER_STATUS_CLS = { pending:'chip-amber', shipped:'chip-blue', completed:'chip-green', cancelled:'chip-gray' };
+const DELIVERY_METHOD = { direct:'직납', courier:'택배', pickup:'직접수령' };
+const CARRIERS = ['CJ대한통운','한진택배','롯데택배','로젠택배','우체국택배','경동택배','기타'];
+
+async function loadOrdersData() {
+  if(!sb) return;
+  const { data } = await sb.from('orders').select('*').order('created_at', {ascending:false});
+  orders = data || [];
+}
+
+async function loadOrderDetail(orderId) {
+  if(!sb) return;
+  const [r1, r2] = await Promise.all([
+    sb.from('order_items').select('*').eq('order_id', orderId).order('id'),
+    sb.from('order_payments').select('*').eq('order_id', orderId).order('id'),
+  ]);
+  orderItems[orderId]   = r1.data || [];
+  orderPayments[orderId] = r2.data || [];
+}
+
+// ── 주문번호 생성 ──
+function genOrderNo() {
+  const y = new Date().getFullYear();
+  const seq = String(orders.length + 1).padStart(3, '0');
+  return `SP-ORD-${y}-${seq}`;
+}
+
+// ══ 목록 렌더 ══
+async function renderOrdersList() {
+  if(!orders.length) await loadOrdersData();
+
+  const searchF  = (document.getElementById('order-search')?.value||'').toLowerCase();
+  const statusF  = document.getElementById('order-status-filter')?.value||'';
+  const dateFrom = document.getElementById('order-date-from')?.value||'';
+  const dateTo   = document.getElementById('order-date-to')?.value||'';
+
+  let data = [...orders];
+  if(searchF) data = data.filter(o=>(o.co||'').toLowerCase().includes(searchF)||(o.order_no||'').toLowerCase().includes(searchF));
+  if(statusF) data = data.filter(o=>o.status===statusF);
+  if(dateFrom) data = data.filter(o=>(o.ordered_at||'')>=dateFrom);
+  if(dateTo)   data = data.filter(o=>(o.ordered_at||'')<=dateTo);
+
+  // 합계
+  const sumEl = document.getElementById('order-summary');
+  if(sumEl) sumEl.innerHTML = `총 ${data.length}건`;
+
+  const tbody = document.getElementById('orders-table-body');
+  if(!tbody) return;
+
+  if(!data.length) {
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--t3)">주문 내역이 없습니다<br><button class="btn btn-p btn-sm" onclick="openOrderModal()" style="margin-top:10px">+ 주문 등록</button></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = data.map(o => {
+    const items = orderItems[o.id] || [];
+    const itemSummary = items.length
+      ? items.map(i=>`${i.item_name} ${i.qty}${i.unit||'대'}`).join(', ')
+      : '–';
+    const totalAmt = items.reduce((s,i)=>s+(i.amount||0), 0);
+    const totalQty = items.reduce((s,i)=>s+(i.qty||0), 0);
+    const hasTracking = items.some(i=>i.tracking_no);
+
+    return `<tr onclick="openOrderDetail(${o.id})">
+      <td style="font-family:monospace;font-weight:700;font-size:12px;color:var(--accent)">${o.order_no||'–'}</td>
+      <td style="font-weight:600">${o.co}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--t2);font-size:12px">${itemSummary}</td>
+      <td style="font-weight:700">${totalQty}대</td>
+      <td style="font-weight:700">${fmtMW(totalAmt)}</td>
+      <td style="color:var(--accent);font-weight:700">${fmtMW(Math.round(totalAmt*1.1))}</td>
+      <td style="color:var(--t2)">${o.ordered_at||'–'}</td>
+      <td><span class="chip ${ORDER_STATUS_CLS[o.status]||'chip-gray'}">${ORDER_STATUS[o.status]||o.status}</span></td>
+      <td>${hasTracking ? '<span class="chip chip-blue">✓ 송장</span>' : '<span style="color:var(--t3);font-size:11px">미입력</span>'}</td>
+      <td onclick="event.stopPropagation()" style="display:flex;gap:4px">
+        <button class="btn btn-s btn-sm" onclick="openOrderModal(${o.id})">수정</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteOrder(${o.id})">삭제</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ══ 주문 상세 ══
+async function openOrderDetail(orderId) {
+  await loadOrderDetail(orderId);
+  const o = orders.find(x=>x.id===orderId); if(!o) return;
+  const items = orderItems[orderId]||[];
+  const payments = orderPayments[orderId]||[];
+
+  showView('order-detail', document.getElementById('ni-orders-list'));
+  document.getElementById('order-detail-title').textContent = `${o.order_no} · ${o.co}`;
+
+  const actions = document.getElementById('order-detail-actions');
+  if(actions) actions.innerHTML = `
+    <button class="btn btn-s btn-sm" onclick="openOrderModal(${o.id})">✏️ 수정</button>
+    <button class="btn btn-p btn-sm" onclick="shipOrder(${o.id})">📦 출고 처리</button>
+    ${o.status!=='completed'?`<button class="btn btn-green btn-sm" onclick="completeOrder(${o.id})">✓ 완료</button>`:''}
+  `;
+
+  const totalAmt = items.reduce((s,i)=>s+(i.amount||0), 0);
+
+  document.getElementById('order-detail-content').innerHTML = `
+    <!-- 기본 정보 -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-hd"><div class="card-title">📋 주문 정보</div>
+        <span class="chip ${ORDER_STATUS_CLS[o.status]||'chip-gray'}">${ORDER_STATUS[o.status]||o.status}</span>
+      </div>
+      <div class="card-body">
+        <div class="det-grid">
+          <div class="det-item"><div class="det-label">주문번호</div><div class="det-val" style="font-family:monospace;color:var(--accent)">${o.order_no}</div></div>
+          <div class="det-item"><div class="det-label">고객사</div><div class="det-val">${o.co}</div></div>
+          <div class="det-item"><div class="det-label">담당자</div><div class="det-val">${o.person||'–'}</div></div>
+          <div class="det-item"><div class="det-label">주문일</div><div class="det-val">${o.ordered_at||'–'}</div></div>
+          <div class="det-item"><div class="det-label">출고일</div><div class="det-val">${o.shipped_at||'–'}</div></div>
+          <div class="det-item"><div class="det-label">공급가 합계</div><div class="det-val">${fmtMW(totalAmt)}</div></div>
+          <div class="det-item"><div class="det-label">VAT포함 합계</div><div class="det-val" style="color:var(--accent)">${fmtMW(Math.round(totalAmt*1.1))}</div></div>
+          ${o.note?`<div class="det-item" style="grid-column:1/-1"><div class="det-label">메모</div><div class="det-val" style="font-weight:400;font-size:13px">${o.note}</div></div>`:''}
+        </div>
+      </div>
+    </div>
+
+    <!-- 품목 + 배송 -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-hd"><div class="card-title">📦 주문 품목 및 배송</div></div>
+      <div class="card-body" style="padding:0">
+        ${items.map(item=>`
+          <div style="padding:14px 20px;border-bottom:1px solid var(--bd)">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
+              <div>
+                <div style="font-size:14px;font-weight:700">${item.item_name}</div>
+                ${item.item_code?`<div style="font-size:11px;font-family:monospace;color:var(--t3)">${item.item_code}</div>`:''}
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:15px;font-weight:800">${item.qty}대 × ${fmtMW(item.unit_price)} = ${fmtMW(item.amount||0)}</div>
+                <div style="font-size:11px;color:var(--t3)">VAT포함 ${fmtMW(Math.round((item.amount||0)*1.1))}</div>
+              </div>
+            </div>
+            <!-- 배송 정보 -->
+            <div style="background:var(--s2);border-radius:var(--r);padding:10px 14px;display:flex;flex-wrap:wrap;gap:12px;font-size:12px">
+              <div><span style="color:var(--t3);font-weight:600">배송방식</span> ${DELIVERY_METHOD[item.delivery_method]||'직납'}</div>
+              ${item.carrier?`<div><span style="color:var(--t3);font-weight:600">택배사</span> ${item.carrier}</div>`:''}
+              ${item.tracking_no?`<div><span style="color:var(--t3);font-weight:600">송장번호</span> <span style="font-family:monospace;font-weight:700;color:var(--accent)">${item.tracking_no}</span></div>`:'<div style="color:var(--t3)">송장번호 미입력</div>'}
+              ${item.delivery_note?`<div style="width:100%;color:var(--t2)">${item.delivery_note}</div>`:''}
+            </div>
+          </div>`).join('')}
+        ${!items.length?`<div style="padding:32px;text-align:center;color:var(--t3)">품목이 없습니다</div>`:''}
+      </div>
+    </div>
+
+    <!-- 수금 -->
+    <div class="card">
+      <div class="card-hd"><div class="card-title">💰 수금 현황</div></div>
+      <div class="card-body" style="padding:0">
+        ${payments.map(p=>`
+          <div style="padding:12px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <span class="chip ${p.status==='received'?'chip-green':'chip-amber'}">${p.status==='received'?'수금완료':'대기'}</span>
+              ${p.due_date?`<span style="font-size:12px;color:var(--t2);margin-left:8px">예정 ${p.due_date}</span>`:''}
+            </div>
+            <div style="font-size:14px;font-weight:700">${fmtMW(p.amount)}</div>
+          </div>`).join('')}
+        ${!payments.length?`<div style="padding:24px;text-align:center;color:var(--t3)">수금 정보 없음 (주문 등록 시 자동 생성)</div>`:''}
+      </div>
+    </div>
+  `;
+}
+
+// ══ 주문 등록/수정 모달 ══
+function openOrderModal(editId) {
+  const o = editId ? orders.find(x=>x.id===editId) : null;
+  const finItems = invItems.filter(i=>i.category==='finished');
+  const finOpts  = finItems.map(i=>`<option value="${i.id}" data-code="${i.code||''}" data-price="0">${i.name} ${i.code?'('+i.code+')':''}</option>`).join('');
+  const memberOpts = allMembers().map(m=>`<option value="${m.name}"${m.name===(o?.person||'') ? ' selected':''}>${m.name}</option>`).join('');
+  const existItems = editId ? (orderItems[editId]||[]) : [];
+
+  document.getElementById('orderModalOv')?.remove();
+  const ov = document.createElement('div');
+  ov.id = 'orderModalOv';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:3000;display:flex;align-items:center;justify-content:center;padding:16px';
+  ov.innerHTML = `
+    <div style="background:var(--surface);border-radius:var(--r-xl);width:100%;max-width:680px;max-height:92vh;overflow-y:auto;box-shadow:var(--sh-lg)">
+      <div style="padding:20px 24px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1">
+        <div>
+          <div style="font-size:17px;font-weight:800">${o ? '주문 수정' : '+ 주문 등록'}</div>
+          <div style="font-size:12px;color:var(--t3);margin-top:2px">단건 제품 판매 · 재고 자동 출고 · 수금 자동 연동</div>
+        </div>
+        <button onclick="document.getElementById('orderModalOv').remove()" style="width:30px;height:30px;border-radius:50%;background:var(--s2);border:none;cursor:pointer;font-size:18px">×</button>
+      </div>
+      <div style="padding:20px 24px;display:flex;flex-direction:column;gap:16px">
+        <input type="hidden" id="om-id" value="${o?.id||''}">
+
+        <!-- 기본 정보 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <label class="form-label">고객사 *</label>
+            <input class="form-input" id="om-co" value="${o?.co||''}" placeholder="예: 현대중공업" style="margin-top:4px">
+          </div>
+          <div>
+            <label class="form-label">담당자</label>
+            <select class="form-select" id="om-person" style="margin-top:4px">
+              <option value="">담당자 선택</option>${memberOpts}
+            </select>
+          </div>
+          <div>
+            <label class="form-label">주문일</label>
+            <input class="form-input" id="om-date" type="date" value="${o?.ordered_at||new Date().toISOString().slice(0,10)}" style="margin-top:4px">
+          </div>
+          <div>
+            <label class="form-label">연결 딜 <span style="color:var(--t3);font-weight:400">(선택)</span></label>
+            <input class="form-input" id="om-deal" type="number" placeholder="딜 번호 (선택)" value="${o?.deal_id||''}" style="margin-top:4px">
+          </div>
+        </div>
+
+        <!-- 품목 목록 -->
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <label class="form-label">주문 품목 *</label>
+            <button class="btn btn-s btn-sm" onclick="addOrderItemRow()">+ 품목 추가</button>
+          </div>
+          <div id="om-items" style="display:flex;flex-direction:column;gap:8px">
+            ${existItems.length
+              ? existItems.map((item,idx)=>orderItemRowHtml(finOpts, item, idx)).join('')
+              : orderItemRowHtml(finOpts, null, 0)
+            }
+          </div>
+        </div>
+
+        <!-- 메모 -->
+        <div>
+          <label class="form-label">메모 <span style="color:var(--t3);font-weight:400">(선택)</span></label>
+          <textarea class="form-textarea" id="om-note" rows="2" placeholder="특이사항, 요청사항 등" style="margin-top:4px">${o?.note||''}</textarea>
+        </div>
+
+        <!-- 수금 설정 -->
+        <div style="background:var(--s2);border-radius:var(--r-lg);padding:14px">
+          <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:10px">💰 수금 설정</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <label class="form-label">수금 예정일</label>
+              <input class="form-input" id="om-pay-date" type="date" style="margin-top:4px">
+            </div>
+            <div>
+              <label class="form-label">수금 조건</label>
+              <select class="form-select" id="om-pay-basis" style="margin-top:4px">
+                <option value="immediately">즉시 수금</option>
+                <option value="30days">30일 후</option>
+                <option value="60days">60일 후</option>
+                <option value="custom">직접 지정</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button class="btn btn-p" style="flex:1;justify-content:center;padding:13px;font-size:14px" onclick="saveOrder()">
+            ${o ? '수정 저장' : '📦 주문 등록 (재고 자동 출고)'}
+          </button>
+          <button class="btn btn-s" style="padding:13px 18px" onclick="document.getElementById('orderModalOv').remove()">취소</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+}
+
+function orderItemRowHtml(finOpts, item, idx) {
+  return `<div class="om-item-row" style="background:var(--s2);border-radius:var(--r-lg);padding:14px;display:flex;flex-direction:column;gap:10px">
+    <input type="hidden" class="om-item-id" value="${item?.id||''}">
+    <!-- 품목 + 수량 + 단가 -->
+    <div style="display:grid;grid-template-columns:2fr 80px 120px auto;gap:8px;align-items:end">
+      <div>
+        <label class="form-label" style="font-size:10px">품목 *</label>
+        <select class="form-select om-item-sel" style="margin-top:2px" onchange="onOrderItemChange(this)">
+          <option value="">품목 선택</option>${finOpts}
+        </select>
+      </div>
+      <div>
+        <label class="form-label" style="font-size:10px">수량</label>
+        <input class="form-input om-item-qty" type="number" min="1" value="${item?.qty||1}" style="margin-top:2px" oninput="calcOrderRowTotal(this)">
+      </div>
+      <div>
+        <label class="form-label" style="font-size:10px">단가 (만원)</label>
+        <input class="form-input om-item-price" type="number" min="0" value="${item?.unit_price||0}" placeholder="0" style="margin-top:2px" oninput="calcOrderRowTotal(this)">
+      </div>
+      <button onclick="this.closest('.om-item-row').remove()" style="background:var(--rl);border:1px solid #fecaca;border-radius:var(--r-sm);cursor:pointer;width:32px;height:32px;color:var(--red);font-size:16px;flex:none;margin-top:16px">×</button>
+    </div>
+    <!-- 소계 -->
+    <div class="om-row-total" style="font-size:12px;font-weight:700;color:var(--accent);text-align:right">소계: ${fmtMW((item?.qty||1)*(item?.unit_price||0))} (VAT ${fmtMW(Math.round((item?.qty||1)*(item?.unit_price||0)*1.1))})</div>
+    <!-- 배송 정보 -->
+    <details style="cursor:pointer">
+      <summary style="font-size:11px;font-weight:700;color:var(--t2);user-select:none">📦 배송 정보 (선택사항)</summary>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+        <div>
+          <label class="form-label" style="font-size:10px">배송 방식</label>
+          <select class="form-select om-item-delivery" style="margin-top:2px">
+            <option value="direct"${(item?.delivery_method||'direct')==='direct'?' selected':''}>직납</option>
+            <option value="courier"${item?.delivery_method==='courier'?' selected':''}>택배</option>
+            <option value="pickup"${item?.delivery_method==='pickup'?' selected':''}>직접수령</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label" style="font-size:10px">택배사</label>
+          <select class="form-select om-item-carrier" style="margin-top:2px">
+            <option value="">선택</option>
+            ${CARRIERS.map(c=>`<option value="${c}"${item?.carrier===c?' selected':''}>${c}</option>`).join('')}
+          </select>
+        </div>
+        <div style="grid-column:1/-1">
+          <label class="form-label" style="font-size:10px">송장번호</label>
+          <input class="form-input om-item-tracking" value="${item?.tracking_no||''}" placeholder="예: 1234567890" style="margin-top:2px;font-family:monospace;font-weight:700;letter-spacing:.05em">
+        </div>
+        <div style="grid-column:1/-1">
+          <label class="form-label" style="font-size:10px">배송 메모</label>
+          <input class="form-input om-item-dnote" value="${item?.delivery_note||''}" placeholder="예: 2층 자재 창고 납품" style="margin-top:2px">
+        </div>
+      </div>
+    </details>
+  </div>`;
+}
+
+function addOrderItemRow() {
+  const finOpts = invItems.filter(i=>i.category==='finished').map(i=>`<option value="${i.id}" data-code="${i.code||''}">${i.name} ${i.code?'('+i.code+')':''}</option>`).join('');
+  const wrap = document.getElementById('om-items');
+  const div = document.createElement('div');
+  div.innerHTML = orderItemRowHtml(finOpts, null, wrap.children.length);
+  wrap.appendChild(div.firstElementChild);
+}
+
+function onOrderItemChange(sel) {
+  const opt = sel.options[sel.selectedIndex];
+  // 단가 자동 채우기 가능 (현재는 0)
+}
+
+function calcOrderRowTotal(input) {
+  const row = input.closest('.om-item-row');
+  if(!row) return;
+  const qty   = parseFloat(row.querySelector('.om-item-qty')?.value)||0;
+  const price = parseFloat(row.querySelector('.om-item-price')?.value)||0;
+  const total = qty * price;
+  const totalEl = row.querySelector('.om-row-total');
+  if(totalEl) totalEl.textContent = `소계: ${fmtMW(total)} (VAT ${fmtMW(Math.round(total*1.1))})`;
+}
+
+// ══ 주문 저장 ══
+async function saveOrder() {
+  const id  = parseInt(document.getElementById('om-id')?.value)||null;
+  const co  = document.getElementById('om-co')?.value.trim();
+  if(!co) { showToast('고객사를 입력해주세요','warn'); return; }
+
+  const itemRows = [...document.querySelectorAll('#om-items .om-item-row')];
+  const itemsData = itemRows.map(row=>({
+    itemId:   parseInt(row.querySelector('.om-item-sel')?.value)||0,
+    itemName: row.querySelector('.om-item-sel option:checked')?.textContent?.trim()||'',
+    itemCode: row.querySelector('.om-item-sel option:checked')?.dataset?.code||'',
+    qty:      parseFloat(row.querySelector('.om-item-qty')?.value)||1,
+    unitPrice:parseFloat(row.querySelector('.om-item-price')?.value)||0,
+    delivery: row.querySelector('.om-item-delivery')?.value||'direct',
+    carrier:  row.querySelector('.om-item-carrier')?.value||'',
+    tracking: row.querySelector('.om-item-tracking')?.value.trim()||'',
+    dnote:    row.querySelector('.om-item-dnote')?.value.trim()||'',
+  })).filter(i=>i.itemId>0);
+
+  if(!itemsData.length) { showToast('품목을 1개 이상 추가해주세요','warn'); return; }
+
+  const orderData = {
+    co,
+    person:     document.getElementById('om-person')?.value||null,
+    ordered_at: document.getElementById('om-date')?.value||new Date().toISOString().slice(0,10),
+    deal_id:    parseInt(document.getElementById('om-deal')?.value)||null,
+    note:       document.getElementById('om-note')?.value.trim()||null,
+    status:     'pending',
+    updated_at: new Date().toISOString(),
+  };
+
+  let orderId = id;
+  if(sb) {
+    if(id) {
+      await sb.from('orders').update(orderData).eq('id', id);
+      const idx = orders.findIndex(o=>o.id===id);
+      if(idx>=0) orders[idx] = {...orders[idx], ...orderData};
+    } else {
+      orderData.order_no = genOrderNo();
+      orderData.created_by = CU?.name||'';
+      const {data:newOrder, error} = await sb.from('orders').insert([orderData]).select().single();
+      if(error) { showToast('등록 실패: '+error.message, 'error'); return; }
+      orders.unshift(newOrder);
+      orderId = newOrder.id;
+    }
+
+    // 품목 저장
+    if(id) await sb.from('order_items').delete().eq('order_id', id);
+    const itemsToInsert = itemsData.map(i=>({
+      order_id: orderId,
+      item_id: i.itemId||null,
+      item_name: i.itemName,
+      item_code: i.itemCode,
+      qty: i.qty,
+      unit_price: i.unitPrice,
+      delivery_method: i.delivery,
+      carrier: i.carrier||null,
+      tracking_no: i.tracking||null,
+      delivery_note: i.dnote||null,
+    }));
+    const {data:savedItems} = await sb.from('order_items').insert(itemsToInsert).select();
+    orderItems[orderId] = savedItems||[];
+
+    // 재고 자동 출고 (신규 주문만)
+    if(!id) {
+      for(const item of itemsData) {
+        if(item.itemId && item.qty > 0) {
+          try {
+            await doSingleTx(item.itemId, 'out', item.qty, `주문 출고 (${orderData.order_no})`, CU?.name||'', `${co} 주문`);
+          } catch(e) { console.warn('재고 출고 실패:', e); }
+        }
+      }
+    }
+
+    // 수금 자동 생성 (신규 주문만)
+    if(!id) {
+      const totalAmt = itemsData.reduce((s,i)=>s+i.qty*i.unitPrice, 0);
+      const payDate  = document.getElementById('om-pay-date')?.value||orderData.ordered_at;
+      if(totalAmt > 0) {
+        const recvData = {
+          deal_id: orderData.deal_id||null,
+          company_name: co,
+          amount: totalAmt,
+          payment_basis: 'contract',
+          basis_date: orderData.ordered_at,
+          expected_date: payDate||orderData.ordered_at,
+          status: 'pending',
+          note: `${orderData.order_no} 주문 자동 생성`,
+        };
+        const {data:recvResult} = await sb.from('receivables').insert([recvData]).select().single();
+        if(recvResult) {
+          recvList.push(recvResult);
+          await sb.from('order_payments').insert([{order_id:orderId, recv_id:recvResult.id, amount:totalAmt, due_date:payDate, status:'pending'}]);
+        }
+      }
+    }
+  }
+
+  document.getElementById('orderModalOv')?.remove();
+  showToast(id ? '수정됐습니다 ✓' : '주문이 등록됐습니다 ✓');
+  await renderOrdersList();
+  if(orderId && !id) openOrderDetail(orderId);
+}
+
+// ══ 출고 처리 ══
+async function shipOrder(orderId) {
+  const o = orders.find(x=>x.id===orderId); if(!o) return;
+  const today = new Date().toISOString().slice(0,10);
+  if(sb) await sb.from('orders').update({status:'shipped', shipped_at:today}).eq('id',orderId);
+  if(o) { o.status='shipped'; o.shipped_at=today; }
+  showToast('출고 완료 처리됐습니다 ✓');
+  openOrderDetail(orderId);
+}
+
+async function completeOrder(orderId) {
+  if(!confirm('이 주문을 완료 처리할까요?')) return;
+  if(sb) await sb.from('orders').update({status:'completed'}).eq('id',orderId);
+  const o = orders.find(x=>x.id===orderId); if(o) o.status='completed';
+  showToast('완료 처리됐습니다 ✓');
+  openOrderDetail(orderId);
+}
+
+async function deleteOrder(orderId) {
+  if(!confirm('이 주문을 삭제할까요?\n연관 수금 예정 및 품목도 삭제됩니다.')) return;
+  if(sb) {
+    await sb.from('order_payments').delete().eq('order_id', orderId);
+    await sb.from('order_items').delete().eq('order_id', orderId);
+    await sb.from('orders').delete().eq('id', orderId);
+  }
+  orders = orders.filter(o=>o.id!==orderId);
+  delete orderItems[orderId];
+  delete orderPayments[orderId];
+  showToast('삭제됐습니다');
+  renderOrdersList();
+}
+</script>
+
+<script>
+// ══ 주문 목록 직접 진입 함수 ══
+function goToOrdersList() {
+  // 1. 모든 뷰 숨기기
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  // 2. 주문 목록 뷰 표시
+  const v = document.getElementById('view-orders-list');
+  if(v) v.classList.add('active');
+  // 3. nav-inv-ctx 보이기
+  document.getElementById('nav-home-section').style.display = 'none';
+  document.getElementById('nav-sales-ctx').style.display = 'none';
+  document.getElementById('nav-inv-ctx').style.display   = '';
+  document.getElementById('nav-fin-ctx').style.display   = 'none';
+  document.getElementById('nav-mass-ctx').style.display  = 'none';
+  document.getElementById('nav-rd-ctx').style.display    = 'none';
+  currentDashContext = 'inv';
+  updateSwitcher('inv');
+  // 4. nav-item 활성화
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const ni = document.getElementById('ni-orders-list');
+  if(ni) ni.classList.add('active');
+  // 5. 탑바 설정
+  document.getElementById('topTitle').textContent = '주문 목록';
+  document.getElementById('topActions').innerHTML = `<button class="btn btn-p" onclick="openOrderModal()">+ 주문 등록</button>`;
+  closeSidebar?.();
+  // 6. 데이터 렌더
+  renderOrdersList();
+}
+</script>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// 딜 다중 제품 (Multi-product deal)
+// ══════════════════════════════════════════════════════════════════
+
+function getNdProductList() {
+  // openNewDealModal에서 세팅한 목록 우선 사용
+  if(window._ndProdList && window._ndProdList.length > 0) return window._ndProdList;
+  const finishedItems = invItems.filter(i => i.category === 'finished');
+  return finishedItems.length > 0
+    ? finishedItems.map(i => i.name)
+    : (window.PRODUCTS || []);
+}
+
+function getNdProductOpts(selectedProd) {
+  return getNdProductList().map(p =>
+    `<option value="${p}"${p === selectedProd ? ' selected' : ''}>${p}</option>`
+  ).join('');
+}
+
+function addNdProductRow(prod, qty, unitPrice) {
+  const rows = document.getElementById('nd-product-rows');
+  if(!rows) return;
+  const idx = rows.children.length;
+  const opts = getNdProductOpts(prod);
+  const div = document.createElement('div');
+  div.className = 'nd-prod-row';
+  div.style.cssText = 'background:var(--s2);border-radius:var(--r);padding:10px 12px;display:flex;flex-direction:column;gap:8px';
+  div.innerHTML = `
+    <div style="display:grid;grid-template-columns:2fr 70px 1fr auto;gap:8px;align-items:end">
+      <div>
+        <label class="form-label" style="font-size:10px;margin-bottom:2px">제품</label>
+        <select class="form-select nd-prod-sel" onchange="calcNdTotal();autoNdName()" style="font-size:13px">
+          ${opts}
+        </select>
+      </div>
+      <div>
+        <label class="form-label" style="font-size:10px;margin-bottom:2px">수량</label>
+        <input class="form-input nd-prod-qty" type="number" min="1" value="${qty||1}"
+          oninput="calcNdTotal()" style="font-size:13px;text-align:center">
+      </div>
+      <div>
+        <label class="form-label" style="font-size:10px;margin-bottom:2px">단가 (원)</label>
+        <input class="form-input nd-prod-unit" type="number" min="0" value="${unitPrice||''}"
+          placeholder="단가 입력" oninput="calcNdTotal()"
+          style="font-size:13px">
+      </div>
+      <button type="button" onclick="this.closest('.nd-prod-row').remove();calcNdTotal();autoNdName()"
+        style="background:var(--rl);border:1px solid #fecaca;border-radius:var(--r-sm);
+          cursor:pointer;width:30px;height:30px;color:var(--red);font-size:16px;
+          flex-shrink:0;margin-top:16px;display:flex;align-items:center;justify-content:center">×</button>
+    </div>
+    <div class="nd-prod-subtotal" style="font-size:11px;color:var(--t3);text-align:right"></div>
+  `;
+  rows.appendChild(div);
+  calcNdTotal();
+}
+
+function calcNdTotal() {
+  let total = 0;
+  document.querySelectorAll('.nd-prod-row').forEach(row => {
+    const qty   = parseInt(row.querySelector('.nd-prod-qty')?.value)||0;
+    const unit  = parseInt(row.querySelector('.nd-prod-unit')?.value)||0;
+    const sub   = qty * unit;
+    total += sub;
+    const subEl = row.querySelector('.nd-prod-subtotal');
+    if(subEl) subEl.textContent = sub > 0
+      ? `소계: ${fmt(sub)} (${qty}대 × ${fmt(unit)})`
+      : '';
+  });
+
+  // hidden fields 업데이트 (createDeal에서 사용)
+  const amtEl = document.getElementById('nd-amt');
+  if(amtEl) amtEl.value = total;
+
+  // 합계 표시
+  const totalEl = document.getElementById('nd-total-preview');
+  if(totalEl) totalEl.textContent = total > 0 ? fmt(total) : '₩0';
+}
+
+// autoNdName override — 다중 제품 지원
+const _origAutoNdName = window.autoNdName;
+window.autoNdName = function() {
+  const co   = document.getElementById('nd-co')?.value.trim();
+  const rows = document.querySelectorAll('.nd-prod-row');
+  const nameEl = document.getElementById('nd-name');
+  if(!nameEl) return;
+
+  if(rows.length > 0) {
+    const prods = [...rows].map(r => {
+      const sel = r.querySelector('.nd-prod-sel');
+      const qty = r.querySelector('.nd-prod-qty')?.value||'1';
+      return sel?.value ? `${sel.value} ${qty}대` : '';
+    }).filter(Boolean);
+    if(co && prods.length > 0) {
+      nameEl.value = `${co} | ${prods.join(', ')}`;
+    } else if(co) {
+      nameEl.value = co;
+    }
+  } else {
+    _origAutoNdName?.call(this);
+  }
+};
+
+// openNewDealModal — 다중 제품 행 초기화는 원본 함수에서 직접 처리
+
+// createDeal override — 다중 제품 수집
+// createDeal override 제거됨 (원본 함수에 통합)
+
+// 딜 카드에 다중 제품 표시 — buildDealInfo에서 제품 목록 표시
+// dealProducts 전역 캐시
+let dealProductsCache = {};
+
+async function loadDealProducts(dealId) {
+  if(dealProductsCache[dealId]) return dealProductsCache[dealId];
+  if(!sb) return [];
+  const {data} = await sb.from('deal_products').select('*').eq('deal_id', dealId).order('id');
+  dealProductsCache[dealId] = data || [];
+  return dealProductsCache[dealId];
+}
+</script>
+
+<script>
+// ── 딜 삭제 ──
+async function deleteDeal(dealId) {
+  if(!dealId) return;
+  const d = deals.find(x=>x.id===dealId);
+  if(!d) return;
+  if(!confirm(`"${d.name}" 딜을 삭제할까요?\n이 작업은 되돌릴 수 없습니다.`)) return;
+
+  if(sb) {
+    try {
+      await sb.from('deal_products').delete().eq('deal_id', dealId);
+      await sb.from('deal_logs').delete().eq('deal_id', dealId);
+      const {error} = await sb.from('deals').delete().eq('id', dealId);
+      if(error) { showToast('삭제 실패: ' + error.message, 'error'); return; }
+    } catch(e) {
+      showToast('삭제 실패: ' + e.message, 'error'); return;
+    }
+  }
+  deals = deals.filter(x=>x.id!==dealId);
+  closeModal('dealModal');
+  showToast('딜이 삭제됐습니다');
+  renderDashboard();
+  if(document.getElementById('view-pipeline').classList.contains('active')) renderPipeline();
+  if(document.getElementById('view-deals').classList.contains('active')) renderDeals();
+}
 </script>
