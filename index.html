@@ -1882,7 +1882,7 @@ tbody tr:hover{background:var(--s2)}
         <div class="modal-title" style="display:flex;align-items:center;gap:8px">새 딜 추가 <button class="help-btn" onclick="showHelp('newDeal')">?</button></div>
         <div class="modal-sub">고객사·제품명 입력 시 딜명이 자동 생성됩니다</div>
       </div>
-      <button class="modal-close" onclick="closeModal('newDealModal')"><svg viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+      <button class="modal-close" onclick="confirmCloseNewDeal()"><svg viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
     </div>
     <div class="modal-body">
       <div class="form-grid">
@@ -4664,7 +4664,17 @@ function renderInflowStats(fd){
 function openModal(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden';}
 function closeModal(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';}
 // 배경 클릭으로 모달 닫기 비활성화 (X버튼으로만 닫기)
-document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay.open').forEach(o=>closeModal(o.id));});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    // 새 딜 모달은 확인 팝업으로 닫기
+    const newDealModal = document.getElementById('newDealModal');
+    if(newDealModal && newDealModal.classList.contains('open')){
+      confirmCloseNewDeal();
+      return;
+    }
+    document.querySelectorAll('.overlay.open').forEach(o=>closeModal(o.id));
+  }
+});
 
 // ══════════════════════════════════════════════
 // INIT
@@ -11681,4 +11691,59 @@ document.addEventListener('dragend', () => {
   });
   _orgDrag = null;
 });
+</script>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// 새 딜 모달 닫기 확인 팝업
+// ══════════════════════════════════════════════════════════════════
+function confirmCloseNewDeal() {
+  // 입력된 내용이 있는지 확인
+  const co    = document.getElementById('nd-co')?.value.trim();
+  const memo  = document.getElementById('nd-memo')?.value.trim();
+  const rows  = document.querySelectorAll('.nd-prod-row');
+  const hasProd = [...rows].some(r => r.querySelector('.nd-prod-sel')?.value);
+
+  const hasContent = co || memo || hasProd;
+
+  if(!hasContent) {
+    // 아무것도 입력 안 했으면 그냥 닫기
+    closeModal('newDealModal');
+    return;
+  }
+
+  // 확인 팝업 표시
+  const ov = document.createElement('div');
+  ov.id = 'ndCloseConfirmOv';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);z-index:4000;display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.innerHTML = `
+    <div style="background:var(--surface);border-radius:var(--r-xl);width:100%;max-width:360px;box-shadow:var(--sh-lg);overflow:hidden">
+      <div style="padding:24px 24px 16px">
+        <div style="font-size:18px;font-weight:800;margin-bottom:8px">작성 중인 내용이 있습니다</div>
+        <div style="font-size:14px;color:var(--t2);line-height:1.6">
+          입력한 내용이 <strong>모두 삭제</strong>됩니다.<br>종료하시겠습니까?
+        </div>
+      </div>
+      <div style="display:flex;border-top:1px solid var(--bd)">
+        <button onclick="document.getElementById('ndCloseConfirmOv').remove();closeModal('newDealModal')"
+          style="flex:1;padding:14px;border:none;background:var(--surface);cursor:pointer;font-size:14px;font-weight:700;color:var(--red);border-right:1px solid var(--bd);font-family:var(--font);transition:background .12s"
+          onmouseenter="this.style.background='var(--rl)'"
+          onmouseleave="this.style.background='var(--surface)'">
+          네, 종료합니다
+        </button>
+        <button onclick="document.getElementById('ndCloseConfirmOv').remove()"
+          style="flex:1;padding:14px;border:none;background:var(--surface);cursor:pointer;font-size:14px;font-weight:600;color:var(--t2);font-family:var(--font);transition:background .12s"
+          onmouseenter="this.style.background='var(--s2)'"
+          onmouseleave="this.style.background='var(--surface)'">
+          아니오 (계속 작성)
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+
+  // 팝업 바깥 클릭으로 닫기 (팝업 자체는 닫기 — 모달은 유지)
+  ov.addEventListener('click', e => {
+    if(e.target === ov) ov.remove();
+  });
+}
 </script>
