@@ -7211,11 +7211,18 @@ function orgRenderChart() {
         </div>
       </div>
       <div class="org-mwrap">
-        ${(dept.members||[]).map(m=>`
-          <div class="org-mitem">
+        ${(dept.members||[]).map((m,mi)=>`
+          <div class="org-mitem" draggable="true"
+            ondragstart="orgMemDragStart(event,${dept.id},${mi})"
+            ondragover="orgMemDragOver(event,${dept.id},${mi})"
+            ondragleave="orgMemDragLeave(event)"
+            ondrop="orgMemDrop(event,${dept.id},${mi})"
+            data-dept="${dept.id}" data-idx="${mi}"
+            style="cursor:grab">
             <div class="org-mcard" onclick="orgOpenMemModal(${dept.id},${m.id})">
               <button class="org-ico" onclick="event.stopPropagation();orgOpenMemModal(${dept.id},${m.id})">✏️</button>
               <button class="org-del-ico" onclick="event.stopPropagation();orgAskDelMem(${dept.id},${m.id})">✕</button>
+              <div style="position:absolute;top:3px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--bd2);letter-spacing:2px;user-select:none">⠿</div>
               <div class="org-mn">${m.name}</div>
               <div class="org-mt${m.hl?' org-hl':''}">${m.title}</div>
               <div class="org-minfo">${m.phone||''}<br>${m.email||''}</div>
@@ -11604,4 +11611,74 @@ async function deleteDeal(dealId) {
   if(document.getElementById('view-pipeline').classList.contains('active')) renderPipeline();
   if(document.getElementById('view-deals').classList.contains('active')) renderDeals();
 }
+</script>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// 조직도 멤버 순서 변경 (드래그 앤 드롭)
+// ══════════════════════════════════════════════════════════════════
+let _orgDrag = null; // { deptId, fromIdx }
+
+function orgMemDragStart(event, deptId, fromIdx) {
+  _orgDrag = { deptId, fromIdx };
+  event.dataTransfer.effectAllowed = 'move';
+  // 드래그 중인 카드 반투명
+  setTimeout(() => {
+    const el = event.currentTarget;
+    if(el) el.style.opacity = '0.4';
+  }, 0);
+}
+
+function orgMemDragOver(event, deptId, toIdx) {
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'move';
+  // 같은 부서만 허용
+  if(!_orgDrag || _orgDrag.deptId !== deptId) return;
+  // 드롭 대상 강조
+  event.currentTarget.style.outline = '2px solid var(--accent)';
+  event.currentTarget.style.outlineOffset = '2px';
+}
+
+function orgMemDragLeave(event) {
+  event.currentTarget.style.outline = '';
+  event.currentTarget.style.outlineOffset = '';
+}
+
+function orgMemDrop(event, deptId, toIdx) {
+  event.preventDefault();
+  event.currentTarget.style.outline = '';
+  event.currentTarget.style.outlineOffset = '';
+
+  if(!_orgDrag || _orgDrag.deptId !== deptId) return;
+  const fromIdx = _orgDrag.fromIdx;
+  _orgDrag = null;
+
+  if(fromIdx === toIdx) return;
+  if(!orgActiveVer) return;
+
+  // 부서 찾기
+  const dept = (orgActiveVer.depts_data || []).find(d => d.id === deptId);
+  if(!dept || !dept.members) return;
+
+  // 순서 변경
+  const members = [...dept.members];
+  const [moved] = members.splice(fromIdx, 1);
+  members.splice(toIdx, 0, moved);
+  dept.members = members;
+
+  // 저장 후 렌더
+  orgSaveActiveData().then(() => {
+    orgRenderChart();
+    showToast('순서가 변경됐습니다 ✓');
+  });
+}
+
+// 드래그 끝 — 투명도 복원
+document.addEventListener('dragend', () => {
+  document.querySelectorAll('.org-mitem').forEach(el => {
+    el.style.opacity = '';
+    el.style.outline = '';
+  });
+  _orgDrag = null;
+});
 </script>
