@@ -4713,9 +4713,8 @@ async function loadDealsFromDB(){
     const {data:dbDeals, error:de} = await sb.from('deals').select('*').order('created_at', {ascending:false});
     if(de) throw de;
 
-    // Load all logs
-    const {data:dbLogs, error:le} = await sb.from('deal_logs').select('*').order('created_at', {ascending:true});
-    if(le) throw le;
+    // Load all logs (RLS 미설정 시 빈 배열로 처리)
+    const {data:dbLogs} = await sb.from('deal_logs').select('*').order('created_at', {ascending:true});
 
     // Map to local format — DB 저장 단위: 원(₩)
     deals = dbDeals.map(d => ({
@@ -11583,23 +11582,24 @@ async function loadDealProducts(dealId) {
 // ── 딜 삭제 ──
 async function deleteDeal(dealId) {
   if(!dealId) return;
-  const d = deals.find(x=>x.id===dealId);
+  const id = parseInt(dealId);
+  if(!id) return;
+  const d = deals.find(x=>x.id===id || x.id===dealId);
   if(!d) return;
   if(!confirm(`"${d.name}" 딜을 삭제할까요?\n이 작업은 되돌릴 수 없습니다.`)) return;
 
   if(sb) {
-    try {
-      await sb.from('deal_products').delete().eq('deal_id', dealId);
-      await sb.from('deal_logs').delete().eq('deal_id', dealId);
-      const {error} = await sb.from('deals').delete().eq('id', dealId);
-      if(error) { showToast('삭제 실패: ' + error.message, 'error'); return; }
-    } catch(e) {
-      showToast('삭제 실패: ' + e.message, 'error'); return;
-    }
+    // 연관 테이블 정리
+    try { await sb.from('deal_products').delete().eq('deal_id', id); } catch(e) {}
+    try { await sb.from('deal_logs').delete().eq('deal_id', id); } catch(e) {}
+    try { await sb.from('receivables').delete().eq('deal_id', id); } catch(e) {}
+    // deals 삭제 — .select() 없이 error만 체크 (select 시 RLS 이중 체크로 빈 배열 반환됨)
+    const {error} = await sb.from('deals').delete().eq('id', id);
+    if(error) { showToast('삭제 실패: ' + error.message, 'error'); return; }
   }
-  deals = deals.filter(x=>x.id!==dealId);
+  deals = deals.filter(x=>x.id!==id && x.id!==dealId);
   closeModal('dealModal');
-  showToast('딜이 삭제됐습니다');
+  showToast('딜이 삭제됐습니다 ✓');
   renderDashboard();
   if(document.getElementById('view-pipeline').classList.contains('active')) renderPipeline();
   if(document.getElementById('view-deals').classList.contains('active')) renderDeals();
