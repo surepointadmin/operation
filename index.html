@@ -3899,15 +3899,19 @@ function saveSectionEdit() {
 // DEAL MODAL
 // ══════════════════════════════════════════════
 let curDealId=null;
-function openDeal(id) {
+async function openDeal(id) {
   const d=deals.find(x=>x.id===id); if(!d) return;
   curDealId=id;
   document.getElementById('mdTitle').textContent=d.name;
   document.getElementById('mdSub').textContent=`${d.co} · ${d.person} · ${fmt(d.amt)}`;
   document.querySelectorAll('.mtab').forEach((t,i)=>t.classList.toggle('on',i===0));
   document.querySelectorAll('.mtc').forEach((t,i)=>t.classList.toggle('on',i===0));
-  buildDealInfo(d);
   openModal('dealModal');
+  // deal_products 캐시 없으면 먼저 로드
+  if(sb && !dealProductsCache[id]) {
+    await loadDealProducts(id);
+  }
+  buildDealInfo(d);
 }
 
 function buildDealInfo(d) {
@@ -3935,6 +3939,8 @@ function buildDealInfo(d) {
       ${d.linkedProject?`<div><div class="det-label">연결 프로젝트</div><div style="font-weight:600;color:var(--accent);margin-top:3px;cursor:pointer" onclick="openProjectDetail(${d.linkedProject});closeModal('dealModal')">프로젝트 보기 →</div></div>`:''}
     </div>`;
   } else { pi.style.display='none'; }
+  // 합계 초기 계산
+  setTimeout(calcDeTotal, 0);
 }
 
 function switchMTab(ctx,name,el){
@@ -3947,41 +3953,69 @@ function switchMTab(ctx,name,el){
 }
 
 function buildDealEdit(id){
-  const d=deals.find(x=>x.id===id); if(!d) return;
-  document.getElementById('dealEditGrid').innerHTML=`
+  const d = deals.find(x=>x.id===id); if(!d) return;
+  const prodList = invItems.filter(i=>i.category==='finished').map(i=>i.name);
+  const prods = prodList.length > 0 ? prodList : PRODUCTS;
+
+  // deal_products에서 기존 제품 목록 불러오기 (비동기)
+  const existingProducts = dealProductsCache[id] || [];
+
+  // 제품 행 HTML 생성
+  function deProdRowHtml(prod, qty, unitPrice) {
+    const opts = prods.map(p=>`<option value="${p}"${p===prod?' selected':''}>${p}</option>`).join('');
+    return `<div class="de-prod-row" style="background:var(--s2);border-radius:var(--r);padding:10px 12px;display:flex;flex-direction:column;gap:8px;margin-bottom:8px">
+      <div style="display:grid;grid-template-columns:2fr 70px 1fr auto;gap:8px;align-items:end">
+        <div>
+          <label class="form-label" style="font-size:10px;margin-bottom:2px">제품</label>
+          <select class="form-select de-prod-sel" onchange="calcDeTotal()" style="font-size:13px">
+            ${opts}
+          </select>
+        </div>
+        <div>
+          <label class="form-label" style="font-size:10px;margin-bottom:2px">수량</label>
+          <input class="form-input de-prod-qty" type="number" min="1" value="${qty||1}" oninput="calcDeTotal()" style="font-size:13px;text-align:center">
+        </div>
+        <div>
+          <label class="form-label" style="font-size:10px;margin-bottom:2px">단가 (원)</label>
+          <input class="form-input de-prod-unit" type="number" min="0" value="${unitPrice||''}" placeholder="단가 입력" oninput="calcDeTotal()" style="font-size:13px">
+        </div>
+        <button type="button" onclick="this.closest('.de-prod-row').remove();calcDeTotal()"
+          style="background:var(--rl);border:1px solid #fecaca;border-radius:var(--r-sm);cursor:pointer;width:30px;height:30px;color:var(--red);font-size:16px;flex-shrink:0;margin-top:16px;display:flex;align-items:center;justify-content:center">×</button>
+      </div>
+      <div class="de-prod-subtotal" style="font-size:11px;color:var(--t3);text-align:right"></div>
+    </div>`;
+  }
+
+  // 초기 제품 행 결정
+  let initialRows = '';
+  if(existingProducts.length > 0) {
+    // deal_products에 저장된 제품들
+    initialRows = existingProducts.map(p => deProdRowHtml(p.prod, p.qty, p.unit_price)).join('');
+  } else if(d.prod) {
+    // 기존 단일 제품 (합쳐진 경우 파싱 시도)
+    initialRows = deProdRowHtml(d.prod, d.qty, d.unit);
+  } else {
+    initialRows = deProdRowHtml('', 1, 0);
+  }
+
+  document.getElementById('dealEditGrid').innerHTML = `
     <div class="form-field full"><label class="form-label">딜명</label><input class="form-input" id="de-name" value="${d.name}"></div>
     <div class="form-field full"><label class="form-label">고객사</label><input class="form-input" id="de-co" value="${d.co}"></div>
-    <div class="form-field full"><label class="form-label">제품</label><select class="form-select" id="de-prod">${(invItems.filter(i=>i.category==='finished').map(i=>i.name).length>0?invItems.filter(i=>i.category==='finished').map(i=>i.name):PRODUCTS).map(p=>`<option${p===d.prod?' selected':''}>${p}</option>`).join('')}</select></div>
-    <div class="form-field full"><label class="form-label">옵션 품목</label><input class="form-input" id="de-option" value="${d.option||''}" placeholder="예: 전방 카메라 추가"></div>
-    <div class="form-field"><label class="form-label">수량</label><input class="form-input" id="de-qty" type="number" value="${d.qty||1}" oninput="calcDeAmt()"></div>
-    <div class="form-field">
-      <label class="form-label">대당 단가 (원)</label>
-      <div class="amt-wrap">
-        <input class="form-input" id="de-unit" type="number" value="${d.unit||0}" oninput="calcDeAmt();updateAmtPreview('de-unit','de-unit-preview')" placeholder="예: 75,000,000">
-        <div class="amt-preview" id="de-unit-preview">${d.unit?fmtWon(d.unit):''}</div>
-        <div class="amt-btns">
-          <button type="button" class="amt-btn" onclick="addAmt('de-unit',100000000)">+1억</button>
-          <button type="button" class="amt-btn" onclick="addAmt('de-unit',10000000)">+1천만</button>
-          <button type="button" class="amt-btn" onclick="addAmt('de-unit',1000000)">+100만</button>
-          <button type="button" class="amt-btn" onclick="addAmt('de-unit',100000)">+10만</button>
-          <button type="button" class="amt-btn minus" onclick="addAmt('de-unit',-1000000)">-100만</button>
-        </div>
-      </div>
-    </div>
+
+    <!-- 다중 제품 섹션 -->
     <div class="form-field full">
-      <label class="form-label">예상 총금액 (원)</label>
-      <div class="amt-wrap">
-        <input class="form-input auto" id="de-amt" type="number" value="${d.amt||0}" oninput="updateAmtPreview('de-amt','de-amt-preview')">
-        <div class="amt-preview" id="de-amt-preview">${d.amt?fmtWon(d.amt):''}</div>
-        <div class="amt-btns">
-          <button type="button" class="amt-btn" onclick="addAmt('de-amt',100000000)">+1억</button>
-          <button type="button" class="amt-btn" onclick="addAmt('de-amt',10000000)">+1천만</button>
-          <button type="button" class="amt-btn" onclick="addAmt('de-amt',1000000)">+100만</button>
-          <button type="button" class="amt-btn" onclick="addAmt('de-amt',100000)">+10만</button>
-          <button type="button" class="amt-btn minus" onclick="addAmt('de-amt',-1000000)">-100만</button>
-        </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <label class="form-label" style="margin-bottom:0">제품</label>
+        <button type="button" class="btn btn-s btn-sm" onclick="addDeProdRow()">+ 제품 추가</button>
+      </div>
+      <div id="de-product-rows">${initialRows}</div>
+      <div style="margin-top:8px;padding:8px 12px;background:var(--s2);border-radius:var(--r);display:flex;justify-content:space-between;font-size:12px">
+        <span style="color:var(--t2);font-weight:600">예상 총금액</span>
+        <span id="de-total-preview" style="font-weight:800;color:var(--accent)">₩0</span>
       </div>
     </div>
+
+    <div class="form-field full"><label class="form-label">옵션 품목</label><input class="form-input" id="de-option" value="${d.option||''}" placeholder="예: 전방 카메라 추가"></div>
     <div class="form-field"><label class="form-label">담당자</label><select class="form-select" id="de-person">${salesMembers().map(m=>`<option${m.name===d.person?' selected':''}>${m.name}</option>`).join('')}</select></div>
     <div class="form-field"><label class="form-label">단계</label><select class="form-select" id="de-stage">${STAGES.map(s=>`<option${s===d.stage?' selected':''}>${s}</option>`).join('')}</select></div>
     <div class="form-field">
@@ -3991,13 +4025,78 @@ function buildDealEdit(id){
     <div class="form-field">
       <label class="form-label">납품 완료 기한 <span style="font-weight:400;color:var(--t3);font-size:10px">고객사 납기 기준</span></label>
       <input class="form-input" id="de-delivery" type="date" value="${d.deliveryDate||''}">
-    </div></div>
+    </div>
     <div class="form-field"><label class="form-label">우선순위</label><select class="form-select" id="de-pri"><option value="0"${!d.priority?' selected':''}>보통</option><option value="1"${d.priority?' selected':''}>중요</option></select></div>
-    <div class="form-field full"><label class="form-label">유입 경로</label><div id="de-inflow-btns" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"></div><input type="hidden" id="de-inflow" value="${d.inflow||'direct'}"></div>`;
-  const btn=document.getElementById('linkProjBtn');
-  if(btn) btn.textContent=d.linkedProject?'연결된 프로젝트 보기 →':'프로젝트 연결/생성';
-  // render inflow chips
-  setTimeout(()=>renderInflowChips('de-inflow-btns','de-inflow',d.inflow||'direct'),10);
+    <div class="form-field full"><label class="form-label">유입 경로</label><div id="de-inflow-btns" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"></div><input type="hidden" id="de-inflow" value="${d.inflow||'direct'}"></div>
+    <input type="hidden" id="de-amt">
+    <input type="hidden" id="de-prod">
+    <input type="hidden" id="de-qty">
+    <input type="hidden" id="de-unit">
+  `;
+
+  const btn = document.getElementById('linkProjBtn');
+  if(btn) btn.textContent = d.linkedProject ? '연결된 프로젝트 보기 →' : '프로젝트 연결/생성';
+  setTimeout(() => {
+    renderInflowChips('de-inflow-btns','de-inflow', d.inflow||'direct');
+    calcDeTotal();
+    // deal_products 비동기 로드 후 행 업데이트
+    if(!dealProductsCache[id]) {
+      loadDealProducts(id).then(products => {
+        if(products.length > 0) {
+          const wrap = document.getElementById('de-product-rows');
+          if(wrap) {
+            wrap.innerHTML = products.map(p => deProdRowHtml(p.prod, p.qty, p.unit_price)).join('');
+            calcDeTotal();
+          }
+        }
+      });
+    }
+  }, 10);
+}
+
+function addDeProdRow() {
+  const prods = invItems.filter(i=>i.category==='finished').map(i=>i.name);
+  const prodList = prods.length > 0 ? prods : PRODUCTS;
+  const opts = prodList.map(p=>`<option value="${p}">${p}</option>`).join('');
+  const wrap = document.getElementById('de-product-rows');
+  if(!wrap) return;
+  const div = document.createElement('div');
+  div.innerHTML = `<div class="de-prod-row" style="background:var(--s2);border-radius:var(--r);padding:10px 12px;display:flex;flex-direction:column;gap:8px;margin-bottom:8px">
+    <div style="display:grid;grid-template-columns:2fr 70px 1fr auto;gap:8px;align-items:end">
+      <div>
+        <label class="form-label" style="font-size:10px;margin-bottom:2px">제품</label>
+        <select class="form-select de-prod-sel" onchange="calcDeTotal()" style="font-size:13px"><option value="">선택</option>${opts}</select>
+      </div>
+      <div>
+        <label class="form-label" style="font-size:10px;margin-bottom:2px">수량</label>
+        <input class="form-input de-prod-qty" type="number" min="1" value="1" oninput="calcDeTotal()" style="font-size:13px;text-align:center">
+      </div>
+      <div>
+        <label class="form-label" style="font-size:10px;margin-bottom:2px">단가 (원)</label>
+        <input class="form-input de-prod-unit" type="number" min="0" placeholder="단가 입력" oninput="calcDeTotal()" style="font-size:13px">
+      </div>
+      <button type="button" onclick="this.closest('.de-prod-row').remove();calcDeTotal()"
+        style="background:var(--rl);border:1px solid #fecaca;border-radius:var(--r-sm);cursor:pointer;width:30px;height:30px;color:var(--red);font-size:16px;flex-shrink:0;margin-top:16px;display:flex;align-items:center;justify-content:center">×</button>
+    </div>
+    <div class="de-prod-subtotal" style="font-size:11px;color:var(--t3);text-align:right"></div>
+  </div>`;
+  wrap.appendChild(div.firstElementChild);
+}
+
+function calcDeTotal() {
+  let total = 0;
+  document.querySelectorAll('.de-prod-row').forEach(row => {
+    const qty  = parseInt(row.querySelector('.de-prod-qty')?.value)||0;
+    const unit = parseInt(row.querySelector('.de-prod-unit')?.value)||0;
+    const sub  = qty * unit;
+    total += sub;
+    const el = row.querySelector('.de-prod-subtotal');
+    if(el) el.textContent = sub > 0 ? `소계: ${fmt(sub)} (${qty}대 × ${fmt(unit)})` : '';
+  });
+  const el = document.getElementById('de-amt');
+  if(el) el.value = total;
+  const prev = document.getElementById('de-total-preview');
+  if(prev) prev.textContent = total > 0 ? fmt(total) : '₩0';
 }
 
 function calcDeAmt(){
@@ -4017,12 +4116,22 @@ async function saveDealEdit(){
   const os=d.stage;
   d.name=document.getElementById('de-name').value.trim()||d.name;
   d.co=document.getElementById('de-co').value.trim()||d.co;
-  d.prod=document.getElementById('de-prod').value;
+  // 다중 제품 수집
+  const deRows = [...document.querySelectorAll('.de-prod-row')];
+  const deProducts = deRows.map(row=>({
+    prod:      row.querySelector('.de-prod-sel')?.value||'',
+    qty:       parseInt(row.querySelector('.de-prod-qty')?.value)||1,
+    unitPrice: parseInt(row.querySelector('.de-prod-unit')?.value)||0,
+  })).filter(p=>p.prod);
+
+  if(deProducts.length > 0) {
+    const prodLabel = deProducts.map(p=>`${p.prod} ${p.qty}대`).join(', ');
+    d.prod  = prodLabel;
+    d.qty   = deProducts.reduce((s,p)=>s+p.qty, 0);
+    d.unit  = deProducts[0].unitPrice;
+    d.amt   = deProducts.reduce((s,p)=>s+p.qty*p.unitPrice, 0);
+  }
   d.option=document.getElementById('de-option')?.value.trim()||'';
-  d.qty=parseInt(document.getElementById('de-qty').value)||1;
-  // 원 단위 그대로 저장
-  d.unit=parseInt(document.getElementById('de-unit').value)||0;
-  d.amt=parseInt(document.getElementById('de-amt').value)||d.amt;
   d.person=document.getElementById('de-person').value;
   d.stage=document.getElementById('de-stage').value;
   d.closeDate=document.getElementById('de-date').value;
@@ -4046,6 +4155,15 @@ async function saveDealEdit(){
   document.querySelectorAll('.mtab').forEach((t,i)=>t.classList.toggle('on',i===0));
   document.querySelectorAll('.mtc').forEach((t,i)=>t.classList.toggle('on',i===0));
   updateDealInDB(d);
+  // deal_products 업데이트
+  if(sb && typeof deProducts !== 'undefined' && deProducts.length > 0) {
+    sb.from('deal_products').delete().eq('deal_id', d.id).then(() => {
+      const rows = deProducts.map(p=>({deal_id:d.id, prod:p.prod, qty:p.qty, unit_price:p.unitPrice}));
+      sb.from('deal_products').insert(rows).select().then(({data}) => {
+        dealProductsCache[d.id] = data || [];
+      });
+    });
+  }
   showToast('저장됐습니다 ✓');
   renderDashboard();
   if(document.getElementById('view-pipeline').classList.contains('active'))renderPipeline();
