@@ -5147,6 +5147,62 @@ document.getElementById('loginId').addEventListener('keydown',e=>{if(e.key==='En
     <div class="deal-alert-empty">알람이 없습니다</div>
   </div>
 </div>
+
+<script>
+// ── 조직도 마이그레이션: 슈어포인트 조직도(260408)에 영업팀·기술운영팀 추가 ──
+async function migrateOrgAddSalesTeams() {
+  const DONE_KEY = 'org_migration_salesteams_v1';
+  if(localStorage.getItem(DONE_KEY)) return; // 이미 실행됨
+  if(!sb) return;
+
+  try {
+    const {data: vers} = await sb.from('org_versions').select('id,name,depts_data');
+    if(!vers) return;
+
+    const target = vers.find(v => v.name && v.name.includes('260408'));
+    if(!target) return; // 해당 버전 없으면 스킵
+
+    const depts = JSON.parse(JSON.stringify(target.depts_data || []));
+
+    // 이미 있으면 스킵
+    if(depts.some(d => d.name === '영업팀' || d.name === '기술운영팀')) {
+      localStorage.setItem(DONE_KEY, '1');
+      return;
+    }
+
+    // 영업본부 위치 찾기
+    const salesHQIdx = depts.findIndex(d => d.name === '영업본부');
+    const insertIdx = salesHQIdx >= 0 ? salesHQIdx + 1 : depts.length;
+
+    // 최대 id 계산
+    const allIds = depts.flatMap(d => [d.id, ...(d.members||[]).map(m=>m.id)]).filter(Boolean);
+    const maxId = allIds.length > 0 ? Math.max(...allIds) : 999;
+
+    // 영업팀, 기술운영팀 삽입
+    depts.splice(insertIdx, 0,
+      { id: maxId+1, name: '영업팀',    members: [] },
+      { id: maxId+2, name: '기술운영팀', members: [] }
+    );
+
+    const {error} = await sb.from('org_versions').update({depts_data: depts}).eq('id', target.id);
+    if(!error) {
+      localStorage.setItem(DONE_KEY, '1');
+      console.log('[마이그레이션] 영업팀·기술운영팀 추가 완료');
+      showToast('조직도 업데이트: 영업팀·기술운영팀이 추가됐습니다 ✓');
+    }
+  } catch(e) {
+    console.warn('[마이그레이션] 오류:', e);
+  }
+}
+
+// 로그인 후 조직도 뷰 진입 시 실행
+const _origOrgInitView = window.orgInitView;
+window.orgInitView = async function() {
+  await migrateOrgAddSalesTeams();
+  _origOrgInitView?.call(this);
+};
+</script>
+
 </body>
 </html>
 
@@ -7329,17 +7385,8 @@ function orgRenderChart() {
   // 부서 트리
   const depts=orgActiveVer.depts_data||[];
   const tree=document.getElementById('orgTree2'); if(!tree) return;
-  tree.innerHTML = depts.map(dept=>`
-    <div class="org-dcol">
-      <div class="org-dhw">
-        <div class="org-dhd" onclick="orgOpenDeptModal(${dept.id})">${dept.name}</div>
-        <div class="org-dacts">
-          <button class="btn btn-s btn-sm" style="width:20px;height:20px;padding:0;justify-content:center;font-size:10px" onclick="orgOpenDeptModal(${dept.id})">✏️</button>
-          <button class="btn btn-danger btn-sm" style="width:20px;height:20px;padding:0;justify-content:center;font-size:10px" onclick="orgAskDelDept(${dept.id})">✕</button>
-        </div>
-      </div>
-      <div class="org-mwrap">
-        ${(dept.members||[]).map((m,mi)=>`
+  tree.innerHTML = depts.map(dept=>{
+    const memberRows = (dept.members||[]).map((m,mi)=>`
           <div class="org-mitem" draggable="true"
             ondragstart="orgMemDragStart(event,${dept.id},${mi})"
             ondragover="orgMemDragOver(event,${dept.id},${mi})"
@@ -7355,18 +7402,161 @@ function orgRenderChart() {
               <div class="org-mt${m.hl?' org-hl':''}">${m.title}</div>
               <div class="org-minfo">${m.phone||''}<br>${m.email||''}</div>
             </div>
-          </div>`).join('')}
+          </div>`).join('');
+
+    // sub_depts: 하위 팀 렌더링
+    const subDeptsHtml = (dept.sub_depts||[]).map(sub=>{
+      const subMembers = (sub.members||[]).map((m,mi)=>`
+        <div class="org-mitem" draggable="true"
+          ondragstart="orgSubMemDragStart(event,${dept.id},${sub.id},${mi})"
+          ondragover="orgSubMemDragOver(event,${dept.id},${sub.id},${mi})"
+          ondragleave="orgMemDragLeave(event)"
+          ondrop="orgSubMemDrop(event,${dept.id},${sub.id},${mi})"
+          style="cursor:grab">
+          <div class="org-mcard" onclick="orgOpenSubMemModal(${dept.id},${sub.id},${m.id})">
+            <button class="org-ico" onclick="event.stopPropagation();orgOpenSubMemModal(${dept.id},${sub.id},${m.id})">✏️</button>
+            <button class="org-del-ico" onclick="event.stopPropagation();orgAskDelSubMem(${dept.id},${sub.id},${m.id})">✕</button>
+            <div style="position:absolute;top:3px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--bd2);letter-spacing:2px;user-select:none">⠿</div>
+            <div class="org-mn">${m.name}</div>
+            <div class="org-mt">${m.title}</div>
+            <div class="org-minfo">${m.phone||''}<br>${m.email||''}</div>
+          </div>
+        </div>`).join('');
+      return `<div style="margin-top:10px;padding:8px;background:var(--s2);border-radius:var(--r-lg);border:1px dashed var(--bd2)">
+        <div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:6px;position:relative">
+          <span style="font-size:11px;font-weight:700;color:var(--t2)">${sub.name}</span>
+          <div class="org-dacts" style="position:absolute;right:0;top:0">
+            <button class="btn btn-danger btn-sm" style="width:18px;height:18px;padding:0;justify-content:center;font-size:9px" onclick="orgAskDelSubDept(${dept.id},${sub.id})">✕</button>
+          </div>
+        </div>
+        <div class="org-mwrap">
+          ${subMembers}
+          <button class="org-add-mb" onclick="orgOpenSubMemModal(${dept.id},${sub.id},null)">
+            <svg viewBox="0 0 12 12" fill="none" style="width:9px;height:9px"><line x1="6" y1="1" x2="6" y2="11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="1" y1="6" x2="11" y2="6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            팀원 추가
+          </button>
+        </div>
+      </div>`;
+    }).join('');
+
+    // sub_depts가 있으면 트리 구조, 없으면 기존 단일 열
+    const hasSubs = dept.sub_depts && dept.sub_depts.length > 0;
+
+    if(hasSubs) {
+      // 부서 헤더 + 아래에 소속팀들 가로 펼침
+      return `<div style="display:flex;flex-direction:column;align-items:center;flex:none">
+        <!-- 부서 헤더 -->
+        <div class="org-dcol" style="flex:none;min-width:168px;max-width:220px">
+          <div class="org-dhw">
+            <div class="org-dhd" onclick="orgOpenDeptModal(${dept.id})">${dept.name}</div>
+            <div class="org-dacts">
+              <button class="btn btn-s btn-sm" style="width:20px;height:20px;padding:0;justify-content:center;font-size:10px" onclick="orgOpenDeptModal(${dept.id})">✏️</button>
+              <button class="btn btn-danger btn-sm" style="width:20px;height:20px;padding:0;justify-content:center;font-size:10px" onclick="orgAskDelDept(${dept.id})">✕</button>
+              <button class="btn btn-s btn-sm" style="width:20px;height:20px;padding:0;justify-content:center;font-size:10px" onclick="orgAddSubDept(${dept.id})" title="소속팀 추가">+팀</button>
+            </div>
+          </div>
+          ${memberRows ? `<div class="org-mwrap">${memberRows}</div>` : ''}
+        </div>
+        <!-- 수직 연결선 -->
+        <div style="width:1px;height:20px;background:var(--bd)"></div>
+        <!-- 수평 연결선 -->
+        <div style="position:relative;display:flex;align-items:flex-start;justify-content:center">
+          <div style="position:absolute;top:0;left:calc(168px / 2);right:calc(168px / 2);height:1px;background:var(--bd)"></div>
+          <!-- 소속팀 열들 -->
+          <div style="display:flex;gap:8px;align-items:flex-start;padding-top:0">
+            ${(dept.sub_depts||[]).map(sub => {
+              const subMemRows = (sub.members||[]).map((m,mi)=>`
+                <div class="org-mitem" draggable="true"
+                  ondragstart="orgSubMemDragStart(event,${dept.id},${sub.id},${mi})"
+                  ondragover="orgSubMemDragOver(event,${dept.id},${sub.id},${mi})"
+                  ondragleave="orgMemDragLeave(event)"
+                  ondrop="orgSubMemDrop(event,${dept.id},${sub.id},${mi})"
+                  style="cursor:grab">
+                  <div class="org-mcard" onclick="orgOpenSubMemModal(${dept.id},${sub.id},${m.id})">
+                    <button class="org-ico" onclick="event.stopPropagation();orgOpenSubMemModal(${dept.id},${sub.id},${m.id})">✏️</button>
+                    <button class="org-del-ico" onclick="event.stopPropagation();orgAskDelSubMem(${dept.id},${sub.id},${m.id})">✕</button>
+                    <div class="org-mn">${m.name}</div>
+                    <div class="org-mt${m.hl?' org-hl':''}">${m.title}</div>
+                    <div class="org-minfo">${m.phone||''}<br>${m.email||''}</div>
+                  </div>
+                </div>`).join('');
+              return `<div class="org-dcol" style="min-width:168px;max-width:198px">
+                <div class="org-dhw">
+                  <div class="org-dhd" onclick="orgOpenSubMemModal(${dept.id},${sub.id},null)">${sub.name}</div>
+                  <div class="org-dacts">
+                    <button class="btn btn-danger btn-sm" style="width:18px;height:18px;padding:0;justify-content:center;font-size:9px" onclick="orgAskDelSubDept(${dept.id},${sub.id})">✕</button>
+                  </div>
+                </div>
+                <div class="org-mwrap">
+                  ${subMemRows}
+                  <button class="org-add-mb" onclick="orgOpenSubMemModal(${dept.id},${sub.id},null)">
+                    <svg viewBox="0 0 12 12" fill="none" style="width:9px;height:9px"><line x1="6" y1="1" x2="6" y2="11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="1" y1="6" x2="11" y2="6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                    팀원 추가
+                  </button>
+                </div>
+              </div>`;
+            }).join('')}
+
+          </div>
+        </div>
+      </div>`;
+    }
+
+    return `<div class="org-dcol">
+      <div class="org-dhw">
+        <div class="org-dhd" onclick="orgOpenDeptModal(${dept.id})">${dept.name}</div>
+        <div class="org-dacts">
+          <button class="btn btn-s btn-sm" style="width:20px;height:20px;padding:0;justify-content:center;font-size:10px" onclick="orgOpenDeptModal(${dept.id})">✏️</button>
+          <button class="btn btn-danger btn-sm" style="width:20px;height:20px;padding:0;justify-content:center;font-size:10px" onclick="orgAskDelDept(${dept.id})">✕</button>
+          <button class="btn btn-s btn-sm" style="width:20px;height:20px;padding:0;justify-content:center;font-size:10px" onclick="orgAddSubDept(${dept.id})" title="소속팀 추가">+팀</button>
+        </div>
+      </div>
+      <div class="org-mwrap">
+        ${memberRows}
         <button class="org-add-mb" onclick="orgOpenMemModal(${dept.id},null)">
           <svg viewBox="0 0 12 12" fill="none" style="width:9px;height:9px"><line x1="6" y1="1" x2="6" y2="11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="1" y1="6" x2="11" y2="6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
           팀원 추가
         </button>
       </div>
-    </div>`).join('')+
+    </div>`;
+  }).join('')+
   `<div class="org-add-dcol"><button class="org-add-db" onclick="orgOpenDeptModal(null)">
     <svg viewBox="0 0 16 16" fill="none" style="width:18px;height:18px;opacity:.35"><line x1="8" y1="2" x2="8" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="2" y1="8" x2="14" y2="8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     부서 추가
   </button></div>`;
   setTimeout(orgDrawLines,60);
+  // ── 연구소·마케팅팀 세로 위치 조정 (260408 버전에만 적용) ──
+  setTimeout(()=>{
+    const verName = orgActiveVer?.name || '';
+    if(!verName.includes('260408')) return;
+
+    const PADDING = 78; // 내려갈 px값
+
+    // 1. 해당 컬럼 paddingTop 적용
+    document.querySelectorAll('.org-dhd').forEach(el=>{
+      const name = el.textContent.trim();
+      if(['연구소','마케팅팀'].includes(name)){
+        el.closest('.org-dcol').style.paddingTop = PADDING + 'px';
+      }
+    });
+
+    // 2. 가로선/세로선 위치 재계산 (orgDrawLines 재실행)
+    orgDrawLines();
+
+    // 3. 연구소·마케팅팀의 세로 연결선 높이를 paddingTop만큼 늘리기
+    const aEl = document.getElementById('orgHArea');
+    if(!aEl) return;
+    const vts = aEl.querySelectorAll('.org-vt');
+    const cols = [...document.querySelectorAll('.org-dcol')];
+    cols.forEach((col, i) => {
+      const dhd = col.querySelector('.org-dhd');
+      if(!dhd) return;
+      const name = dhd.textContent.trim();
+      if(['연구소','마케팅팀'].includes(name) && vts[i]){
+        vts[i].style.height = (26 + PADDING) + 'px';
+      }
+    });
+  }, 100);
   orgSetPrintOrientation();
 }
 
@@ -11863,5 +12053,197 @@ function confirmCloseNewDeal() {
   ov.addEventListener('click', e => {
     if(e.target === ov) ov.remove();
   });
+}
+</script>
+
+<script>
+// ══ 하위 팀(sub_dept) CRUD ══
+
+function orgOpenSubMemModal(deptId, subDeptId, memberId) {
+  if(!orgActiveVer) return;
+  const dept = (orgActiveVer.depts_data||[]).find(d=>d.id===deptId);
+  const sub  = (dept?.sub_depts||[]).find(s=>s.id===subDeptId);
+  if(!sub) return;
+  const m = memberId ? (sub.members||[]).find(x=>x.id===memberId) : null;
+
+  // 기존 orgMemModal 재활용 — hidden fields로 sub 정보 전달
+  document.getElementById('org-mi-name').value  = m?.name||'';
+  document.getElementById('org-mi-title').value = m?.title||'';
+  document.getElementById('org-mi-phone').value = m?.phone||'';
+  document.getElementById('org-mi-email').value = m?.email||'';
+  const hlEl = document.getElementById('org-mi-hl');
+  if(hlEl) hlEl.checked = m?.hl||false;
+
+  // sub 정보 hidden
+  let hd = document.getElementById('org-sub-hidden');
+  if(!hd) {
+    hd = document.createElement('div');
+    hd.id = 'org-sub-hidden';
+    document.getElementById('orgMemModal').appendChild(hd);
+  }
+  hd.dataset.deptId    = deptId;
+  hd.dataset.subDeptId = subDeptId;
+  hd.dataset.memberId  = memberId||'';
+  hd.dataset.isSubMem  = 'true';
+
+  openModal('orgMemModal');
+}
+
+// orgSaveMem override — sub_dept 멤버 처리
+const _origOrgSaveMem = window.orgSaveMem;
+window.orgSaveMem = async function() {
+  const hd = document.getElementById('org-sub-hidden');
+  if(!hd || hd.dataset.isSubMem !== 'true') {
+    hd && (hd.dataset.isSubMem = '');
+    return _origOrgSaveMem?.call(this);
+  }
+
+  const deptId    = parseInt(hd.dataset.deptId);
+  const subDeptId = parseInt(hd.dataset.subDeptId);
+  const memberId  = hd.dataset.memberId ? parseInt(hd.dataset.memberId) : null;
+  hd.dataset.isSubMem = '';
+
+  const name  = document.getElementById('org-mi-name')?.value.trim();
+  const title = document.getElementById('org-mi-title')?.value.trim();
+  const phone = document.getElementById('org-mi-phone')?.value.trim();
+  const email = document.getElementById('org-mi-email')?.value.trim();
+  const hl    = document.getElementById('org-mi-hl')?.checked||false;
+  if(!name) return;
+
+  const dept = (orgActiveVer.depts_data||[]).find(d=>d.id===deptId);
+  const sub  = (dept?.sub_depts||[]).find(s=>s.id===subDeptId);
+  if(!sub) return;
+
+  if(memberId) {
+    const m = (sub.members||[]).find(x=>x.id===memberId);
+    if(m) Object.assign(m, {name,title,phone,email,hl});
+  } else {
+    const allIds = (orgActiveVer.depts_data||[]).flatMap(d=>[d.id,...(d.members||[]).map(m=>m.id),...(d.sub_depts||[]).flatMap(s=>[s.id,...(s.members||[]).map(m=>m.id)])]);
+    const maxId = Math.max(0,...allIds);
+    sub.members = sub.members||[];
+    sub.members.push({id:maxId+1,name,title,phone,email,hl});
+  }
+
+  await orgSaveActiveData();
+  closeModal('orgMemModal');
+  orgRenderChart();
+  showToast('저장됐습니다 ✓');
+};
+
+async function orgAskDelSubMem(deptId, subDeptId, memberId) {
+  if(!confirm('이 팀원을 삭제할까요?')) return;
+  const dept = (orgActiveVer.depts_data||[]).find(d=>d.id===deptId);
+  const sub  = (dept?.sub_depts||[]).find(s=>s.id===subDeptId);
+  if(!sub) return;
+  sub.members = (sub.members||[]).filter(m=>m.id!==memberId);
+  await orgSaveActiveData();
+  orgRenderChart();
+  showToast('삭제됐습니다');
+}
+
+async function orgAskDelSubDept(deptId, subDeptId) {
+  if(!confirm('이 하위 팀을 삭제할까요?\n팀원 정보도 모두 삭제됩니다.')) return;
+  const dept = (orgActiveVer.depts_data||[]).find(d=>d.id===deptId);
+  if(!dept) return;
+  dept.sub_depts = (dept.sub_depts||[]).filter(s=>s.id!==subDeptId);
+  await orgSaveActiveData();
+  orgRenderChart();
+  showToast('삭제됐습니다');
+}
+
+// sub_dept 멤버 드래그 (간단 구현)
+function orgSubMemDragStart(e,deptId,subId,idx){ e.dataTransfer.effectAllowed='move'; window._orgSubDrag={deptId,subId,idx}; }
+function orgSubMemDragOver(e,deptId,subId,idx){ e.preventDefault(); if(window._orgSubDrag?.subId===subId) e.currentTarget.style.outline='2px solid var(--accent)'; }
+function orgSubMemDrop(e,deptId,subId,toIdx){
+  e.preventDefault(); e.currentTarget.style.outline='';
+  const drag=window._orgSubDrag; window._orgSubDrag=null;
+  if(!drag||drag.subId!==subId||drag.idx===toIdx) return;
+  const dept=(orgActiveVer.depts_data||[]).find(d=>d.id===deptId);
+  const sub=(dept?.sub_depts||[]).find(s=>s.id===subId); if(!sub) return;
+  const members=[...sub.members]; const [moved]=members.splice(drag.idx,1); members.splice(toIdx,0,moved);
+  sub.members=members;
+  orgSaveActiveData().then(()=>{ orgRenderChart(); showToast('순서 변경 ✓'); });
+}
+
+// ══ DB 마이그레이션: 슈어포인트 조직도(260408)에 영업팀·기술운영팀 추가 ══
+async function migrateAddSalesSubDepts() {
+  const DONE_KEY = 'org_sub_sales_v2';
+  if(localStorage.getItem(DONE_KEY)) return;
+  if(!sb) return;
+  try {
+    const {data:vers} = await sb.from('org_versions').select('id,name,depts_data');
+    if(!vers) return;
+    const target = vers.find(v=>v.name&&v.name.includes('260408'));
+    if(!target) return;
+
+    const depts = JSON.parse(JSON.stringify(target.depts_data||[]));
+    const salesHQ = depts.find(d=>d.name==='영업본부');
+    if(!salesHQ) { console.warn('영업본부 없음'); return; }
+
+    // 이미 있으면 스킵
+    if((salesHQ.sub_depts||[]).some(s=>s.name==='영업팀'||s.name==='기술운영팀')) {
+      localStorage.setItem(DONE_KEY,'1'); return;
+    }
+
+    const allIds = depts.flatMap(d=>[d.id,...(d.members||[]).map(m=>m.id),...(d.sub_depts||[]).flatMap(s=>[s.id,...(s.members||[]).map(m=>m.id)])]);
+    const maxId = Math.max(0,...allIds);
+
+    salesHQ.sub_depts = salesHQ.sub_depts||[];
+    salesHQ.sub_depts.push(
+      {id:maxId+1, name:'영업팀',    members:[]},
+      {id:maxId+2, name:'기술운영팀', members:[]}
+    );
+
+    const {error} = await sb.from('org_versions').update({depts_data:depts}).eq('id',target.id);
+    if(!error) {
+      localStorage.setItem(DONE_KEY,'1');
+      showToast('조직도 업데이트: 영업팀·기술운영팀이 영업본부 하위에 추가됐습니다 ✓');
+    }
+  } catch(e) { console.warn('마이그레이션 오류:', e); }
+}
+
+// 조직도 뷰 진입 시 마이그레이션 실행
+const _origOrgInitViewSub = window.orgInitView;
+window.orgInitView = async function() {
+  _origOrgInitViewSub?.call(this);
+  await migrateAddSalesSubDepts();
+  // 마이그레이션 후 차트 재렌더
+  if(orgActiveVer) setTimeout(orgRenderChart, 500);
+};
+</script>
+
+<script>
+// ══ 소속팀(sub_dept) 추가 ══
+async function orgAddSubDept(deptId) {
+  if(!orgActiveVer) return;
+
+  const name = prompt('추가할 소속팀 이름을 입력하세요\n(예: 영업팀, 기술운영팀)');
+  if(!name || !name.trim()) return;
+
+  const depts = orgActiveVer.depts_data || [];
+  const dept = depts.find(d => d.id === deptId);
+  if(!dept) return;
+
+  if(!dept.sub_depts) dept.sub_depts = [];
+
+  // 중복 체크
+  if(dept.sub_depts.some(s => s.name === name.trim())) {
+    showToast('이미 같은 이름의 소속팀이 있습니다', 'warn');
+    return;
+  }
+
+  // 새 id 생성
+  const allIds = depts.flatMap(d => [
+    d.id,
+    ...(d.members||[]).map(m=>m.id),
+    ...(d.sub_depts||[]).flatMap(s=>[s.id, ...(s.members||[]).map(m=>m.id)])
+  ]).filter(Boolean);
+  const newId = Math.max(0, ...allIds) + 1;
+
+  dept.sub_depts.push({ id: newId, name: name.trim(), members: [] });
+
+  await orgSaveActiveData();
+  orgRenderChart();
+  showToast(`"${name.trim()}" 소속팀이 추가됐습니다 ✓`);
 }
 </script>
