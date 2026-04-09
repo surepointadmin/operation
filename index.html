@@ -1892,6 +1892,20 @@ tbody tr:hover{background:var(--s2)}
           <input class="form-input" id="nd-co" placeholder="예: 현대중공업" oninput="autoNdName()">
         </div>
 
+        <!-- 고객사 담당자 정보 -->
+        <div class="form-field">
+          <label class="form-label">고객사 담당자</label>
+          <input class="form-input" id="nd-contact-name" placeholder="예: 김부장">
+        </div>
+        <div class="form-field">
+          <label class="form-label">연락처</label>
+          <input class="form-input" id="nd-contact-phone" placeholder="예: 010-1234-5678">
+        </div>
+        <div class="form-field full">
+          <label class="form-label">이메일</label>
+          <input class="form-input" id="nd-contact-email" placeholder="예: kim@company.com">
+        </div>
+
         <!-- 다중 제품 섹션 -->
         <div class="form-field full">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
@@ -7525,38 +7539,6 @@ function orgRenderChart() {
     부서 추가
   </button></div>`;
   setTimeout(orgDrawLines,60);
-  // ── 연구소·마케팅팀 세로 위치 조정 (260408 버전에만 적용) ──
-  setTimeout(()=>{
-    const verName = orgActiveVer?.name || '';
-    if(!verName.includes('260408')) return;
-
-    const PADDING = 78; // 내려갈 px값
-
-    // 1. 해당 컬럼 paddingTop 적용
-    document.querySelectorAll('.org-dhd').forEach(el=>{
-      const name = el.textContent.trim();
-      if(['연구소','마케팅팀'].includes(name)){
-        el.closest('.org-dcol').style.paddingTop = PADDING + 'px';
-      }
-    });
-
-    // 2. 가로선/세로선 위치 재계산 (orgDrawLines 재실행)
-    orgDrawLines();
-
-    // 3. 연구소·마케팅팀의 세로 연결선 높이를 paddingTop만큼 늘리기
-    const aEl = document.getElementById('orgHArea');
-    if(!aEl) return;
-    const vts = aEl.querySelectorAll('.org-vt');
-    const cols = [...document.querySelectorAll('.org-dcol')];
-    cols.forEach((col, i) => {
-      const dhd = col.querySelector('.org-dhd');
-      if(!dhd) return;
-      const name = dhd.textContent.trim();
-      if(['연구소','마케팅팀'].includes(name) && vts[i]){
-        vts[i].style.height = (26 + PADDING) + 'px';
-      }
-    });
-  }, 100);
   orgSetPrintOrientation();
 }
 
@@ -11801,7 +11783,7 @@ function getNdProductOpts(selectedProd) {
   ).join('');
 }
 
-function addNdProductRow(prod, qty, unitPrice) {
+function addNdProductRow(prod, qty, unitPrice, installFee) {
   const rows = document.getElementById('nd-product-rows');
   if(!rows) return;
   const idx = rows.children.length;
@@ -11810,7 +11792,7 @@ function addNdProductRow(prod, qty, unitPrice) {
   div.className = 'nd-prod-row';
   div.style.cssText = 'background:var(--s2);border-radius:var(--r);padding:10px 12px;display:flex;flex-direction:column;gap:8px';
   div.innerHTML = `
-    <div style="display:grid;grid-template-columns:2fr 70px 1fr auto;gap:8px;align-items:end">
+    <div style="display:grid;grid-template-columns:2fr 70px 1fr 1fr auto;gap:8px;align-items:end">
       <div>
         <label class="form-label" style="font-size:10px;margin-bottom:2px">제품</label>
         <select class="form-select nd-prod-sel" onchange="calcNdTotal();autoNdName()" style="font-size:13px">
@@ -11828,6 +11810,12 @@ function addNdProductRow(prod, qty, unitPrice) {
           placeholder="단가 입력" oninput="calcNdTotal()"
           style="font-size:13px">
       </div>
+      <div>
+        <label class="form-label" style="font-size:10px;margin-bottom:2px">설치비/대 (원)</label>
+        <input class="form-input nd-prod-install" type="number" min="0" value="${installFee||''}"
+          placeholder="설치비 입력" oninput="calcNdTotal()"
+          style="font-size:13px">
+      </div>
       <button type="button" onclick="this.closest('.nd-prod-row').remove();calcNdTotal();autoNdName()"
         style="background:var(--rl);border:1px solid #fecaca;border-radius:var(--r-sm);
           cursor:pointer;width:30px;height:30px;color:var(--red);font-size:16px;
@@ -11841,24 +11829,40 @@ function addNdProductRow(prod, qty, unitPrice) {
 
 function calcNdTotal() {
   let total = 0;
+  let totalInstall = 0;
   document.querySelectorAll('.nd-prod-row').forEach(row => {
-    const qty   = parseInt(row.querySelector('.nd-prod-qty')?.value)||0;
-    const unit  = parseInt(row.querySelector('.nd-prod-unit')?.value)||0;
-    const sub   = qty * unit;
-    total += sub;
+    const qty     = parseInt(row.querySelector('.nd-prod-qty')?.value)||0;
+    const unit    = parseInt(row.querySelector('.nd-prod-unit')?.value)||0;
+    const install = parseInt(row.querySelector('.nd-prod-install')?.value)||0;
+    const sub        = qty * unit;
+    const installSub = qty * install;
+    total        += sub;
+    totalInstall += installSub;
     const subEl = row.querySelector('.nd-prod-subtotal');
-    if(subEl) subEl.textContent = sub > 0
-      ? `소계: ${fmt(sub)} (${qty}대 × ${fmt(unit)})`
-      : '';
+    if(subEl) {
+      let txt = sub > 0 ? `제품: ${fmt(sub)} (${qty}대 × ${fmt(unit)})` : '';
+      if(installSub > 0) txt += `　설치: ${fmt(installSub)} (${qty}대 × ${fmt(install)})`;
+      subEl.textContent = txt;
+    }
   });
+
+  const grandTotal = total + totalInstall;
 
   // hidden fields 업데이트 (createDeal에서 사용)
   const amtEl = document.getElementById('nd-amt');
-  if(amtEl) amtEl.value = total;
+  if(amtEl) amtEl.value = grandTotal;
 
   // 합계 표시
   const totalEl = document.getElementById('nd-total-preview');
-  if(totalEl) totalEl.textContent = total > 0 ? fmt(total) : '₩0';
+  if(totalEl) {
+    if(grandTotal > 0) {
+      let preview = fmt(grandTotal);
+      if(totalInstall > 0) preview += ` (제품 ${fmt(total)} + 설치 ${fmt(totalInstall)})`;
+      totalEl.textContent = preview;
+    } else {
+      totalEl.textContent = '₩0';
+    }
+  }
 }
 
 // autoNdName override — 다중 제품 지원
