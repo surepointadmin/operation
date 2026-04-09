@@ -3975,10 +3975,10 @@ function buildDealEdit(id){
   const existingProducts = dealProductsCache[id] || [];
 
   // 제품 행 HTML 생성
-  function deProdRowHtml(prod, qty, unitPrice) {
+  function deProdRowHtml(prod, qty, unitPrice, installFee) {
     const opts = prods.map(p=>`<option value="${p}"${p===prod?' selected':''}>${p}</option>`).join('');
     return `<div class="de-prod-row" style="background:var(--s2);border-radius:var(--r);padding:10px 12px;display:flex;flex-direction:column;gap:8px;margin-bottom:8px">
-      <div style="display:grid;grid-template-columns:2fr 70px 1fr auto;gap:8px;align-items:end">
+      <div style="display:grid;grid-template-columns:2fr 70px 1fr 1fr auto;gap:8px;align-items:end">
         <div>
           <label class="form-label" style="font-size:10px;margin-bottom:2px">제품</label>
           <select class="form-select de-prod-sel" onchange="calcDeTotal()" style="font-size:13px">
@@ -3992,6 +3992,10 @@ function buildDealEdit(id){
         <div>
           <label class="form-label" style="font-size:10px;margin-bottom:2px">단가 (원)</label>
           <input class="form-input de-prod-unit" type="number" min="0" value="${unitPrice||''}" placeholder="단가 입력" oninput="calcDeTotal()" style="font-size:13px">
+        </div>
+        <div>
+          <label class="form-label" style="font-size:10px;margin-bottom:2px">설치비/대 (원)</label>
+          <input class="form-input de-prod-install" type="number" min="0" value="${installFee||''}" placeholder="설치비 입력" oninput="calcDeTotal()" style="font-size:13px">
         </div>
         <button type="button" onclick="this.closest('.de-prod-row').remove();calcDeTotal()"
           style="background:var(--rl);border:1px solid #fecaca;border-radius:var(--r-sm);cursor:pointer;width:30px;height:30px;color:var(--red);font-size:16px;flex-shrink:0;margin-top:16px;display:flex;align-items:center;justify-content:center">×</button>
@@ -4076,7 +4080,7 @@ function addDeProdRow() {
   if(!wrap) return;
   const div = document.createElement('div');
   div.innerHTML = `<div class="de-prod-row" style="background:var(--s2);border-radius:var(--r);padding:10px 12px;display:flex;flex-direction:column;gap:8px;margin-bottom:8px">
-    <div style="display:grid;grid-template-columns:2fr 70px 1fr auto;gap:8px;align-items:end">
+    <div style="display:grid;grid-template-columns:2fr 70px 1fr 1fr auto;gap:8px;align-items:end">
       <div>
         <label class="form-label" style="font-size:10px;margin-bottom:2px">제품</label>
         <select class="form-select de-prod-sel" onchange="calcDeTotal()" style="font-size:13px"><option value="">선택</option>${opts}</select>
@@ -4089,6 +4093,10 @@ function addDeProdRow() {
         <label class="form-label" style="font-size:10px;margin-bottom:2px">단가 (원)</label>
         <input class="form-input de-prod-unit" type="number" min="0" placeholder="단가 입력" oninput="calcDeTotal()" style="font-size:13px">
       </div>
+      <div>
+        <label class="form-label" style="font-size:10px;margin-bottom:2px">설치비/대 (원)</label>
+        <input class="form-input de-prod-install" type="number" min="0" placeholder="설치비 입력" oninput="calcDeTotal()" style="font-size:13px">
+      </div>
       <button type="button" onclick="this.closest('.de-prod-row').remove();calcDeTotal()"
         style="background:var(--rl);border:1px solid #fecaca;border-radius:var(--r-sm);cursor:pointer;width:30px;height:30px;color:var(--red);font-size:16px;flex-shrink:0;margin-top:16px;display:flex;align-items:center;justify-content:center">×</button>
     </div>
@@ -4098,19 +4106,35 @@ function addDeProdRow() {
 }
 
 function calcDeTotal() {
-  let total = 0;
+  let totalProd = 0;
+  let totalInstall = 0;
   document.querySelectorAll('.de-prod-row').forEach(row => {
-    const qty  = parseInt(row.querySelector('.de-prod-qty')?.value)||0;
-    const unit = parseInt(row.querySelector('.de-prod-unit')?.value)||0;
-    const sub  = qty * unit;
-    total += sub;
+    const qty     = parseInt(row.querySelector('.de-prod-qty')?.value)||0;
+    const unit    = parseInt(row.querySelector('.de-prod-unit')?.value)||0;
+    const install = parseInt(row.querySelector('.de-prod-install')?.value)||0;
+    const subProd    = qty * unit;
+    const subInstall = qty * install;
+    totalProd    += subProd;
+    totalInstall += subInstall;
     const el = row.querySelector('.de-prod-subtotal');
-    if(el) el.textContent = sub > 0 ? `소계: ${fmt(sub)} (${qty}대 × ${fmt(unit)})` : '';
+    if(el) {
+      const parts = [];
+      if(subProd > 0)    parts.push(`제품 ${fmt(subProd)} (${qty}대 × ${fmt(unit)})`);
+      if(subInstall > 0) parts.push(`설치 ${fmt(subInstall)} (${qty}대 × ${fmt(install)})`);
+      el.textContent = parts.join('　');
+    }
   });
+  const grandTotal = totalProd + totalInstall;
   const el = document.getElementById('de-amt');
-  if(el) el.value = total;
+  if(el) el.value = grandTotal;
   const prev = document.getElementById('de-total-preview');
-  if(prev) prev.textContent = total > 0 ? fmt(total) : '₩0';
+  if(prev) {
+    if(grandTotal === 0) { prev.textContent = '₩0'; return; }
+    let preview = fmt(grandTotal);
+    if(totalInstall > 0)
+      preview += `  <span style="font-size:10px;color:var(--t3);font-weight:400">(제품 ${fmt(totalProd)} + 설치 ${fmt(totalInstall)})</span>`;
+    prev.innerHTML = preview;
+  }
 }
 
 function calcDeAmt(){
