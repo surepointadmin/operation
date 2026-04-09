@@ -7539,6 +7539,38 @@ function orgRenderChart() {
     부서 추가
   </button></div>`;
   setTimeout(orgDrawLines,60);
+  // ── 연구소·마케팅팀 세로 위치 조정 (260408 버전에만 적용) ──
+  setTimeout(()=>{
+    const verName = orgActiveVer?.name || '';
+    if(!verName.includes('260408')) return;
+
+    const PADDING = 78; // 내려갈 px값
+
+    // 1. 해당 컬럼 paddingTop 적용
+    document.querySelectorAll('.org-dhd').forEach(el=>{
+      const name = el.textContent.trim();
+      if(['연구소','마케팅팀'].includes(name)){
+        el.closest('.org-dcol').style.paddingTop = PADDING + 'px';
+      }
+    });
+
+    // 2. 가로선/세로선 위치 재계산 (orgDrawLines 재실행)
+    orgDrawLines();
+
+    // 3. 연구소·마케팅팀의 세로 연결선 높이를 paddingTop만큼 늘리기
+    const aEl = document.getElementById('orgHArea');
+    if(!aEl) return;
+    const vts = aEl.querySelectorAll('.org-vt');
+    const cols = [...document.querySelectorAll('.org-dcol')];
+    cols.forEach((col, i) => {
+      const dhd = col.querySelector('.org-dhd');
+      if(!dhd) return;
+      const name = dhd.textContent.trim();
+      if(['연구소','마케팅팀'].includes(name) && vts[i]){
+        vts[i].style.height = (26 + PADDING) + 'px';
+      }
+    });
+  }, 100);
   orgSetPrintOrientation();
 }
 
@@ -11828,25 +11860,26 @@ function addNdProductRow(prod, qty, unitPrice, installFee) {
 }
 
 function calcNdTotal() {
-  let total = 0;
+  let totalProd = 0;
   let totalInstall = 0;
   document.querySelectorAll('.nd-prod-row').forEach(row => {
     const qty     = parseInt(row.querySelector('.nd-prod-qty')?.value)||0;
     const unit    = parseInt(row.querySelector('.nd-prod-unit')?.value)||0;
     const install = parseInt(row.querySelector('.nd-prod-install')?.value)||0;
-    const sub        = qty * unit;
-    const installSub = qty * install;
-    total        += sub;
-    totalInstall += installSub;
+    const subProd    = qty * unit;
+    const subInstall = qty * install;
+    totalProd    += subProd;
+    totalInstall += subInstall;
     const subEl = row.querySelector('.nd-prod-subtotal');
     if(subEl) {
-      let txt = sub > 0 ? `제품: ${fmt(sub)} (${qty}대 × ${fmt(unit)})` : '';
-      if(installSub > 0) txt += `　설치: ${fmt(installSub)} (${qty}대 × ${fmt(install)})`;
-      subEl.textContent = txt;
+      const parts = [];
+      if(subProd > 0)    parts.push(`제품 ${fmt(subProd)} (${qty}대 × ${fmt(unit)})`);
+      if(subInstall > 0) parts.push(`설치 ${fmt(subInstall)} (${qty}대 × ${fmt(install)})`);
+      subEl.textContent = parts.join('　');
     }
   });
 
-  const grandTotal = total + totalInstall;
+  const grandTotal = totalProd + totalInstall;
 
   // hidden fields 업데이트 (createDeal에서 사용)
   const amtEl = document.getElementById('nd-amt');
@@ -11855,13 +11888,11 @@ function calcNdTotal() {
   // 합계 표시
   const totalEl = document.getElementById('nd-total-preview');
   if(totalEl) {
-    if(grandTotal > 0) {
-      let preview = fmt(grandTotal);
-      if(totalInstall > 0) preview += ` (제품 ${fmt(total)} + 설치 ${fmt(totalInstall)})`;
-      totalEl.textContent = preview;
-    } else {
-      totalEl.textContent = '₩0';
-    }
+    if(grandTotal === 0) { totalEl.textContent = '₩0'; return; }
+    let preview = fmt(grandTotal);
+    if(totalInstall > 0)
+      preview += `  <span style="font-size:10px;color:var(--t3);font-weight:400">(제품 ${fmt(totalProd)} + 설치 ${fmt(totalInstall)})</span>`;
+    totalEl.innerHTML = preview;
   }
 }
 
