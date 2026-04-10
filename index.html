@@ -93,9 +93,10 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
 .cal-topbar-btn:hover{background:var(--al);border-color:var(--accent);color:var(--accent)}
 .cal-topbar-btn.active{background:var(--al);border-color:var(--accent);color:var(--accent)}
 @media(max-width:768px){
-  .cal-day{min-height:52px;padding:4px 3px}
-  .cal-dot{display:none}
-  .cal-day-num{font-size:11px}
+  .cal-day{height:72px;min-height:72px;max-height:72px;padding:3px 2px;overflow:hidden;box-sizing:border-box}
+  .cal-dot{display:block;font-size:9px;font-weight:600;padding:1px 3px;line-height:1.3;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;margin-bottom:1px}
+  .cal-dot-row{gap:1px;flex-wrap:nowrap;flex-direction:column;margin-top:1px;overflow:hidden;max-height:44px}
+  .cal-day-num{font-size:10px;margin-bottom:1px}
   .cal-month-label{font-size:15px}
 }
 /* ── 금액 빠른입력 버튼 ── */
@@ -5236,6 +5237,43 @@ window.orgInitView = async function() {
 };
 </script>
 
+
+<div class="overlay" id="poEditModal">
+  <div class="modal modal-sm">
+    <div class="modal-hd">
+      <div class="modal-hd-info"><div class="modal-title">발주 수정</div><div class="modal-sub" id="poEditModalSub"></div></div>
+      <button class="modal-close" onclick="closeModal('poEditModal')"><svg viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="po-edit-id">
+      <div class="form-grid">
+        <div class="form-field full"><label class="form-label">품목</label><input class="form-input auto" id="po-edit-item-name" readonly></div>
+        <div class="form-field"><label class="form-label">발주 수량 *</label><input class="form-input" id="po-edit-qty" type="number" min="1" oninput="calcPoEditTotal()"></div>
+        <div class="form-field"><label class="form-label">단가 (원)</label><input class="form-input" id="po-edit-unit-cost" type="number" min="0" oninput="calcPoEditTotal()"></div>
+        <div class="form-field full"><label class="form-label">총 발주금액 — 자동계산</label><input class="form-input auto" id="po-edit-total" type="number" readonly></div>
+        <div class="form-field full"><label class="form-label">공급업체</label><input class="form-input" id="po-edit-supplier"></div>
+        <div class="form-field"><label class="form-label">발주일</label><input class="form-input" id="po-edit-order-date" type="date" oninput="calcPoEditExpected()"></div>
+        <div class="form-field"><label class="form-label">리드타임 (주)</label><input class="form-input" id="po-edit-lead-weeks" type="number" min="1" max="52" oninput="calcPoEditExpected()"></div>
+        <div class="form-field full"><label class="form-label">입고 예정일</label><input class="form-input" id="po-edit-expected-date" type="date"></div>
+        <div class="form-field"><label class="form-label">실제 입고일</label><input class="form-input" id="po-edit-received-date" type="date"></div>
+        <div class="form-field"><label class="form-label">발주자</label><input class="form-input" id="po-edit-orderer"></div>
+        <div class="form-field full"><label class="form-label">상태</label>
+          <select class="form-select" id="po-edit-status">
+            <option value="ordered">발주완료</option>
+            <option value="partial">부분입고</option>
+            <option value="received">입고완료</option>
+            <option value="cancelled">취소</option>
+          </select>
+        </div>
+        <div class="form-field full"><label class="form-label">메모</label><input class="form-input" id="po-edit-note"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn btn-p" style="flex:1;justify-content:center" onclick="savePOEdit()">저장</button>
+        <button class="btn btn-danger" style="justify-content:center" onclick="deletePOFromEdit()">삭제</button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
 
@@ -5973,13 +6011,17 @@ async function renderInvOverview() {
         const statusCls=p.status==='partial'?'chip-amber':'chip-blue';
         const statusTxt=p.status==='partial'?'부분입고':'발주완료';
         return `<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--bd)">
-          <div style="flex:1;min-width:0">
+          <div style="flex:1;min-width:0;cursor:pointer" onclick="goToRawStock(${p.item_id})">
             <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${iName}</div>
             <div style="font-size:11px;color:var(--t3);margin-top:2px">${p.qty}개 · ${p.expected_date||'입고일 미정'}${weeks?' · '+weeks:''}${p.orderer?' · '+p.orderer:''}</div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">
             ${ddayHtml}
             <span class="chip ${statusCls}" style="font-size:9px">${statusTxt}</span>
+          </div>
+          <div style="display:flex;gap:4px;flex-shrink:0;margin-left:4px">
+            <button class="btn btn-s btn-sm" onclick="event.stopPropagation();openPOEdit(${p.id})" style="padding:3px 8px;font-size:11px">수정</button>
+            <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deletePO(${p.id})" style="padding:3px 8px;font-size:11px">삭제</button>
           </div>
         </div>`;
       }).join('');
@@ -6986,7 +7028,7 @@ function openPoModal() {
     showToast('품목을 먼저 재고 현황에서 추가해주세요', 'warn');
     return;
   }
-  // 필드 초기화 먼저
+  sel.innerHTML = '<option value="">품목 선택 *</option>' + invItems.map(i=>`<option value="${i.id}">[${i.category==='raw'?'원재료':'완제품'}] ${i.name} (현재 ${i.current_stock}${i.unit})</option>`).join('');
   const today = new Date().toISOString().slice(0,10);
   document.getElementById('po-order-date').value = today;
   document.getElementById('po-expected-date').value = '';
@@ -6997,29 +7039,17 @@ function openPoModal() {
   document.getElementById('po-supplier').value = '';
   document.getElementById('po-note').value = '';
   document.getElementById('po-orderer').value = '';
-  // 품목 목록
   sel.innerHTML = '<option value="">품목 선택 *</option>' + invItems.map(i=>`<option value="${i.id}">[${i.category==='raw'?'원재료':'완제품'}] ${i.name} (현재 ${i.current_stock}${i.unit})</option>`).join('');
-  // 품목 선택 시 자동입력
   sel.onchange = function() {
-    const item = invItems.find(i=>i.id===parseInt(sel.value));
+    const item = invItems.find(i => i.id === parseInt(sel.value));
     if(!item) return;
-    // 공급업체
     if(item.supplier) document.getElementById('po-supplier').value = item.supplier;
-    // 단가 → 총액
-    if(item.unit_cost > 0) {
-      document.getElementById('po-unit-cost').value = item.unit_cost;
-      calcPoTotal();
-    }
-    // 리드타임 → 입고예정일 자동계산
+    if(item.unit_cost > 0) { document.getElementById('po-unit-cost').value = item.unit_cost; if(typeof calcPoTotal==='function') calcPoTotal(); }
     const weeks = item.lead_time_days ? Math.round(item.lead_time_days / 7) : null;
-    if(weeks) {
-      document.getElementById('po-lead-weeks').value = weeks;
-      calcPoExpected();
-    }
-    // 발주수량: 부족분 (안전재고 - 현재재고), 최소 1
-    const shortage = (item.safety_stock || 0) - (item.current_stock || 0);
+    if(weeks) { document.getElementById('po-lead-weeks').value = weeks; calcPoExpected(); }
+    const shortage = (item.safety_stock||0) - (item.current_stock||0);
     document.getElementById('po-qty').value = shortage > 0 ? shortage : 1;
-    calcPoTotal();
+    if(typeof calcPoTotal==='function') calcPoTotal();
   };
   openModal('poModal');
 }
@@ -7090,9 +7120,17 @@ async function savePO() {
     note: document.getElementById('po-note')?.value.trim()||null
   };
   if(sb){
-    const {data:d, error} = await sb.from('purchase_orders').insert([data]).select().single();
+    const tryInsert = async (payload) => {
+      const {data:d, error} = await sb.from('purchase_orders').insert([payload]).select().single();
+      if(error?.message?.includes("Could not find the '")) {
+        const m = error.message.match(/Could not find the '([^']+)' column/);
+        if(m){ const {[m[1]]:_, ...rest} = payload; return tryInsert(rest); }
+      }
+      return {data:d, error};
+    };
+    const {data:d, error} = await tryInsert(data);
     if(error){ showToast('저장 실패: '+error.message,'error'); return; }
-    if(d) poOrders.unshift(d);
+    poOrders.unshift({...data, id: d?.id||Date.now()});
   } else {
     poOrders.unshift({id:Date.now(),...data});
   }
@@ -12445,4 +12483,11 @@ async function orgAddSubDept(deptId) {
   orgRenderChart();
   showToast(`"${name.trim()}" 소속팀이 추가됐습니다 ✓`);
 }
+
+function openPOEdit(id){const p=poOrders.find(o=>o.id===id);if(!p)return;const item=invItems.find(i=>i.id===p.item_id);document.getElementById('po-edit-id').value=id;document.getElementById('poEditModalSub').textContent=item?.name||'';document.getElementById('po-edit-item-name').value=item?.name||'–';document.getElementById('po-edit-qty').value=p.qty||'';document.getElementById('po-edit-unit-cost').value=p.unit_cost||0;document.getElementById('po-edit-total').value=p.total_cost||'';document.getElementById('po-edit-supplier').value=p.supplier||'';document.getElementById('po-edit-order-date').value=p.order_date||'';document.getElementById('po-edit-lead-weeks').value=p.lead_weeks||(p.lead_time_days?Math.round(p.lead_time_days/7):'');document.getElementById('po-edit-expected-date').value=p.expected_date||'';document.getElementById('po-edit-received-date').value=p.received_date||'';document.getElementById('po-edit-orderer').value=p.orderer||'';document.getElementById('po-edit-status').value=p.status||'ordered';document.getElementById('po-edit-note').value=p.note||'';openModal('poEditModal');}
+function calcPoEditTotal(){const q=parseInt(document.getElementById('po-edit-qty')?.value)||0;const cost=parseInt(document.getElementById('po-edit-unit-cost')?.value)||0;document.getElementById('po-edit-total').value=q&&cost?q*cost:'';}
+function calcPoEditExpected(){const od=document.getElementById('po-edit-order-date')?.value;const w=parseInt(document.getElementById('po-edit-lead-weeks')?.value)||0;if(od&&w>0){const d=new Date(od);d.setDate(d.getDate()+w*7);document.getElementById('po-edit-expected-date').value=d.toISOString().slice(0,10);}}
+async function savePOEdit(){const id=parseInt(document.getElementById('po-edit-id').value);const qty=parseInt(document.getElementById('po-edit-qty')?.value)||0;if(!qty){showToast('수량을 입력해주세요','warn');return;}const lw=parseInt(document.getElementById('po-edit-lead-weeks')?.value)||null;const upd={qty,unit_cost:parseInt(document.getElementById('po-edit-unit-cost')?.value)||0,total_cost:parseInt(document.getElementById('po-edit-total')?.value)||0,supplier:document.getElementById('po-edit-supplier')?.value.trim()||null,order_date:document.getElementById('po-edit-order-date')?.value||null,lead_weeks:lw,lead_time_days:lw?lw*7:null,expected_date:document.getElementById('po-edit-expected-date')?.value||null,received_date:document.getElementById('po-edit-received-date')?.value||null,orderer:document.getElementById('po-edit-orderer')?.value.trim()||null,status:document.getElementById('po-edit-status')?.value||'ordered',note:document.getElementById('po-edit-note')?.value.trim()||null};if(typeof sb!=='undefined'&&sb){const tryUpd=async(payload)=>{const{error}=await sb.from('purchase_orders').update(payload).eq('id',id);if(error?.message?.includes("Could not find the '")){const m=error.message.match(/Could not find the '([^']+)' column/);if(m){const{[m[1]]:_,...rest}=payload;return tryUpd(rest);}}return{error};};const{error}=await tryUpd(upd);if(error){showToast('수정 실패: '+error.message,'error');return;}}const i=poOrders.findIndex(o=>o.id===id);if(i>=0)poOrders[i]={...poOrders[i],...upd};showToast('수정됐습니다 ✓');closeModal('poEditModal');renderPurchaseOrders();if(typeof renderInvOverview==='function')renderInvOverview();}
+function deletePOFromEdit(){const id=parseInt(document.getElementById('po-edit-id').value);const p=poOrders.find(o=>o.id===id);const item=invItems.find(i=>i.id===p?.item_id);if(!confirm('"'+(item?.name||'발주')+'"을(를) 삭제할까요?\n삭제 후 복구가 불가능합니다.'))return;closeModal('poEditModal');deletePO(id);}
+async function deletePO(id){if(typeof sb!=='undefined'&&sb){const{error}=await sb.from('purchase_orders').delete().eq('id',id);if(error){showToast('삭제 실패: '+error.message,'error');return;}}poOrders=poOrders.filter(o=>o.id!==id);showToast('삭제됐습니다');renderPurchaseOrders();if(typeof renderInvOverview==='function')renderInvOverview();}
 </script>
