@@ -622,7 +622,7 @@ tbody tr:hover{background:var(--s2)}
   .phase-block:not(:last-child)::after{content:'↓';right:auto;bottom:-14px;top:auto;left:50%;transform:translateX(-50%)}
   :not(.gantt-table) > thead > tr > th:nth-child(n+5),:not(.gantt-table) > tbody > tr > td:nth-child(n+5){display:none}
 }
-@media(max-width:768px){#inv-stock-grids{grid-template-columns:1fr!important}}
+@media(max-width:1100px){#inv-stock-grids{grid-template-columns:1fr 1fr!important}}@media(max-width:768px){#inv-stock-grids{grid-template-columns:1fr!important}}
 @media(max-width:480px){
   .kpi-grid{grid-template-columns:repeat(2,1fr)}
   .kpi-val{font-size:20px}
@@ -1507,7 +1507,7 @@ tbody tr:hover{background:var(--s2)}
           <div class="kpi-card"><div class="kpi-label">즉시 발주 권고</div><div class="kpi-val" id="inv-kpi-urgent" style="color:var(--amber)">0</div><span class="chip chip-amber">품목</span></div>
           <div class="kpi-card"><div class="kpi-label">이번 달 입고 예정</div><div class="kpi-val" id="inv-kpi-incoming">0</div><span class="chip chip-green">건</span></div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px" id="inv-stock-grids">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px" id="inv-stock-grids">
           <div class="card">
             <div class="card-hd"><div class="card-title" style="display:flex;align-items:center;gap:7px">📦 완제품 재고 <button class="help-btn" onclick="showHelp('invOverview')">?</button></div><button class="btn btn-p btn-sm" onclick="openItemModal('finished')">+ 품목 추가</button></div>
             <div class="card-body" style="padding:0"><div id="inv-finished-list"></div></div>
@@ -1515,6 +1515,16 @@ tbody tr:hover{background:var(--s2)}
           <div class="card">
             <div class="card-hd"><div class="card-title" style="display:flex;align-items:center;gap:7px">🔩 원재료 재고 <button class="help-btn" onclick="showHelp('invOverview')">?</button></div><button class="btn btn-p btn-sm" onclick="openItemModal('raw')">+ 품목 추가</button></div>
             <div class="card-body" style="padding:0"><div id="inv-raw-list"></div></div>
+          </div>
+          <div class="card">
+            <div class="card-hd">
+              <div class="card-title">📋 발주 현황</div>
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-p btn-sm" onclick="openPoModal()">+ 발주 추가</button>
+                <button class="btn btn-s btn-sm" onclick="showView('inv-orders',null)">전체 보기</button>
+              </div>
+            </div>
+            <div class="card-body" style="padding:0"><div id="inv-po-summary"></div></div>
           </div>
         </div>
         <div class="card">
@@ -1562,11 +1572,18 @@ tbody tr:hover{background:var(--s2)}
 
       <!-- INV: 발주 관리 -->
       <div class="view" id="view-inv-orders">
+        <div class="kpi-grid" style="margin-bottom:16px">
+          <div class="kpi-card"><div class="kpi-label">진행 중 발주</div><div class="kpi-val" id="po-kpi-active" style="color:var(--accent)">0</div><span class="chip chip-blue">건</span></div>
+          <div class="kpi-card"><div class="kpi-label">이번 달 입고 예정</div><div class="kpi-val" id="po-kpi-this-month">0</div><span class="chip chip-green">건</span></div>
+          <div class="kpi-card"><div class="kpi-label">다음 달 입고 예정</div><div class="kpi-val" id="po-kpi-next-month">0</div><span class="chip chip-cyan">건</span></div>
+          <div class="kpi-card"><div class="kpi-label">입고 지연</div><div class="kpi-val" id="po-kpi-overdue" style="color:var(--red)">0</div><span class="chip chip-red">건</span></div>
+        </div>
         <div class="filter-bar">
           <select class="f-select" id="po-status-filter" onchange="renderPurchaseOrders()"><option value="">전체 상태</option><option value="ordered">발주완료</option><option value="partial">부분입고</option><option value="received">입고완료</option><option value="cancelled">취소</option></select>
+          <input class="f-input" id="po-search" placeholder="품목명·공급업체 검색" oninput="renderPurchaseOrders()" style="max-width:220px">
         </div>
         <div class="table-wrap">
-          <table><thead><tr><th>발주일</th><th>품목</th><th>수량</th><th>공급업체</th><th>입고예정일</th><th>상태</th><th>금액</th><th>관리</th></tr></thead>
+          <table><thead><tr><th>발주일</th><th>품목</th><th>수량</th><th>공급업체</th><th>입고예정일</th><th>D-day</th><th>리드타임</th><th>발주자</th><th>상태</th><th>금액</th><th>관리</th></tr></thead>
           <tbody id="po-table-body"></tbody></table>
         </div>
       </div>
@@ -2178,10 +2195,12 @@ tbody tr:hover{background:var(--s2)}
         <div class="form-field"><label class="form-label">발주 수량 *</label><input class="form-input" id="po-qty" type="number" min="1" value="1" oninput="calcPoTotal()"></div>
         <div class="form-field"><label class="form-label">단가 (원)</label><input class="form-input" id="po-unit-cost" type="number" min="0" value="0" oninput="calcPoTotal()"></div>
         <div class="form-field full"><label class="form-label">총 발주금액 (원) — 자동계산</label><input class="form-input auto" id="po-total" type="number" placeholder="자동 계산"></div>
-        <div class="form-field full"><label class="form-label">공급업체</label><input class="form-input" id="po-supplier" placeholder="공급업체명"></div>
-        <div class="form-field"><label class="form-label">발주일 *</label><input class="form-input" id="po-order-date" type="date"></div>
-        <div class="form-field"><label class="form-label">입고 예정일</label><input class="form-input" id="po-expected-date" type="date"></div>
-        <div class="form-field full"><label class="form-label">메모</label><textarea class="form-textarea" id="po-note" rows="2"></textarea></div>
+        <div class="form-field full"><label class="form-label">공급업체 <span style="font-weight:400;color:var(--t3);font-size:10px">품목 선택 시 자동입력</span></label><input class="form-input" id="po-supplier" placeholder="공급업체명"></div>
+        <div class="form-field"><label class="form-label">발주일 *</label><input class="form-input" id="po-order-date" type="date" oninput="calcPoExpected()"></div>
+        <div class="form-field"><label class="form-label">리드타임 (주) <span style="font-weight:400;color:var(--t3);font-size:10px">품목 선택 시 자동입력</span></label><input class="form-input" id="po-lead-weeks" type="number" min="1" max="52" placeholder="예: 10" oninput="calcPoExpected()"></div>
+        <div class="form-field full"><label class="form-label">입고 예정일 <span style="font-weight:400;color:var(--t3);font-size:10px">— 리드타임 입력 시 자동계산</span></label><input class="form-input" id="po-expected-date" type="date"></div>
+        <div class="form-field"><label class="form-label">발주자</label><input class="form-input" id="po-orderer" placeholder="발주자 이름 직접 입력"></div>
+        <div class="form-field"><label class="form-label">메모</label><input class="form-input" id="po-note" placeholder="특이사항"></div>
       </div>
       <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px;margin-top:16px" onclick="savePO()">발주 등록</button>
     </div>
@@ -3975,10 +3994,10 @@ function buildDealEdit(id){
   const existingProducts = dealProductsCache[id] || [];
 
   // 제품 행 HTML 생성
-  function deProdRowHtml(prod, qty, unitPrice, installFee) {
+  function deProdRowHtml(prod, qty, unitPrice) {
     const opts = prods.map(p=>`<option value="${p}"${p===prod?' selected':''}>${p}</option>`).join('');
     return `<div class="de-prod-row" style="background:var(--s2);border-radius:var(--r);padding:10px 12px;display:flex;flex-direction:column;gap:8px;margin-bottom:8px">
-      <div style="display:grid;grid-template-columns:2fr 70px 1fr 1fr auto;gap:8px;align-items:end">
+      <div style="display:grid;grid-template-columns:2fr 70px 1fr auto;gap:8px;align-items:end">
         <div>
           <label class="form-label" style="font-size:10px;margin-bottom:2px">제품</label>
           <select class="form-select de-prod-sel" onchange="calcDeTotal()" style="font-size:13px">
@@ -3992,10 +4011,6 @@ function buildDealEdit(id){
         <div>
           <label class="form-label" style="font-size:10px;margin-bottom:2px">단가 (원)</label>
           <input class="form-input de-prod-unit" type="number" min="0" value="${unitPrice||''}" placeholder="단가 입력" oninput="calcDeTotal()" style="font-size:13px">
-        </div>
-        <div>
-          <label class="form-label" style="font-size:10px;margin-bottom:2px">설치비/대 (원)</label>
-          <input class="form-input de-prod-install" type="number" min="0" value="${installFee||''}" placeholder="설치비 입력" oninput="calcDeTotal()" style="font-size:13px">
         </div>
         <button type="button" onclick="this.closest('.de-prod-row').remove();calcDeTotal()"
           style="background:var(--rl);border:1px solid #fecaca;border-radius:var(--r-sm);cursor:pointer;width:30px;height:30px;color:var(--red);font-size:16px;flex-shrink:0;margin-top:16px;display:flex;align-items:center;justify-content:center">×</button>
@@ -4080,7 +4095,7 @@ function addDeProdRow() {
   if(!wrap) return;
   const div = document.createElement('div');
   div.innerHTML = `<div class="de-prod-row" style="background:var(--s2);border-radius:var(--r);padding:10px 12px;display:flex;flex-direction:column;gap:8px;margin-bottom:8px">
-    <div style="display:grid;grid-template-columns:2fr 70px 1fr 1fr auto;gap:8px;align-items:end">
+    <div style="display:grid;grid-template-columns:2fr 70px 1fr auto;gap:8px;align-items:end">
       <div>
         <label class="form-label" style="font-size:10px;margin-bottom:2px">제품</label>
         <select class="form-select de-prod-sel" onchange="calcDeTotal()" style="font-size:13px"><option value="">선택</option>${opts}</select>
@@ -4093,10 +4108,6 @@ function addDeProdRow() {
         <label class="form-label" style="font-size:10px;margin-bottom:2px">단가 (원)</label>
         <input class="form-input de-prod-unit" type="number" min="0" placeholder="단가 입력" oninput="calcDeTotal()" style="font-size:13px">
       </div>
-      <div>
-        <label class="form-label" style="font-size:10px;margin-bottom:2px">설치비/대 (원)</label>
-        <input class="form-input de-prod-install" type="number" min="0" placeholder="설치비 입력" oninput="calcDeTotal()" style="font-size:13px">
-      </div>
       <button type="button" onclick="this.closest('.de-prod-row').remove();calcDeTotal()"
         style="background:var(--rl);border:1px solid #fecaca;border-radius:var(--r-sm);cursor:pointer;width:30px;height:30px;color:var(--red);font-size:16px;flex-shrink:0;margin-top:16px;display:flex;align-items:center;justify-content:center">×</button>
     </div>
@@ -4106,35 +4117,19 @@ function addDeProdRow() {
 }
 
 function calcDeTotal() {
-  let totalProd = 0;
-  let totalInstall = 0;
+  let total = 0;
   document.querySelectorAll('.de-prod-row').forEach(row => {
-    const qty     = parseInt(row.querySelector('.de-prod-qty')?.value)||0;
-    const unit    = parseInt(row.querySelector('.de-prod-unit')?.value)||0;
-    const install = parseInt(row.querySelector('.de-prod-install')?.value)||0;
-    const subProd    = qty * unit;
-    const subInstall = qty * install;
-    totalProd    += subProd;
-    totalInstall += subInstall;
+    const qty  = parseInt(row.querySelector('.de-prod-qty')?.value)||0;
+    const unit = parseInt(row.querySelector('.de-prod-unit')?.value)||0;
+    const sub  = qty * unit;
+    total += sub;
     const el = row.querySelector('.de-prod-subtotal');
-    if(el) {
-      const parts = [];
-      if(subProd > 0)    parts.push(`제품 ${fmt(subProd)} (${qty}대 × ${fmt(unit)})`);
-      if(subInstall > 0) parts.push(`설치 ${fmt(subInstall)} (${qty}대 × ${fmt(install)})`);
-      el.textContent = parts.join('　');
-    }
+    if(el) el.textContent = sub > 0 ? `소계: ${fmt(sub)} (${qty}대 × ${fmt(unit)})` : '';
   });
-  const grandTotal = totalProd + totalInstall;
   const el = document.getElementById('de-amt');
-  if(el) el.value = grandTotal;
+  if(el) el.value = total;
   const prev = document.getElementById('de-total-preview');
-  if(prev) {
-    if(grandTotal === 0) { prev.textContent = '₩0'; return; }
-    let preview = fmt(grandTotal);
-    if(totalInstall > 0)
-      preview += `  <span style="font-size:10px;color:var(--t3);font-weight:400">(제품 ${fmt(totalProd)} + 설치 ${fmt(totalInstall)})</span>`;
-    prev.innerHTML = preview;
-  }
+  if(prev) prev.textContent = total > 0 ? fmt(total) : '₩0';
 }
 
 function calcDeAmt(){
@@ -5960,6 +5955,36 @@ async function renderInvOverview() {
     </div>`;
 
   // Alert list
+  // 발주 현황 요약
+  const _poToday = new Date(); _poToday.setHours(0,0,0,0);
+  const _activePOs = poOrders.filter(p=>['ordered','partial'].includes(p.status));
+  const poSummaryEl = document.getElementById('inv-po-summary');
+  if(poSummaryEl) {
+    if(!_activePOs.length) {
+      poSummaryEl.innerHTML = '<div style="padding:24px;text-align:center;color:var(--t3);font-size:12px">진행 중인 발주가 없습니다</div>';
+    } else {
+      poSummaryEl.innerHTML = _activePOs.map(p=>{
+        const iName=invItems.find(i=>i.id===p.item_id)?.name||'–';
+        const exp=p.expected_date?new Date(p.expected_date):null;
+        if(exp)exp.setHours(0,0,0,0);
+        const diff=exp?Math.round((exp-_poToday)/(1000*60*60*24)):null;
+        const ddayHtml=diff===null?'<span style="color:var(--t3);font-size:10px">입고일 미정</span>':diff<0?`<span style="font-size:10px;font-weight:700;color:var(--red)">+${Math.abs(diff)}일 지연</span>`:diff===0?`<span style="font-size:10px;font-weight:800;color:var(--accent)">오늘 입고</span>`:`<span style="font-size:10px;font-weight:700;color:var(--green)">D-${diff}</span>`;
+        const weeks=p.lead_weeks?`${p.lead_weeks}주`:'';
+        const statusCls=p.status==='partial'?'chip-amber':'chip-blue';
+        const statusTxt=p.status==='partial'?'부분입고':'발주완료';
+        return `<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--bd)">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${iName}</div>
+            <div style="font-size:11px;color:var(--t3);margin-top:2px">${p.qty}개 · ${p.expected_date||'입고일 미정'}${weeks?' · '+weeks:''}${p.orderer?' · '+p.orderer:''}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">
+            ${ddayHtml}
+            <span class="chip ${statusCls}" style="font-size:9px">${statusTxt}</span>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
   document.getElementById('inv-alert-list').innerHTML = warn.length ?
     `<table style="width:100%;border-collapse:collapse">${warn.map(i => {
       const pct = i.safety_stock > 0 ? Math.round(i.current_stock/i.safety_stock*100) : 0;
@@ -5978,6 +6003,8 @@ async function renderInvOverview() {
 }
 
 function itemRow(i) {
+  if(!window.__itemCache) window.__itemCache = {};
+  window.__itemCache[i.id] = i;
   const isFinished = i.category === 'finished';
 
   // 원재료: 재고 표시 유지 / 완제품: 재고 표시 없음 (목록만)
@@ -6016,12 +6043,12 @@ function itemRow(i) {
     </div>
     <div style="flex:1;min-width:0">
       <div style="font-weight:700;font-size:13px">${i.name}</div>
-      <div style="font-size:11px;color:var(--t3);margin-top:2px">${i.code||''} ${i.supplier?`· ${i.supplier}`:''}</div>
+      <div style="font-size:11px;color:var(--t3);margin-top:2px">${i.code||''} ${i.supplier?`· ${i.supplier}`:''} ${!isFinished&&i.lead_time_days?`· 리드타임 ${Math.round(i.lead_time_days/7)}주`:''}</div>
       ${stockSection}
     </div>
     ${stockDisplay}
     ${actionBtns}
-    <button class="btn btn-s btn-sm" onclick="openItemModalEdit(${i.id});event.stopPropagation()" style="flex-shrink:0">수정</button>
+    <button class="btn btn-s btn-sm" onclick="event.stopPropagation();(function(){var d=window.__itemCache&&window.__itemCache[${i.id}];openItemModalEdit(${i.id},d);})()" style="flex-shrink:0">수정</button>
     <button class="btn btn-danger btn-sm" onclick="deleteItem(${i.id});event.stopPropagation()" style="flex-shrink:0">삭제</button>
   </div>`;
 }
@@ -6390,22 +6417,46 @@ async function renderPurchaseOrders() {
   }
   if(!invItems.length) await loadInvData();
   const statusF = document.getElementById('po-status-filter')?.value||'';
-  let data = statusF ? poOrders.filter(p=>p.status===statusF) : poOrders;
+  const searchQ = (document.getElementById('po-search')?.value||'').trim().toLowerCase();
   const itemName = id => invItems.find(i=>i.id===id)?.name||'–';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const thisMonth = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+  const nextMonthD = new Date(today.getFullYear(), today.getMonth()+1, 1);
+  const nextMonth = `${nextMonthD.getFullYear()}-${String(nextMonthD.getMonth()+1).padStart(2,'0')}`;
+  const active  = poOrders.filter(p=>['ordered','partial'].includes(p.status));
+  const overdue = poOrders.filter(p=>!['received','cancelled'].includes(p.status)&&p.expected_date&&new Date(p.expected_date)<today);
+  const kpiMap = {'po-kpi-active':active.length,'po-kpi-this-month':poOrders.filter(p=>p.expected_date?.startsWith(thisMonth)&&['ordered','partial'].includes(p.status)).length,'po-kpi-next-month':poOrders.filter(p=>p.expected_date?.startsWith(nextMonth)&&['ordered','partial'].includes(p.status)).length,'po-kpi-overdue':overdue.length};
+  Object.entries(kpiMap).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.textContent=v;});
+  let data = poOrders;
+  if(statusF) data = data.filter(p=>p.status===statusF);
+  if(searchQ) data = data.filter(p=>(itemName(p.item_id)+' '+(p.supplier||'')+' '+(p.orderer||'')).toLowerCase().includes(searchQ));
+  function dday(expectedDate,status){if(!expectedDate||['received','cancelled'].includes(status))return '–';const exp=new Date(expectedDate);exp.setHours(0,0,0,0);const diff=Math.round((exp-today)/(1000*60*60*24));if(diff===0)return `<span style="font-weight:800;color:var(--accent)">D-day</span>`;if(diff>0)return `<span style="font-weight:700;color:var(--green)">D-${diff}</span>`;return `<span style="font-weight:700;color:var(--red)">+${Math.abs(diff)}일 지연</span>`;}
+  function leadTime(p){if(p.lead_weeks)return `<span style="font-weight:600;color:var(--t2)">${p.lead_weeks}주</span>`;if(p.order_date&&p.expected_date){const w=Math.round((new Date(p.expected_date)-new Date(p.order_date))/(1000*60*60*24*7));return w>0?`<span style="color:var(--t3)">${w}주</span>`:'–';}return '–';}
   document.getElementById('po-table-body').innerHTML = data.length ?
-    data.map(p=>`<tr>
-      <td style="white-space:nowrap">${p.order_date||'–'}</td>
-      <td style="font-weight:600">${itemName(p.item_id)}</td>
+    data.map(p=>`<tr style="${overdue.find(o=>o.id===p.id)?'background:#fff8f8':''}">
+      <td style="white-space:nowrap;color:var(--t2);font-size:12px">${p.order_date||'–'}</td>
+      <td style="font-weight:700">${itemName(p.item_id)}</td>
       <td>${p.qty}개</td>
-      <td>${p.supplier||'–'}</td>
-      <td style="white-space:nowrap">${p.expected_date||'–'}</td>
+      <td style="color:var(--t2)">${p.supplier||'–'}</td>
+      <td style="white-space:nowrap;font-weight:600">${p.expected_date||'미정'}</td>
+      <td style="text-align:center">${dday(p.expected_date,p.status)}</td>
+      <td style="text-align:center">${leadTime(p)}</td>
+      <td style="color:var(--t2)">${p.orderer||'–'}</td>
       <td><span class="chip ${PO_STATUS_CLS[p.status]||'chip-gray'}">${PO_STATUS[p.status]||p.status}</span></td>
-      <td style="font-weight:700">${p.total_cost?'₩'+(p.total_cost/10000).toFixed(0)+'만':'–'}</td>
-      <td>
-        ${p.status!=='received'?`<button class="btn btn-green btn-sm" onclick="markPOReceived(${p.id})">입고완료</button>`:''}
+      <td style="font-weight:700">${p.total_cost?fmt(p.total_cost):'–'}</td>
+      <td style="white-space:nowrap">
+        ${p.status==='ordered'?`<button class="btn btn-green btn-sm" onclick="markPOReceived(${p.id})">입고완료</button><button class="btn btn-s btn-sm" onclick="markPOPartial(${p.id})" style="margin-left:4px">부분입고</button>`:''}
+        ${p.status==='partial'?`<button class="btn btn-green btn-sm" onclick="markPOReceived(${p.id})">최종입고</button>`:''}
       </td>
     </tr>`).join('') :
-    `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--t3)"><div style="font-size:32px;margin-bottom:8px">📋</div><div style="font-size:14px;font-weight:600;margin-bottom:4px">발주 내역이 없습니다</div><div style="font-size:12px">우상단 "발주 등록" 버튼으로 발주를 등록해보세요</div></td></tr>`;
+    `<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--t3)"><div style="font-size:32px;margin-bottom:8px">📋</div><div style="font-size:14px;font-weight:600;margin-bottom:4px">발주 내역이 없습니다</div></td></tr>`;
+}
+async function markPOPartial(id) {
+  const po=poOrders.find(p=>p.id===id); if(!po)return;
+  po.status='partial';
+  if(sb){await sb.from('purchase_orders').update({status:'partial'}).eq('id',id);}
+  showToast('부분입고 처리됐습니다 ✓');
+  renderPurchaseOrders(); renderInvOverview();
 }
 async function markPOReceived(id) {
   const po = poOrders.find(p=>p.id===id); if(!po)return;
@@ -6679,24 +6730,36 @@ function openItemModal(cat) {
   openModal('itemModal');
 }
 
-function openRawItemModal(prefillFinishedId) {
-  // Build finished product options
+function openRawItemModal(prefillFinishedId, editId, editItemDirect) {
+  const editItem = editItemDirect || (editId ? (invItems.find(i=>i.id===parseInt(editId)||i.id===editId)) : null);
+  const isEdit = !!editItem;
   const finished = invItems.filter(i=>i.category==='finished');
   const finOpts = finished.length
     ? finished.map(f=>`<option value="${f.id}"${prefillFinishedId===f.id?' selected':''}>${f.name}</option>`).join('')
-    : '<option value="">완제품 없음 (먼저 완제품을 추가해주세요)</option>';
+    : '<option value="">완제품 없음</option>';
+  const weeks = editItem
+    ? (editItem.lead_time_days ? Math.round(editItem.lead_time_days/7) : 10)
+    : 10;
 
-  const html = `<div style="position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px" id="rawItemOverlay">
+  // 오버레이 생성
+  const overlay = document.createElement('div');
+  overlay.id = 'rawItemOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px';
+
+  overlay.innerHTML = `
+    <input type="hidden" id="raw-edit-id" value="${editId||''}">
     <div style="background:var(--surface);border-radius:var(--r-xl);width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:var(--sh-lg);animation:su .2s ease">
       <div style="padding:20px 24px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:12px;position:sticky;top:0;background:var(--surface);z-index:10">
-        <div style="flex:1"><div style="font-size:18px;font-weight:800;letter-spacing:-.4px">원재료 추가</div>
-        <div style="font-size:13px;color:var(--t2);margin-top:2px">어느 완제품에 들어가는 원재료인지 선택 후 추가합니다</div></div>
+        <div style="flex:1">
+          <div style="font-size:18px;font-weight:800;letter-spacing:-.4px">${isEdit?'원재료 수정':'원재료 추가'}</div>
+          <div style="font-size:13px;color:var(--t2);margin-top:2px">${isEdit?(editItem.name||''):'어느 완제품에 들어가는 원재료인지 선택 후 추가합니다'}</div>
+        </div>
         <button onclick="document.getElementById('rawItemOverlay').remove()" style="width:32px;height:32px;border-radius:50%;background:var(--s2);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--t2)">×</button>
       </div>
       <div style="padding:20px 24px">
-        <div style="background:var(--al);border-radius:var(--r);padding:10px 14px;font-size:12px;color:var(--at);margin-bottom:18px">
-          💡 원재료는 여러 완제품에 공통으로 사용될 수 있습니다. 등록한 원재료는 BOM 관리에서 각 완제품에 연결할 수 있어요.
-        </div>
+        ${!isEdit?`<div style="background:var(--al);border-radius:var(--r);padding:10px 14px;font-size:12px;color:var(--at);margin-bottom:18px">
+          💡 원재료는 여러 완제품에 공통으로 사용될 수 있습니다.
+        </div>`:''}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div style="grid-column:1/-1" class="form-field">
             <label class="form-label">원재료명 *</label>
@@ -6708,7 +6771,7 @@ function openRawItemModal(prefillFinishedId) {
           </div>
           <div class="form-field">
             <label class="form-label">단위</label>
-            <input class="form-input" id="raw-unit" value="개" placeholder="개, EA, kg">
+            <input class="form-input" id="raw-unit" placeholder="개, EA, kg">
           </div>
           <div class="form-field">
             <label class="form-label">현재 재고</label>
@@ -6719,8 +6782,8 @@ function openRawItemModal(prefillFinishedId) {
             <input class="form-input" id="raw-safety" type="number" min="0" value="0">
           </div>
           <div class="form-field">
-            <label class="form-label">발주 기간 (일) * <span style="font-weight:400;color:var(--t3);font-size:10px">발주 → 입고까지 걸리는 기간</span></label>
-            <input class="form-input" id="raw-lead" type="number" value="14" min="1" placeholder="예: 14">
+            <label class="form-label">리드타임 (주) * <span style="font-weight:400;color:var(--t3);font-size:10px">발주→입고 소요기간</span></label>
+            <input class="form-input" id="raw-lead" type="number" min="1" max="52" placeholder="예: 10">
           </div>
           <div class="form-field">
             <label class="form-label">단가 (원)</label>
@@ -6730,35 +6793,49 @@ function openRawItemModal(prefillFinishedId) {
             <label class="form-label">공급업체</label>
             <input class="form-input" id="raw-supplier" placeholder="공급업체명">
           </div>
-          <div style="grid-column:1/-1;border-top:1px solid var(--bd);padding-top:16px;margin-top:4px">
+          ${!isEdit?`<div style="grid-column:1/-1;border-top:1px solid var(--bd);padding-top:16px;margin-top:4px">
             <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:10px">🔗 완제품 연결 (BOM 등록)</div>
             <div style="background:var(--s2);border-radius:var(--r);padding:12px 14px">
-              <div style="font-size:12px;color:var(--t2);margin-bottom:8px">이 원재료가 사용되는 완제품과 필요 수량을 지금 바로 등록할 수 있습니다. 나중에 BOM 관리에서도 추가 가능합니다.</div>
               <div id="raw-bom-rows">
                 <div class="raw-bom-row" style="display:grid;grid-template-columns:1fr 80px 32px;gap:6px;align-items:center;margin-bottom:6px">
                   <select class="form-select raw-finished-sel" style="font-size:13px">
                     <option value="">완제품 선택 (선택사항)</option>
                     ${finOpts}
                   </select>
-                  <input class="form-input raw-qty-in" type="number" min="1" step="1" value="1" placeholder="수량">
+                  <input class="form-input raw-qty-in" type="number" min="1" value="1">
                   <span style="font-size:11px;color:var(--t3);text-align:center">개</span>
                 </div>
               </div>
               <button type="button" onclick="addRawBomRow()" style="font-size:12px;color:var(--accent);background:none;border:none;cursor:pointer;padding:4px 0;font-family:var(--font);font-weight:600">+ 완제품 추가</button>
             </div>
-          </div>
+          </div>`:''}
           <div style="grid-column:1/-1" class="form-field">
             <label class="form-label">메모</label>
             <textarea class="form-textarea" id="raw-note" rows="2" placeholder="특이사항, 보관 방법 등"></textarea>
           </div>
         </div>
-        <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px;margin-top:16px" onclick="saveRawItem()">원재료 저장</button>
+        <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px;margin-top:16px" onclick="saveRawItem()">${isEdit?'수정 저장':'원재료 저장'}</button>
       </div>
     </div>
-  </div>`;
-  document.body.insertAdjacentHTML('beforeend', html);
-}
+  `;
+  document.body.appendChild(overlay);
+  if(editId){var ei=editItem||(window.__itemCache&&window.__itemCache[editId]);if(ei){var ov=document.getElementById('rawItemOverlay');if(ov){var ids=['raw-edit-id','raw-name','raw-code','raw-unit','raw-stock','raw-safety','raw-lead','raw-cost','raw-supplier','raw-note'];var vals={"raw-edit-id":editId,"raw-name":ei.name||'',"raw-code":ei.code||'',"raw-unit":ei.unit||'',"raw-stock":ei.current_stock!=null?String(ei.current_stock):'',"raw-safety":ei.safety_stock!=null?String(ei.safety_stock):'',"raw-lead":ei.lead_time_days?String(Math.round(ei.lead_time_days/7)):'',"raw-cost":ei.unit_cost!=null?String(ei.unit_cost):'',"raw-supplier":ei.supplier||'',"raw-note":ei.note||''};ids.forEach(function(id){var el=ov.querySelector('#'+id);if(el)el.value=vals[id]||'';});}}}
 
+  // 수정 모드면 기존 값 직접 채워넣기 (DOM 조작으로 이스케이프 문제 완전 회피)
+  if(editItem) {
+    const set = (id, val) => { const el = document.getElementById(id); if(el && val!=null) el.value = val; };
+    set('raw-name',     editItem.name       || '');
+    set('raw-code',     editItem.code       || '');
+    set('raw-unit',     editItem.unit       || '개');
+    set('raw-stock',    editItem.current_stock ?? 0);
+    set('raw-safety',   editItem.safety_stock  ?? 0);
+    set('raw-lead',     weeks);
+    set('raw-cost',     editItem.unit_cost  ?? 0);
+    set('raw-supplier', editItem.supplier   || '');
+    const noteEl = document.getElementById('raw-note');
+    if(noteEl) noteEl.value = editItem.note || '';
+  }
+}
 function addRawBomRow() {
   const finished = invItems.filter(i=>i.category==='finished');
   const opts = finished.map(f=>`<option value="${f.id}">${f.name}</option>`).join('');
@@ -6774,37 +6851,46 @@ function addRawBomRow() {
 async function saveRawItem() {
   const name = document.getElementById('raw-name')?.value.trim();
   if(!name){showToast('원재료명을 입력해주세요','warn');return;}
+  const editId = parseInt(document.getElementById('raw-edit-id')?.value)||null;
   const data = {
     name, code:document.getElementById('raw-code').value.trim()||null,
     category:'raw', unit:document.getElementById('raw-unit').value||'개',
     current_stock:parseInt(document.getElementById('raw-stock').value)||0,
     safety_stock:parseInt(document.getElementById('raw-safety').value)||0,
-    lead_time_days:parseInt(document.getElementById('raw-lead').value)||14,
+    lead_time_days:(parseInt(document.getElementById('raw-lead').value)||10)*7,
     unit_cost:parseInt(document.getElementById('raw-cost').value)||0,
     supplier:document.getElementById('raw-supplier').value.trim()||null,
     note:document.getElementById('raw-note').value.trim()||null,
   };
-  let newItem;
-  if(sb){ const {data:d}=await sb.from('items').insert([data]).select().single(); newItem=d; if(d)invItems.push(d); }
-  else { newItem={id:Date.now(),...data}; invItems.push(newItem); }
-
-  // Save BOM connections
-  const rows = document.querySelectorAll('.raw-bom-row');
-  for(const row of rows) {
-    const finId = parseInt(row.querySelector('.raw-finished-sel')?.value)||0;
-    const qty = parseFloat(row.querySelector('.raw-qty-in')?.value)||1;
-    if(finId && newItem?.id) {
-      const bomRow = {finished_item_id:finId, raw_item_id:newItem.id, qty_required:qty};
-      if(sb){ const {data:bd}=await sb.from('bom').insert([bomRow]).select().single(); if(bd)bomData.push(bd); }
-      else { bomData.push({id:Date.now(),...bomRow}); }
+  if(editId) {
+    if(sb){ await sb.from('items').update(data).eq('id',editId); }
+    const idx=invItems.findIndex(i=>i.id===editId);
+    if(idx>=0) invItems[idx]={...invItems[idx],...data};
+    showToast('원재료가 수정됐습니다 ✓');
+  } else {
+    let newItem;
+    if(sb){ const {data:d}=await sb.from('items').insert([data]).select().single(); newItem=d; if(d)invItems.push(d); }
+    else { newItem={id:Date.now(),...data}; invItems.push(newItem); }
+    const rows = document.querySelectorAll('.raw-bom-row');
+    for(const row of rows) {
+      const finId=parseInt(row.querySelector('.raw-finished-sel')?.value)||0;
+      const qty=parseFloat(row.querySelector('.raw-qty-in')?.value)||1;
+      if(finId&&newItem?.id){
+        const bomRow={finished_item_id:finId,raw_item_id:newItem.id,qty_required:qty};
+        if(sb){const {data:bd}=await sb.from('bom').insert([bomRow]).select().single();if(bd)bomData.push(bd);}
+        else{bomData.push({id:Date.now(),...bomRow});}
+      }
     }
+    showToast('원재료가 추가됐습니다 ✓');
   }
-  showToast('원재료가 추가됐습니다 ✓');
   document.getElementById('rawItemOverlay')?.remove();
   renderInvOverview();
 }
-function openItemModalEdit(id) {
-  const item = invItems.find(i=>i.id===id); if(!item)return;
+function openItemModalEdit(id, itemData) {
+  id = parseInt(id)||id;
+  const item = invItems.find(i=>i.id===id) || (typeof itemData==='string' ? JSON.parse(decodeURIComponent(atob(itemData))) : itemData) || null;
+  if(!item) return;
+  if(item.category==='raw') { openRawItemModal(null, id, item); return; }
   document.getElementById('item-id').value=id;
   document.getElementById('item-category').value=item.category;
   document.getElementById('itemModalTitle').textContent='품목 수정';
@@ -6901,15 +6987,33 @@ function openPoModal() {
     return;
   }
   sel.innerHTML = '<option value="">품목 선택 *</option>' + invItems.map(i=>`<option value="${i.id}">[${i.category==='raw'?'원재료':'완제품'}] ${i.name} (현재 ${i.current_stock}${i.unit})</option>`).join('');
+  sel.onchange = function() {
+    const item = invItems.find(i=>i.id===parseInt(sel.value));
+    if(!item) return;
+    if(item.supplier) document.getElementById('po-supplier').value = item.supplier;
+    const weeks = item.lead_time_days ? Math.round(item.lead_time_days/7) : null;
+    if(weeks) { document.getElementById('po-lead-weeks').value = weeks; calcPoExpected(); }
+  };
   const today = new Date().toISOString().slice(0,10);
   document.getElementById('po-order-date').value = today;
   document.getElementById('po-expected-date').value = '';
+  document.getElementById('po-lead-weeks').value = '';
   document.getElementById('po-qty').value = '1';
   document.getElementById('po-unit-cost').value = '0';
   document.getElementById('po-total').value = '';
   document.getElementById('po-supplier').value = '';
   document.getElementById('po-note').value = '';
+  document.getElementById('po-orderer').value = '';
   openModal('poModal');
+}
+function calcPoExpected() {
+  const orderDate = document.getElementById('po-order-date')?.value;
+  const weeks = parseInt(document.getElementById('po-lead-weeks')?.value)||0;
+  if(orderDate && weeks>0) {
+    const d = new Date(orderDate);
+    d.setDate(d.getDate() + weeks*7);
+    document.getElementById('po-expected-date').value = d.toISOString().slice(0,10);
+  }
 }
 function openPoModalForItem(itemId) { openPoModal(); document.getElementById('po-item').value=itemId; }
 function selectTxType(t) {
@@ -6958,6 +7062,8 @@ async function savePO() {
     supplier: document.getElementById('po-supplier')?.value.trim()||null,
     order_date: orderDate,
     expected_date: document.getElementById('po-expected-date')?.value||null,
+    lead_weeks: parseInt(document.getElementById('po-lead-weeks')?.value)||null,
+    orderer: document.getElementById('po-orderer')?.value.trim()||null,
     status: 'ordered',
     note: document.getElementById('po-note')?.value.trim()||null
   };
@@ -9083,8 +9189,8 @@ async function loadItemComponents() {
 // openRawItemModal에 구성품 섹션 추가 — saveRawItem 후 구성품 저장
 // 기존 rawItemOverlay를 확장: 구성품 입력 섹션 삽입
 const _origOpenRawItemModal = window.openRawItemModal;
-window.openRawItemModal = function(prefillFinishedId) {
-  _origOpenRawItemModal?.call(this, prefillFinishedId);
+window.openRawItemModal = function(prefillFinishedId, editId, editItem) {
+  _origOpenRawItemModal?.call(this, prefillFinishedId, editId, editItem);
   // 구성품 섹션을 rawItemOverlay 안에 삽입 (BOM 연결 섹션 앞)
   setTimeout(() => {
     const overlay = document.getElementById('rawItemOverlay');
@@ -9150,14 +9256,26 @@ async function saveRawCompComponents(itemName) {
 
 // openItemModalEdit 확장 — 구성품 탭 추가
 const _origOpenItemModalEdit = window.openItemModalEdit;
-window.openItemModalEdit = async function(id) {
+window.openItemModalEdit = async function(id, itemData) {
+  id = parseInt(id)||id;
+  const item = invItems.find(i=>i.id===id)
+    || (itemData && typeof itemData === 'object' ? itemData : null)
+    || (window.__itemCache && window.__itemCache[id])
+    || null;
+
+  // ★ 원재료면 rawItemOverlay로 열고 완전 종료
+  if(item && item.category === 'raw') {
+    openRawItemModal(null, id, item);
+    return;
+  }
+
+  // 완제품이면 기존 함수 실행
   _origOpenItemModalEdit?.call(this, id);
-  const item = invItems.find(i=>i.id===id);
-  if(!item || item.category !== 'raw') return;
-  // 구성품 로드
+
+  // 완제품 구성품 섹션 추가
+  if(!item || item.category === 'raw') return;
   if(!window._itemComponents) await loadItemComponents();
   const comps = (window._itemComponents||{})[id]||[];
-  // itemModal body에 구성품 섹션 추가
   setTimeout(() => {
     const modal = document.getElementById('itemModal');
     if(!modal) return;
