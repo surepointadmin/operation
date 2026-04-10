@@ -6986,14 +6986,7 @@ function openPoModal() {
     showToast('품목을 먼저 재고 현황에서 추가해주세요', 'warn');
     return;
   }
-  sel.innerHTML = '<option value="">품목 선택 *</option>' + invItems.map(i=>`<option value="${i.id}">[${i.category==='raw'?'원재료':'완제품'}] ${i.name} (현재 ${i.current_stock}${i.unit})</option>`).join('');
-  sel.onchange = function() {
-    const item = invItems.find(i=>i.id===parseInt(sel.value));
-    if(!item) return;
-    if(item.supplier) document.getElementById('po-supplier').value = item.supplier;
-    const weeks = item.lead_time_days ? Math.round(item.lead_time_days/7) : null;
-    if(weeks) { document.getElementById('po-lead-weeks').value = weeks; calcPoExpected(); }
-  };
+  // 필드 초기화 먼저
   const today = new Date().toISOString().slice(0,10);
   document.getElementById('po-order-date').value = today;
   document.getElementById('po-expected-date').value = '';
@@ -7004,6 +6997,30 @@ function openPoModal() {
   document.getElementById('po-supplier').value = '';
   document.getElementById('po-note').value = '';
   document.getElementById('po-orderer').value = '';
+  // 품목 목록
+  sel.innerHTML = '<option value="">품목 선택 *</option>' + invItems.map(i=>`<option value="${i.id}">[${i.category==='raw'?'원재료':'완제품'}] ${i.name} (현재 ${i.current_stock}${i.unit})</option>`).join('');
+  // 품목 선택 시 자동입력
+  sel.onchange = function() {
+    const item = invItems.find(i=>i.id===parseInt(sel.value));
+    if(!item) return;
+    // 공급업체
+    if(item.supplier) document.getElementById('po-supplier').value = item.supplier;
+    // 단가 → 총액
+    if(item.unit_cost > 0) {
+      document.getElementById('po-unit-cost').value = item.unit_cost;
+      calcPoTotal();
+    }
+    // 리드타임 → 입고예정일 자동계산
+    const weeks = item.lead_time_days ? Math.round(item.lead_time_days / 7) : null;
+    if(weeks) {
+      document.getElementById('po-lead-weeks').value = weeks;
+      calcPoExpected();
+    }
+    // 발주수량: 부족분 (안전재고 - 현재재고), 최소 1
+    const shortage = (item.safety_stock || 0) - (item.current_stock || 0);
+    document.getElementById('po-qty').value = shortage > 0 ? shortage : 1;
+    calcPoTotal();
+  };
   openModal('poModal');
 }
 function calcPoExpected() {
@@ -7015,7 +7032,12 @@ function calcPoExpected() {
     document.getElementById('po-expected-date').value = d.toISOString().slice(0,10);
   }
 }
-function openPoModalForItem(itemId) { openPoModal(); document.getElementById('po-item').value=itemId; }
+function openPoModalForItem(itemId) {
+  openPoModal();
+  const sel = document.getElementById('po-item');
+  sel.value = itemId;
+  sel.dispatchEvent(new Event('change'));
+}
 function selectTxType(t) {
   ['in','out','adjust'].forEach(x=>{
     const btn=document.getElementById(`tx-type-${x}`);
