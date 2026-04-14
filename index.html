@@ -1105,6 +1105,11 @@ tbody tr:hover{background:var(--s2)}
         <span class="cal-btn-label">알람</span>
         <span class="deal-alert-badge" id="dealAlertBadge" style="display:none">0</span>
       </button>
+      <button class="cal-topbar-btn" onclick="showView('inv-overview',document.getElementById('ni-inv-overview'))" title="입고 승인 대기">
+        <svg viewBox="0 0 16 16" fill="none" style="width:14px;height:14px;flex-shrink:0"><rect x="2" y="4" width="12" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M5 4V3a3 3 0 016 0v1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <span class="cal-btn-label">입고</span>
+        <span class="deal-alert-badge" id="poBadge" style="display:none;background:#f97316">0</span>
+      </button>
       <button class="cal-topbar-btn" id="calTopbarBtn" onclick="toggleCalendar()" title="일정 캘린더">
         <svg viewBox="0 0 16 16" fill="none" style="width:14px;height:14px;flex-shrink:0"><rect x="2" y="2" width="12" height="13" rx="2" stroke="currentColor" stroke-width="1.4"/><line x1="5" y1="1" x2="5" y2="4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="11" y1="1" x2="11" y2="4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="2" y1="7" x2="14" y2="7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
         <span class="cal-btn-label">캘린더</span>
@@ -5960,6 +5965,7 @@ async function loadFinData() {
 // 재고 현황
 // ══════════════════════════════════════════════════════════
 async function renderInvOverview() {
+  setTimeout(updatePOAlertBadge,200);
   await loadInvData();
   const finished = invItems.filter(i=>i.category==='finished');
   const raw = invItems.filter(i=>i.category==='raw');
@@ -6001,23 +6007,49 @@ async function renderInvOverview() {
     if(!_activePOs.length) {
       poSummaryEl.innerHTML = '<div style="padding:24px;text-align:center;color:var(--t3);font-size:12px">진행 중인 발주가 없습니다</div>';
     } else {
-      poSummaryEl.innerHTML = _activePOs.map(p=>{
+      // 승인 대기 (입고 예정일 도래 + 미입고)
+      const _pendingPOs = poOrders.filter(p => {
+        if(!['ordered','partial'].includes(p.status)) return false;
+        if(!p.expected_date) return false;
+        const [ey,em,ed] = p.expected_date.slice(0,10).split('-').map(Number);
+        const expLocal = new Date(ey, em-1, ed);
+        const todayLocal = new Date(); todayLocal.setHours(0,0,0,0);
+        return expLocal <= todayLocal;
+      });
+      const isApprover = CU?.id === 'hbg' || CU?.name === '황병규' || CU?.name === '횡병규';
+      let _sh = '';
+      if(_pendingPOs.length > 0) {
+        _sh += '<div style="background:#fff7ed;border-bottom:2px solid #fed7aa;padding:10px 16px">' +
+          '<div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#c2410c;margin-bottom:6px">' +
+          '📦 입고 승인 대기 ' + _pendingPOs.length + '건' +
+          (!isApprover ? ' <span style="font-size:10px;font-weight:400;color:#9a3412"> · 황병규 담당자에게 승인 요청하세요</span>' : '') +
+          '</div>' +
+          _pendingPOs.map(p => {
+            const n = invItems.find(i=>i.id===p.item_id)?.name||'–';
+            return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid #fed7aa">' +
+              '<div style="flex:1"><b style="font-size:12px">' + n + '</b>' +
+              '<div style="font-size:10px;color:#9a3412">' + p.qty + '개 · ' + p.expected_date + '</div></div>' +
+              (isApprover
+                ? '<button class="btn btn-green btn-sm" onclick="approveStockIn(' + p.id + ')" style="font-size:11px;padding:4px 10px">✅ 입고 승인</button>'
+                : '<span style="font-size:10px;color:#c2410c;font-weight:600">승인 대기중</span>') + '</div>';
+          }).join('') + '</div>';
+      }
+      _sh += _activePOs.map(p=>{
         const iName=invItems.find(i=>i.id===p.item_id)?.name||'–';
         const exp=p.expected_date?new Date(p.expected_date):null;
         if(exp)exp.setHours(0,0,0,0);
         const diff=exp?Math.round((exp-_poToday)/(1000*60*60*24)):null;
-        const ddayHtml=diff===null?'<span style="color:var(--t3);font-size:10px">입고일 미정</span>':diff<0?`<span style="font-size:10px;font-weight:700;color:var(--red)">+${Math.abs(diff)}일 지연</span>`:diff===0?`<span style="font-size:10px;font-weight:800;color:var(--accent)">오늘 입고</span>`:`<span style="font-size:10px;font-weight:700;color:var(--green)">D-${diff}</span>`;
-        const weeks=p.lead_weeks?`${p.lead_weeks}주`:'';
-        const statusCls=p.status==='partial'?'chip-amber':'chip-blue';
-        const statusTxt=p.status==='partial'?'부분입고':'발주완료';
+        const ddayHtml=diff===null?'<span style="color:var(--t3);font-size:10px">입고일 미정</span>':diff<0?`<span style="font-size:10px;font-weight:700;color:var(--red)">+${Math.abs(diff)}일 지연</span>`:diff===0?'<span style="font-size:10px;font-weight:800;color:var(--accent)">오늘 입고</span>':`<span style="font-size:10px;font-weight:700;color:var(--green)">D-${diff}</span>`;
+        const leW=p.lead_weeks||(p.lead_time_days?Math.round(p.lead_time_days/7):null);
+        const wk=leW?` · ${leW}주`:'';
         return `<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--bd)">
           <div style="flex:1;min-width:0;cursor:pointer" onclick="goToRawStock(${p.item_id})">
             <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${iName}</div>
-            <div style="font-size:11px;color:var(--t3);margin-top:2px">${p.qty}개 · ${p.expected_date||'입고일 미정'}${weeks?' · '+weeks:''}${p.orderer?' · '+p.orderer:''}</div>
+            <div style="font-size:11px;color:var(--t3);margin-top:2px">${p.qty}개 · ${p.expected_date||'입고일 미정'}${wk}${p.orderer?' · '+p.orderer:''}</div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">
             ${ddayHtml}
-            <span class="chip ${statusCls}" style="font-size:9px">${statusTxt}</span>
+            <span class="chip ${PO_STATUS_CLS[p.status]||'chip-gray'}" style="font-size:9px">${PO_STATUS[p.status]||p.status}</span>
           </div>
           <div style="display:flex;gap:4px;flex-shrink:0;margin-left:4px">
             <button class="btn btn-s btn-sm" onclick="event.stopPropagation();openPOEdit(${p.id})" style="padding:3px 8px;font-size:11px">수정</button>
@@ -6025,6 +6057,7 @@ async function renderInvOverview() {
           </div>
         </div>`;
       }).join('');
+      poSummaryEl.innerHTML = _sh;
     }
   }
   document.getElementById('inv-alert-list').innerHTML = warn.length ?
@@ -12490,4 +12523,29 @@ function calcPoEditExpected(){const od=document.getElementById('po-edit-order-da
 async function savePOEdit(){const id=parseInt(document.getElementById('po-edit-id').value);const qty=parseInt(document.getElementById('po-edit-qty')?.value)||0;if(!qty){showToast('수량을 입력해주세요','warn');return;}const lw=parseInt(document.getElementById('po-edit-lead-weeks')?.value)||null;const upd={qty,unit_cost:parseInt(document.getElementById('po-edit-unit-cost')?.value)||0,total_cost:parseInt(document.getElementById('po-edit-total')?.value)||0,supplier:document.getElementById('po-edit-supplier')?.value.trim()||null,order_date:document.getElementById('po-edit-order-date')?.value||null,lead_weeks:lw,lead_time_days:lw?lw*7:null,expected_date:document.getElementById('po-edit-expected-date')?.value||null,received_date:document.getElementById('po-edit-received-date')?.value||null,orderer:document.getElementById('po-edit-orderer')?.value.trim()||null,status:document.getElementById('po-edit-status')?.value||'ordered',note:document.getElementById('po-edit-note')?.value.trim()||null};if(typeof sb!=='undefined'&&sb){const tryUpd=async(payload)=>{const{error}=await sb.from('purchase_orders').update(payload).eq('id',id);if(error?.message?.includes("Could not find the '")){const m=error.message.match(/Could not find the '([^']+)' column/);if(m){const{[m[1]]:_,...rest}=payload;return tryUpd(rest);}}return{error};};const{error}=await tryUpd(upd);if(error){showToast('수정 실패: '+error.message,'error');return;}}const i=poOrders.findIndex(o=>o.id===id);if(i>=0)poOrders[i]={...poOrders[i],...upd};showToast('수정됐습니다 ✓');closeModal('poEditModal');renderPurchaseOrders();if(typeof renderInvOverview==='function')renderInvOverview();}
 function deletePOFromEdit(){const id=parseInt(document.getElementById('po-edit-id').value);const p=poOrders.find(o=>o.id===id);const item=invItems.find(i=>i.id===p?.item_id);if(!confirm('"'+(item?.name||'발주')+'"을(를) 삭제할까요?\n삭제 후 복구가 불가능합니다.'))return;closeModal('poEditModal');deletePO(id);}
 async function deletePO(id){if(typeof sb!=='undefined'&&sb){const{error}=await sb.from('purchase_orders').delete().eq('id',id);if(error){showToast('삭제 실패: '+error.message,'error');return;}}poOrders=poOrders.filter(o=>o.id!==id);showToast('삭제됐습니다');renderPurchaseOrders();if(typeof renderInvOverview==='function')renderInvOverview();}
+
+function updatePOAlertBadge() {
+  const t = new Date(); t.setHours(0,0,0,0);
+  const n = poOrders.filter(p=>{
+    if(!['ordered','partial'].includes(p.status)||!p.expected_date)return false;
+    const [ey,em,ed]=p.expected_date.slice(0,10).split('-').map(Number);
+    return new Date(ey,em-1,ed)<=t;
+  }).length;
+  const b=document.getElementById('poBadge');
+  if(b){b.textContent=n;b.style.display=n>0?'inline':'none';}
+}
+async function approveStockIn(poId) {
+  if(CU?.id !== 'hbg' && CU?.name !== '황병규' && CU?.name !== '횡병규'){showToast('입고 승인 권한이 없습니다','error');return;}
+  const po=poOrders.find(p=>p.id===poId);if(!po)return;
+  const item=invItems.find(i=>i.id===po.item_id);
+  if(!confirm('"'+(item?.name||'품목')+'" '+po.qty+'개\n원재료 재고에 추가하고 입고 완료 처리할까요?'))return;
+  po.status='received';po.received_date=new Date().toISOString().slice(0,10);
+  if(sb)await sb.from('purchase_orders').update({status:'received',received_date:po.received_date}).eq('id',poId);
+  const tx={item_id:po.item_id,type:'in',qty:po.qty,reason:'발주 입고 승인 (PO#'+poId+')',person:CU?.name||'황병규',note:''};
+  if(sb){const{data}=await sb.from('stock_transactions').insert([tx]).select().single();if(data)stockTx.unshift(data);}
+  else stockTx.unshift({id:Date.now(),...tx});
+  if(item){item.current_stock+=po.qty;if(sb)await sb.from('items').update({current_stock:item.current_stock}).eq('id',item.id);}
+  showToast('✅ 입고 승인 완료! '+(item?.name||'품목')+' '+po.qty+'개 재고 추가됨');
+  renderInvOverview();renderPurchaseOrders();updatePOAlertBadge();
+}
 </script>
