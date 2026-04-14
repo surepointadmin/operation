@@ -1389,7 +1389,7 @@ tbody tr:hover{background:var(--s2)}
           <select class="f-select" id="dealStageF" onchange="filterDeals()">
             <option value="">전체 단계</option>
             <option>잠재 발굴</option><option>미팅·접촉</option><option>제안·견적</option>
-            <option>협상·검토</option><option>구두합의</option><option>계약 완료</option><option>실패·보류</option>
+            <option>구두합의</option><option>계약 완료</option><option>설치</option><option>실패·보류</option>
           </select>
           <select class="f-select" id="dealPersonF" onchange="filterDeals()"><option value="">전체 담당자</option></select>
           <select class="f-select" id="dealInflowF" onchange="filterDeals()">
@@ -1969,7 +1969,7 @@ tbody tr:hover{background:var(--s2)}
         <div class="form-field">
           <label class="form-label">현재 단계</label>
           <select class="form-select" id="nd-stage">
-            <option>잠재 발굴</option><option>미팅·접촉</option><option>제안·견적</option><option>협상·검토</option><option>구두합의</option><option>계약 완료</option>
+            <option>잠재 발굴</option><option>미팅·접촉</option><option>제안·견적</option><option>구두합의</option><option>계약 완료</option><option>설치</option>
           </select>
         </div>
 
@@ -2588,13 +2588,14 @@ let ROLE_CHIP = {superadmin:'rb-superadmin',admin:'rb-admin',sales:'rb-sales',rd
 // 커스텀 역할은 자동으로 rb-custom 클래스 사용
 function getRoleChip(role){ return ROLE_CHIP[role]||'rb-custom'; }
 
-const STAGES = ['잠재 발굴','미팅·접촉','제안·견적','협상·검토','구두합의','계약 완료','실패·보류'];
-const STAGE_KEYS = ['lead','contact','proposal','nego','verbal','won','lost'];
-const STAGE_SP   = ['sp-lead','sp-contact','sp-proposal','sp-nego','sp-verbal','sp-won','sp-lost'];
-const BAR_CLS    = ['b-lead','b-contact','b-proposal','b-nego','b-verbal','b-won'];
+const STAGES = ['잠재 발굴','미팅·접촉','제안·견적','구두합의','계약 완료','설치','실패·보류'];
+const STAGE_KEYS = ['lead','contact','proposal','verbal','won','install','lost'];
+const STAGE_SP   = ['sp-lead','sp-contact','sp-proposal','sp-verbal','sp-won','sp-install','sp-lost'];
+const BAR_CLS    = ['b-lead','b-contact','b-proposal','b-verbal','b-won'];
 
 // 파이프라인 단계 설명
 const STAGE_DESC = {
+  '설치': '계약 체결 후 현장 설치 일정이 확정된 딜',
   '잠재 발굴':  '단순 유선·무선 컨택, 명함 수집, SNS 인바운드 등 초기 접점',
   '미팅·접촉':  '대면 미팅 또는 구체적 유선 문의 — 제품·서비스 설명 완료',
   '제안·견적':  '공식 제안서 또는 견적서 발송 완료, 고객 검토 중',
@@ -4071,6 +4072,15 @@ function buildDealEdit(id){
     <input type="hidden" id="de-prod">
     <input type="hidden" id="de-qty">
     <input type="hidden" id="de-unit">
+    ${d.stage==='제안·견적'?`
+    <div class="form-field full" style="grid-column:1/-1">
+      <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:var(--r);padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:8px">
+        📋 <b>제안·견적 단계</b>에서 수정 시 히스토리 입력이 <b>필수</b>입니다.
+      </div>
+      <label class="form-label">수정 히스토리 * <span style="font-weight:400;color:var(--t3);font-size:10px">예: 견적 금액 5% 인하, 납기 2주 연장 요청 반영</span></label>
+      <textarea class="form-textarea" id="de-history-text" rows="2" placeholder="이번 수정에서 변경된 내용을 입력하세요 (필수)"></textarea>
+    </div>`:''
+    }
   `;
 
   const btn = document.getElementById('linkProjBtn');
@@ -4153,6 +4163,13 @@ function calcDeAmt(){
 async function saveDealEdit(){
   const d=deals.find(x=>x.id===curDealId); if(!d) return;
   const os=d.stage;
+  // 제안·견적 단계: 히스토리 필수
+  const historyText = document.getElementById('de-history-text')?.value.trim();
+  if(d.stage==='제안·견적' && !historyText){
+    showToast('제안·견적 단계에서는 수정 히스토리 입력이 필수입니다','warn');
+    document.getElementById('de-history-text')?.focus();
+    return;
+  }
   d.name=document.getElementById('de-name').value.trim()||d.name;
   d.co=document.getElementById('de-co').value.trim()||d.co;
   // 다중 제품 수집
@@ -4187,6 +4204,7 @@ async function saveDealEdit(){
     }
     d.logs.push({type:'단계변경',text:`${os} → ${d.stage}`,time:nowStr(),person:CU?.name||'',dept:CU?.role||'sales'});
   }
+  if(historyText) d.logs.push({type:'제안',text:'[수정 히스토리] '+historyText,time:nowStr(),person:CU?.name||'',dept:CU?.role||'sales'});
   d.logs.push({type:'수정',text:'딜 정보 수정됨',time:nowStr(),person:CU?.name||'',dept:CU?.role||'sales'});
   document.getElementById('mdTitle').textContent=d.name;
   document.getElementById('mdSub').textContent=`${d.co} · ${d.person} · ${fmt(d.amt)}`;
@@ -4212,10 +4230,14 @@ async function saveDealEdit(){
 function changeDealStage(id,stage){
   const d=deals.find(x=>x.id===id); if(!d) return;
   const os=d.stage;
-  // 계약 완료로 넘길 때: 수금 기일 필수 입력 팝업
   if(stage==='계약 완료' && os!=='계약 완료'){
     openContractModal(d);
-    return; // 팝업에서 확인 후 실제 저장
+    return;
+  }
+  if(stage==='설치' && os!=='설치'){
+    _doChangeDealStage(d, os, stage);
+    setTimeout(()=>openInstallScheduleModal(d), 400);
+    return;
   }
   _doChangeDealStage(d, os, stage);
 }
@@ -4417,6 +4439,7 @@ async function createDeal(){
   renderDashboard();
   if(document.getElementById('view-pipeline').classList.contains('active')) renderPipeline();
   if(document.getElementById('view-deals').classList.contains('active')) renderDeals();
+  if(newDeal.stage === '설치') setTimeout(()=>openInstallScheduleModal(newDeal), 400);
 }
 
 // ══════════════════════════════════════════════
@@ -5275,6 +5298,31 @@ window.orgInitView = async function() {
       <div style="display:flex;gap:8px;margin-top:12px">
         <button class="btn btn-p" style="flex:1;justify-content:center" onclick="savePOEdit()">저장</button>
         <button class="btn btn-danger" style="justify-content:center" onclick="deletePOFromEdit()">삭제</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="installScheduleModal">
+  <div class="modal modal-md">
+    <div class="modal-hd">
+      <div class="modal-hd-info"><div class="modal-title">🔧 설치 일정 등록</div><div class="modal-sub" id="installScheduleSub"></div></div>
+      <button class="modal-close" onclick="closeModal('installScheduleModal')"><svg viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="install-deal-id">
+      <div class="form-grid">
+        <div class="form-field"><label class="form-label">설치 시작일 *</label><input class="form-input" id="install-start" type="date"></div>
+        <div class="form-field"><label class="form-label">설치 완료 예정일</label><input class="form-input" id="install-end" type="date"></div>
+        <div class="form-field full"><label class="form-label">설치 장소 *</label><input class="form-input" id="install-location" placeholder="예: 현대중공업 울산공장 3동"></div>
+        <div class="form-field"><label class="form-label">설치 담당자</label><input class="form-input" id="install-person" placeholder="담당자 이름"></div>
+        <div class="form-field"><label class="form-label">설치 수량</label><input class="form-input" id="install-qty" type="number" min="1" placeholder="대"></div>
+        <div class="form-field full"><label class="form-label">사전 준비 사항</label><input class="form-input" id="install-prep" placeholder="예: 전원 220V 확보"></div>
+        <div class="form-field full"><label class="form-label">메모</label><textarea class="form-textarea" id="install-note" rows="3" placeholder="설치 관련 특이사항"></textarea></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn btn-p" style="flex:1;justify-content:center;padding:12px" onclick="saveInstallSchedule()">설치 일정 저장</button>
+        <button class="btn btn-s" style="justify-content:center;padding:12px" onclick="closeModal('installScheduleModal')">나중에</button>
       </div>
     </div>
   </div>
@@ -12547,5 +12595,42 @@ async function approveStockIn(poId) {
   if(item){item.current_stock+=po.qty;if(sb)await sb.from('items').update({current_stock:item.current_stock}).eq('id',item.id);}
   showToast('✅ 입고 승인 완료! '+(item?.name||'품목')+' '+po.qty+'개 재고 추가됨');
   renderInvOverview();renderPurchaseOrders();updatePOAlertBadge();
+}
+
+function openInstallScheduleModal(deal) {
+  const d=typeof deal==='number'?deals.find(x=>x.id===deal):deal; if(!d)return;
+  document.getElementById('install-deal-id').value=d.id;
+  document.getElementById('installScheduleSub').textContent=d.name+' · '+d.co;
+  document.getElementById('install-start').value=d.installStart||'';
+  document.getElementById('install-end').value=d.installEnd||'';
+  document.getElementById('install-location').value=d.installLocation||'';
+  document.getElementById('install-person').value=d.installPerson||d.person||'';
+  document.getElementById('install-qty').value=d.installQty||d.qty||'';
+  document.getElementById('install-prep').value=d.installPrep||'';
+  document.getElementById('install-note').value=d.installNote||'';
+  openModal('installScheduleModal');
+}
+async function saveInstallSchedule() {
+  const dealId=parseInt(document.getElementById('install-deal-id').value);
+  const start=document.getElementById('install-start').value;
+  const location=document.getElementById('install-location').value.trim();
+  if(!start){showToast('설치 시작일을 입력해주세요','warn');return;}
+  if(!location){showToast('설치 장소를 입력해주세요','warn');return;}
+  const schedule={installStart:start,installEnd:document.getElementById('install-end').value||null,installLocation:location,installPerson:document.getElementById('install-person').value.trim()||null,installQty:parseInt(document.getElementById('install-qty').value)||null,installPrep:document.getElementById('install-prep').value.trim()||null,installNote:document.getElementById('install-note').value.trim()||null};
+  const deal=deals.find(d=>d.id===dealId); if(deal)Object.assign(deal,schedule);
+  if(typeof sb!=='undefined'&&sb){
+    const tryUpd=async(p)=>{const{error}=await sb.from('deals').update(p).eq('id',dealId);if(error?.message?.includes("Could not find the '")){const m=error.message.match(/Could not find the '([^']+)' column/);if(m){const{[m[1]]:_,...r}=p;return tryUpd(r);}}return{error};};
+    const{error}=await tryUpd(schedule);
+    if(error){showToast('저장 실패: '+error.message,'error');return;}
+  }
+  if(schedule.installStart){
+    const ev={id:'install_deal_'+dealId,title:'🔧 '+(deal?.name||'설치'),event_date:schedule.installStart,end_date:schedule.installEnd||schedule.installStart,category:'install',source:'auto',description:location+(schedule.installPerson?' · '+schedule.installPerson:''),linked_id:dealId};
+    const i=calEvents.findIndex(e=>e.id===ev.id);
+    if(i>=0)calEvents[i]=ev;else calEvents.push(ev);
+  }
+  showToast('설치 일정이 저장됐습니다 ✓');
+  closeModal('installScheduleModal');
+  renderDashboard();
+  if(document.getElementById('view-pipeline')?.classList.contains('active'))renderPipeline();
 }
 </script>
