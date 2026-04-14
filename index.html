@@ -1379,6 +1379,17 @@ tbody tr:hover{background:var(--s2)}
 
       <!-- PIPELINE -->
       <div class="view" id="view-pipeline">
+        <div style="padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <input class="f-input" type="text" id="pipelineSearch" placeholder="딜명, 고객사, 제품명 검색..." oninput="renderPipeline()" style="flex:1;min-width:180px;max-width:320px;font-size:13px">
+          <select class="f-select" id="pipelineSort" onchange="renderPipeline()" style="font-size:13px;min-width:130px;flex-shrink:0">
+            <option value="recent_move">최근 이동 순</option>
+            <option value="recent_create">최근 등록 순</option>
+            <option value="amount_desc">금액 높은 순</option>
+            <option value="amount_asc">금액 낮은 순</option>
+            <option value="close_asc">마감일 빠른 순</option>
+            <option value="name_asc">딜명 가나다 순</option>
+          </select>
+        </div>
         <div class="kanban-wrap" id="kanbanWrap"><div class="kanban-board" id="kanbanBoard"></div></div>
       </div>
 
@@ -3559,13 +3570,43 @@ function renderDashboard() {
 // PIPELINE
 // ══════════════════════════════════════════════
 function renderPipeline() {
+  const q    = (document.getElementById('pipelineSearch')?.value||'').trim().toLowerCase();
+  const sort = document.getElementById('pipelineSort')?.value || 'recent_move';
   document.getElementById('kanbanBoard').innerHTML=STAGES.map((s,i)=>{
-    const cd=deals.filter(d=>d.stage===s);
+    let cd = deals.filter(d=>d.stage===s);
+    if(q) cd = cd.filter(d=>
+      (d.name||'').toLowerCase().includes(q)||
+      (d.co||'').toLowerCase().includes(q)||
+      (d.prod||'').toLowerCase().includes(q)
+    );
+    cd = [...cd].sort((a,b)=>{
+      if(sort==='recent_move'){
+        // _lastMoveTs: 이 딜이 마지막으로 스테이지를 이동한 시각
+        const ta = a._lastMoveTs||a.created_at||a.createdAt||'';
+        const tb = b._lastMoveTs||b.created_at||b.createdAt||'';
+        if(ta&&tb) return tb.localeCompare(ta);
+        return b.id-a.id;
+      }
+      if(sort==='recent_create'){
+        const ta=a.created_at||a.createdAt||'';
+        const tb=b.created_at||b.createdAt||'';
+        if(ta&&tb) return tb.localeCompare(ta);
+        return b.id-a.id;
+      }
+      if(sort==='amount_desc') return b.amt-a.amt;
+      if(sort==='amount_asc')  return a.amt-b.amt;
+      if(sort==='close_asc'){
+        return (a.closeDate||'9999').localeCompare(b.closeDate||'9999');
+      }
+      if(sort==='name_asc') return (a.name||'').localeCompare(b.name||'','ko');
+      return 0;
+    });
     const tot=cd.reduce((a,d)=>a+d.amt,0);
+    const allCnt=deals.filter(d=>d.stage===s).length;
     const desc=STAGE_DESC[s]||'';
     return`<div class="kanban-col">
-      <div class="col-hd"><div class="col-dot d-${STAGE_KEYS[i]}"></div><div style="flex:1;min-width:0"><div class="col-name">${s}</div>${desc?`<div style="font-size:10.5px;color:var(--t3);margin-top:2px;line-height:1.4;font-weight:400">${desc}</div>`:''}</div><div class="col-meta" style="flex-shrink:0;align-self:flex-start;margin-top:2px">${cd.length} · ${tot>0?fmt(tot):'₩0'}</div></div>
-      <div class="col-body">${cd.map(d=>dealCardHtml(d)).join('')}</div>
+      <div class="col-hd"><div class="col-dot d-${STAGE_KEYS[i]}"></div><div style="flex:1;min-width:0"><div class="col-name">${s}</div>${desc?`<div style="font-size:10.5px;color:var(--t3);margin-top:2px;line-height:1.4;font-weight:400">${desc}</div>`:''}</div><div class="col-meta" style="flex-shrink:0;align-self:flex-start;margin-top:2px">${q?`<span style="color:var(--accent)">${cd.length}</span>/${allCnt}`:allCnt} · ${tot>0?fmt(tot):'₩0'}</div></div>
+      <div class="col-body">${cd.length?cd.map(d=>dealCardHtml(d)).join(''):(q?'<div style="padding:20px;text-align:center;color:var(--t3);font-size:12px">검색 결과 없음</div>':'')}</div>
       ${!['계약 완료','실패·보류'].includes(s)?`<div class="col-foot"><button class="add-btn" onclick="openNewDealModal('${s}')">+ 딜 추가</button></div>`:''}
     </div>`;
   }).join('');
@@ -4243,6 +4284,7 @@ function changeDealStage(id,stage){
 }
 function _doChangeDealStage(d, os, stage){
   d.stage=stage;
+  d._lastMoveTs = new Date().toISOString(); // 스테이지 이동 시각 갱신
   const stageLog = {type:'단계변경',text:`${os} → ${stage}`,time:nowStr(),person:CU?.name||'',dept:CU?.role||'sales'};
   d.logs.push(stageLog);
   updateDealInDB(d);
@@ -4930,12 +4972,18 @@ async function loadDealsFromDB(){
         text: l.text,
         person: l.person||'',
         dept: l.dept||'sales',
-        time: new Date(l.created_at).toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})
+        time: new Date(l.created_at).toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}),
+        _ts: l.created_at||''   // 정렬용 원본 타임스탬프
       }))
     }));
     dealIdCnt = Math.max(...deals.map(d=>d.id), 0) + 1;
     // 로드된 딜의 created_at 보존
-    deals.forEach(d => { if(!d.created_at) d.created_at = d.createdAt ? d.createdAt+'T00:00:00Z' : ''; });
+    deals.forEach(d => {
+      if(!d.created_at) d.created_at = d.createdAt ? d.createdAt+'T00:00:00Z' : '';
+      // 가장 최근 단계변경 로그 타임스탬프 → _lastMoveTs
+      const moveLogs = (d.logs||[]).filter(l=>l.type==='단계변경' && l._ts);
+      d._lastMoveTs = moveLogs.length ? moveLogs[moveLogs.length-1]._ts : d.created_at||'';
+    });
   } catch(e){
     console.error('loadDealsFromDB error:', e);
     showToast('데이터 로드에 실패했습니다. 새로고침 후 다시 시도해주세요.', 'error');
