@@ -2666,8 +2666,7 @@ const fmt = v => {
   if(a >= 100000000000) return '₩' + Math.round(a/100000000).toLocaleString() + '억';
   if(a >= 10000000000)  return '₩' + (a/100000000).toFixed(1) + '억';
   if(a >= 100000000)    return '₩' + (a/100000000).toFixed(1) + '억';
-  if(a >= 10000000)     return '₩' + Math.round(a/10000).toLocaleString() + '만';
-  if(a >= 10000)        return '₩' + Math.round(a/10000).toLocaleString() + '만';
+  if(a >= 100000000)    return '₩' + Math.round(a/10000).toLocaleString() + '만';
   return '₩' + a.toLocaleString() + '원';
 };
 const sk = s => STAGE_KEYS[STAGES.indexOf(s)] || 'lead';
