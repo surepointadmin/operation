@@ -4494,7 +4494,7 @@ async function createDeal(){
   if(!productRows.length){ showToast('제품을 1개 이상 추가해주세요','warn'); return; }
 
   const products = [...productRows].map(row=>({
-    prod:      row.querySelector('.nd-prod-sel')?.value||'',
+    prod:      getNdProdValue(row)||'',
     qty:       parseInt(row.querySelector('.nd-prod-qty')?.value)||1,
     unitPrice: parseInt(row.querySelector('.nd-prod-unit')?.value)||0,
   })).filter(p=>p.prod);
@@ -12254,11 +12254,29 @@ function getNdProductOpts(selectedProd) {
   ).join('');
 }
 
+function onNdProdSelChange(sel) {
+  const row = sel.closest('.nd-prod-row');
+  const customWrap = row.querySelector('.nd-prod-custom-wrap');
+  if(sel.value === '__custom__') {
+    customWrap.style.display = 'block';
+    row.querySelector('.nd-prod-custom').focus();
+  } else {
+    customWrap.style.display = 'none';
+  }
+  calcNdTotal(); autoNdName();
+}
+function getNdProdValue(row) {
+  const sel = row.querySelector('.nd-prod-sel');
+  if(sel.value === '__custom__') return row.querySelector('.nd-prod-custom').value.trim();
+  return sel.value;
+}
 function addNdProductRow(prod, qty, unitPrice, installFee) {
   const rows = document.getElementById('nd-product-rows');
   if(!rows) return;
-  const idx = rows.children.length;
-  const opts = getNdProductOpts(prod);
+  const isCustom = prod && !getNdProductList().includes(prod);
+  const opts = getNdProductList().map(p =>
+    `<option value="${p}"${(!isCustom && p === prod) ? ' selected' : ''}>${p}</option>`
+  ).join('');
   const div = document.createElement('div');
   div.className = 'nd-prod-row';
   div.style.cssText = 'background:var(--s2);border-radius:var(--r);padding:10px 12px;display:flex;flex-direction:column;gap:8px';
@@ -12266,9 +12284,15 @@ function addNdProductRow(prod, qty, unitPrice, installFee) {
     <div style="display:grid;grid-template-columns:2fr 70px 1fr 1fr auto;gap:8px;align-items:end">
       <div>
         <label class="form-label" style="font-size:10px;margin-bottom:2px">제품</label>
-        <select class="form-select nd-prod-sel" onchange="calcNdTotal();autoNdName()" style="font-size:13px">
+        <select class="form-select nd-prod-sel" onchange="onNdProdSelChange(this)" style="font-size:13px">
           ${opts}
+          <option value="__custom__"${isCustom ? ' selected' : ''}>✏️ 직접 입력...</option>
         </select>
+        <div class="nd-prod-custom-wrap" style="display:${isCustom ? 'block' : 'none'};margin-top:5px">
+          <input class="form-input nd-prod-custom" type="text" placeholder="제품명 직접 입력"
+            value="${isCustom ? (prod||'') : ''}"
+            oninput="calcNdTotal();autoNdName()" style="font-size:13px">
+        </div>
       </div>
       <div>
         <label class="form-label" style="font-size:10px;margin-bottom:2px">수량</label>
@@ -12278,14 +12302,12 @@ function addNdProductRow(prod, qty, unitPrice, installFee) {
       <div>
         <label class="form-label" style="font-size:10px;margin-bottom:2px">단가 (원)</label>
         <input class="form-input nd-prod-unit" type="number" min="0" value="${unitPrice||''}"
-          placeholder="단가 입력" oninput="calcNdTotal()"
-          style="font-size:13px">
+          placeholder="단가 입력" oninput="calcNdTotal()" style="font-size:13px">
       </div>
       <div>
         <label class="form-label" style="font-size:10px;margin-bottom:2px">설치비/대 (원)</label>
         <input class="form-input nd-prod-install" type="number" min="0" value="${installFee||''}"
-          placeholder="설치비 입력" oninput="calcNdTotal()"
-          style="font-size:13px">
+          placeholder="설치비 입력" oninput="calcNdTotal()" style="font-size:13px">
       </div>
       <button type="button" onclick="this.closest('.nd-prod-row').remove();calcNdTotal();autoNdName()"
         style="background:var(--rl);border:1px solid #fecaca;border-radius:var(--r-sm);
@@ -12345,9 +12367,9 @@ window.autoNdName = function() {
 
   if(rows.length > 0) {
     const prods = [...rows].map(r => {
-      const sel = r.querySelector('.nd-prod-sel');
+      const prodName = getNdProdValue(r);
       const qty = r.querySelector('.nd-prod-qty')?.value||'1';
-      return sel?.value ? `${sel.value} ${qty}대` : '';
+      return prodName ? `${prodName} ${qty}대` : '';
     }).filter(Boolean);
     if(co && prods.length > 0) {
       nameEl.value = `${co} | ${prods.join(', ')}`;
