@@ -1628,7 +1628,6 @@ tbody tr:hover{background:var(--s2)}
         <div class="card" style="margin-bottom:16px">
           <div class="card-hd"><div class="card-title">6개월 캐시플로우 전망</div></div>
           <div class="card-body">
-            <!-- 이번 달 KPI 3개 -->
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
               <div style="background:var(--s2);border-radius:var(--r);padding:12px">
                 <div style="font-size:11px;color:var(--t3);margin-bottom:4px;font-weight:500">이번 달 수금</div>
@@ -2451,7 +2450,14 @@ tbody tr:hover{background:var(--s2)}
         </div>
         <div class="form-field">
           <label class="form-label">지급 기한 (일) *</label>
-          <input class="form-input" id="contract-days" type="number" value="60" min="1" onchange="calcContractExpected()">
+          <input class="form-input" id="contract-days" type="number" value="60" min="1" oninput="calcContractExpected()">
+          <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px">
+            <button type="button" class="btn btn-s btn-sm" onclick="setContractDaysPreset('30')" style="font-size:11px;padding:3px 8px">30일</button>
+            <button type="button" class="btn btn-s btn-sm" onclick="setContractDaysPreset('60')" style="font-size:11px;padding:3px 8px">60일</button>
+            <button type="button" class="btn btn-s btn-sm" onclick="setContractDaysPreset('90')" style="font-size:11px;padding:3px 8px">90일</button>
+            <button type="button" class="btn btn-s btn-sm" onclick="setContractDaysPreset('next_month_end')" style="font-size:11px;padding:3px 8px">익월 말일</button>
+            <button type="button" class="btn btn-s btn-sm" onclick="setContractDaysPreset('next_next_month_end')" style="font-size:11px;padding:3px 8px">익익월 말일</button>
+          </div>
         </div>
       </div>
       <!-- 예상 수금일 자동계산 -->
@@ -2831,12 +2837,47 @@ function openContractModal(deal) {
   setTimeout(()=>document.getElementById('contract-basis-date').focus(), 100);
 }
 
+function setContractDaysPreset(preset) {
+  const basisStr = document.getElementById('contract-basis-date').value;
+  const daysEl   = document.getElementById('contract-days');
+  const expEl    = document.getElementById('contract-expected');
+  if(!basisStr) { showToast('기준일을 먼저 입력해주세요', 'warn'); return; }
+  const [y,m,d] = basisStr.split('-').map(Number);
+  const basis = new Date(y, m-1, d);
+  // 로컬 날짜 포맷 (toISOString은 UTC 변환으로 하루 빠지는 버그 있음)
+  const toLocal = dt => {
+    const yy = dt.getFullYear();
+    const mm = String(dt.getMonth()+1).padStart(2,'0');
+    const dd = String(dt.getDate()).padStart(2,'0');
+    return yy+'-'+mm+'-'+dd;
+  };
+  let result;
+  if(preset === 'next_month_end') {
+    // 익월 말일: new Date(y, m+1, 0) = monthIndex m+1의 0일 = m번째달 마지막날
+    // m=4(4월) → new Date(2026, 5, 0) = 5월 31일 ✓
+    result = new Date(y, m+1, 0);
+  } else if(preset === 'next_next_month_end') {
+    // 익익월 말일: new Date(y, m+2, 0)
+    // m=4(4월) → new Date(2026, 6, 0) = 6월 30일 ✓
+    result = new Date(y, m+2, 0);
+  } else {
+    result = new Date(y, m-1, d);
+    result.setDate(result.getDate() + parseInt(preset));
+  }
+  const diffDays = Math.round((result - basis) / (1000*60*60*24));
+  daysEl.value = diffDays > 0 ? diffDays : 1;
+  expEl.value = toLocal(result);
+  updateAmtPreview('contract-amount','contract-amount-preview');
+}
+
 function calcContractExpected(){
   const basis = document.getElementById('contract-basis-date').value;
   const days  = parseInt(document.getElementById('contract-days').value)||0;
   if(basis && days){
-    const d = new Date(basis); d.setDate(d.getDate()+days);
-    document.getElementById('contract-expected').value = d.toISOString().slice(0,10);
+    const [y,m,d] = basis.split('-').map(Number);
+    const dt = new Date(y, m-1, d);
+    dt.setDate(dt.getDate()+days);
+    document.getElementById('contract-expected').value = dt.toISOString().slice(0,10);
   }
   updateAmtPreview('contract-amount','contract-amount-preview');
 }
@@ -3378,7 +3419,7 @@ function renderSuperAdminKPI() {
   const maxV = Math.max(...r6,...e6,1);
   const chartEl = document.getElementById('sa-cashflow-chart');
   const BAR_H = 96; // 막대 영역 고정 높이(px)
-  const fmtM = v => { if(!v||v===0) return '–'; const a=Math.abs(v); if(a>=100000000000) return Math.round(a/100000000).toLocaleString()+'억'; if(a>=100000000) return (a/100000000).toFixed(1)+'억'; if(a>=10000000) return Math.round(a/10000).toLocaleString()+'만'; if(a>=10000) return Math.round(a/10000).toLocaleString()+'만'; return a.toLocaleString()+'원'; };
+  const fmtM = v => { if(!v||v===0) return '–'; const a=Math.abs(v); if(a>=10000) return (a/10000).toFixed(1)+'억'; if(a>=1) return Math.round(a).toLocaleString()+'만'; return a.toLocaleString()+'만'; };
   if(chartEl) chartEl.innerHTML = `
     <div style="display:flex;align-items:flex-end;gap:6px;width:100%">
       ${months6.map((m,i)=>{
@@ -3405,7 +3446,7 @@ function renderSuperAdminKPI() {
   const totalRecv6 = r6.reduce((s,v)=>s+v,0);
   const totalExp6  = e6.reduce((s,v)=>s+v,0);
   const net6 = totalRecv6 - totalExp6;
-  const fmtM2 = v => { if(!v||v===0) return '₩0'; const a=Math.abs(v); if(a>=100000000000) return '₩'+Math.round(a/100000000).toLocaleString()+'억'; if(a>=100000000) return '₩'+(a/100000000).toFixed(1)+'억'; if(a>=10000) return '₩'+Math.round(a/10000).toLocaleString()+'만'; return '₩'+a.toLocaleString()+'원'; };
+  const fmtM2 = v => { if(!v||v===0) return '₩0'; const a=Math.abs(v); if(a>=10000) return '₩'+(a/10000).toFixed(1)+'억'; if(a>=1) return '₩'+Math.round(a).toLocaleString()+'만'; return '₩'+a.toLocaleString()+'만'; };
   const sumEl = document.getElementById('cf-summary-6m');
   if(sumEl) sumEl.innerHTML = `
     <div style="margin-bottom:12px">
@@ -4100,6 +4141,9 @@ function buildDealEdit(id){
   document.getElementById('dealEditGrid').innerHTML = `
     <div class="form-field full"><label class="form-label">딜명</label><input class="form-input" id="de-name" value="${d.name}"></div>
     <div class="form-field full"><label class="form-label">고객사</label><input class="form-input" id="de-co" value="${d.co}"></div>
+    <div class="form-field"><label class="form-label">고객사 담당자</label><input class="form-input" id="de-contact-name" value="${d.contactName||''}" placeholder="예: 김부장"></div>
+    <div class="form-field"><label class="form-label">연락처</label><input class="form-input" id="de-contact-phone" value="${d.contactPhone||''}" placeholder="예: 010-1234-5678"></div>
+    <div class="form-field full"><label class="form-label">이메일</label><input class="form-input" id="de-contact-email" value="${d.contactEmail||''}" placeholder="예: kim@company.com"></div>
 
     <!-- 다중 제품 섹션 -->
     <div class="form-field full">
@@ -4231,6 +4275,9 @@ async function saveDealEdit(){
   }
   d.name=document.getElementById('de-name').value.trim()||d.name;
   d.co=document.getElementById('de-co').value.trim()||d.co;
+  d.contactName=document.getElementById('de-contact-name')?.value.trim()||d.contactName||'';
+  d.contactPhone=document.getElementById('de-contact-phone')?.value.trim()||d.contactPhone||'';
+  d.contactEmail=document.getElementById('de-contact-email')?.value.trim()||d.contactEmail||'';
   // 다중 제품 수집
   const deRows = [...document.querySelectorAll('.de-prod-row')];
   const deProducts = deRows.map(row=>({
@@ -4478,6 +4525,9 @@ async function createDeal(){
     priority: document.getElementById('nd-pri').value==='1',
     createdAt: new Date().toISOString().slice(0,10),
     linkedProject: null,
+    contactName: document.getElementById('nd-contact-name')?.value.trim()||'',
+    contactPhone: document.getElementById('nd-contact-phone')?.value.trim()||'',
+    contactEmail: document.getElementById('nd-contact-email')?.value.trim()||'',
     logs: memo ? [{type:'메모',text:memo,time:nowStr(),person:CU?.name||'',dept:CU?.role||'sales'}] : []
   };
 
@@ -4985,6 +5035,9 @@ async function loadDealsFromDB(){
       createdAt: d.created_at?.slice(0,10)||'',
       created_at: d.created_at||'',
       deliveryDate: d.delivery_date||'',
+      contactName: d.contact_name||'',
+      contactPhone: d.contact_phone||'',
+      contactEmail: d.contact_email||'',
       logs: dbLogs.filter(l=>l.deal_id===d.id).map(l=>({
         type: l.type,
         text: l.text,
@@ -5025,7 +5078,15 @@ async function loadProductsFromDB(){
 async function saveDealToDB(deal){
   if(!sb){ return deal; }
   try{
-    const {data, error} = await sb.from('deals').insert([{
+    const tryInsert = async (payload) => {
+      const {data, error} = await sb.from('deals').insert([payload]).select().single();
+      if(error?.message?.includes("Could not find the '")) {
+        const col = error.message.match(/Could not find the '([^']+)' column/)?.[1];
+        if(col) { const {[col]:_, ...rest} = payload; return tryInsert(rest); }
+      }
+      return {data, error};
+    };
+    const {data, error} = await tryInsert({
       name: deal.name, co: deal.co, prod: deal.prod,
       option_items: deal.option, inflow: deal.inflow,
       qty: deal.qty, unit_price: deal.unit, amount: deal.amt,
@@ -5034,8 +5095,11 @@ async function saveDealToDB(deal){
       delivery_date: deal.deliveryDate||null,
       priority: deal.priority,
       linked_project: deal.linkedProject||null,
+      contact_name: deal.contactName||null,
+      contact_phone: deal.contactPhone||null,
+      contact_email: deal.contactEmail||null,
       created_at: new Date().toISOString()
-    }]).select().single();
+    });
     if(error) throw error;
     // Save initial log if exists
     if(deal.logs && deal.logs.length > 0){
@@ -5057,8 +5121,16 @@ async function saveDealToDB(deal){
 // ── Update deal in DB ──
 async function updateDealInDB(deal){
   if(!sb){ return; }
+  const tryUpdate = async (payload) => {
+    const {error} = await sb.from('deals').update(payload).eq('id', deal.id);
+    if(error?.message?.includes("Could not find the '")) {
+      const col = error.message.match(/Could not find the '([^']+)' column/)?.[1];
+      if(col) { const {[col]:_, ...rest} = payload; return tryUpdate(rest); }
+    }
+    return {error};
+  };
   try{
-    const {error} = await sb.from('deals').update({
+    const {error} = await tryUpdate({
       name: deal.name, co: deal.co, prod: deal.prod,
       option_items: deal.option, inflow: deal.inflow,
       qty: deal.qty, unit_price: deal.unit, amount: deal.amt,
@@ -5067,8 +5139,11 @@ async function updateDealInDB(deal){
       delivery_date: deal.deliveryDate||null,
       priority: deal.priority,
       linked_project: deal.linkedProject||null,
+      contact_name: deal.contactName||null,
+      contact_phone: deal.contactPhone||null,
+      contact_email: deal.contactEmail||null,
       updated_at: new Date().toISOString()
-    }).eq('id', deal.id);
+    });
     if(error) throw error;
   } catch(e){
     console.error('updateDealInDB:', e);
@@ -6694,7 +6769,7 @@ async function renderCashflow() {
   const expByMonth  = months.map(m => expList.filter(e=>e.expense_date?.startsWith(m)).reduce((s,e)=>s+e.amount,0));
   const maxVal = Math.max(...recvByMonth, ...expByMonth, 1);
 
-  // 이번 달 KPI 업데이트
+  // 이번 달 KPI 카드 업데이트
   const thisRecv = recvByMonth[0], thisExp = expByMonth[0], thisNet = thisRecv - thisExp;
   const thisRecvCnt = recvList.filter(r=>r.expected_date?.startsWith(months[0])).length;
   const thisExpCnt  = expList.filter(e=>e.expense_date?.startsWith(months[0])).length;
@@ -7456,7 +7531,7 @@ function setCfTab(tab, btnEl) {
   });
   const d = window._cfData;
   if(!d) return;
-  const fmtM2 = v => { if(!v||v===0) return '₩0'; const a=Math.abs(v); if(a>=100000000000) return '₩'+Math.round(a/100000000).toLocaleString()+'억'; if(a>=100000000) return '₩'+(a/100000000).toFixed(1)+'억'; if(a>=10000) return '₩'+Math.round(a/10000).toLocaleString()+'만'; return '₩'+a.toLocaleString()+'원'; };
+  const fmtM2 = v => { if(!v||v===0) return '₩0'; const a=Math.abs(v); if(a>=10000) return '₩'+(a/10000).toFixed(1)+'억'; if(a>=1) return '₩'+Math.round(a).toLocaleString()+'만'; return '₩'+a.toLocaleString()+'만'; };
 
   if(tab==='q') {
     // 분기별 (Q1~Q4 현재연도 + 내년)
