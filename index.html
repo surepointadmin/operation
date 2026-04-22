@@ -6262,12 +6262,11 @@ async function renderInvOverview() {
   // 전체 원재료 예상이익 계산
   const rawWithPrice = raw.filter(i => i.sale_price > 0);
   const totalProfit = rawWithPrice.reduce((s,i) => s + (i.sale_price-(i.unit_cost||0))*(i.current_stock||0), 0);
-  const totalSale   = rawWithPrice.reduce((s,i) => s + i.sale_price*(i.current_stock||0), 0);
   const profitCard  = document.getElementById('inv-raw-profit-card');
   if(profitCard) {
     if(rawWithPrice.length > 0) {
       profitCard.style.display = '';
-      profitCard.innerHTML = '전체 예상이익 ' + (totalProfit>=0?'+':'') + totalProfit.toLocaleString() + '원 <span style="font-weight:400;opacity:.7">/ 매출 ' + totalSale.toLocaleString() + '원</span>';
+      profitCard.innerHTML = '전체 예상이익 ' + (totalProfit>=0?'+':'') + totalProfit.toLocaleString() + '원';
     } else {
       profitCard.style.display = 'none';
     }
