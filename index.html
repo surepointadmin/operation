@@ -1530,11 +1530,7 @@ tbody tr:hover{background:var(--s2)}
             <div class="card-body" style="padding:0"><div id="inv-finished-list"></div></div>
           </div>
           <div class="card">
-            <div class="card-hd"><div class="card-title" style="display:flex;align-items:center;gap:7px">🔩 원재료 재고 <button class="help-btn" onclick="showHelp('invOverview')">?</button></div>
-              <div style="display:flex;align-items:center;gap:8px">
-                <div id="inv-raw-profit-card" style="font-size:12px;background:#dcfce7;color:#16a34a;border-radius:6px;padding:4px 12px;font-weight:700;display:none"></div>
-                <button class="btn btn-p btn-sm" onclick="openItemModal('raw')">+ 품목 추가</button>
-              </div></div>
+            <div class="card-hd"><div class="card-title" style="display:flex;align-items:center;gap:7px">🔩 원재료 재고 <button class="help-btn" onclick="showHelp('invOverview')">?</button></div><button class="btn btn-p btn-sm" onclick="openItemModal('raw')">+ 품목 추가</button></div>
             <div class="card-body" style="padding:0"><div id="inv-raw-list"></div></div>
           </div>
           <div class="card">
@@ -1700,6 +1696,7 @@ tbody tr:hover{background:var(--s2)}
               <option value="amount_asc">금액 낮은순</option>
             </select>
             <button class="btn btn-s btn-sm" onclick="document.getElementById('recv-search').value='';document.getElementById('recv-status-filter').value='';document.getElementById('recv-date-from').value='';document.getElementById('recv-date-to').value='';document.getElementById('recv-sort').value='basis_date_asc';renderReceivables()">초기화</button>
+            <button onclick="bulkRegisterInstallDeals()" style="padding:5px 12px;font-size:12px;border:1px solid var(--accent);color:var(--accent);background:none;border-radius:6px;cursor:pointer;white-space:nowrap">설치 딕 일괄 등록</button>
           </div>
           <!-- 합계 표시 -->
           <div id="recv-summary" style="display:flex;gap:16px;font-size:12px;padding:6px 10px;background:var(--s2);border-radius:var(--r);flex-wrap:wrap"></div>
@@ -4429,6 +4426,17 @@ function _doChangeDealStage(d, os, stage){
   if(stage==='계약 완료'){
     setTimeout(()=>onDealContractComplete(d), 500);
   }
+  if(stage==='설치'){
+    setTimeout(async()=>{
+      const existing = recvList.find(r=>r.deal_id===d.id);
+      if(!existing && sb) {
+        const today = new Date().toISOString().slice(0,10);
+        const recvData = { deal_id:d.id, company_name:d.co, amount:d.amt||0, payment_basis:'install', basis_date:today, expected_date:today, status:'pending', note:d.name+' 설치 단계 자동 생성' };
+        const {data} = await sb.from('receivables').insert([recvData]).select().single();
+        if(data) { recvList.push(data); showToast('수금관리에 자동 등록됨 ✓'); }
+      }
+    }, 600);
+  }
   buildDealInfo(d);
   const subEl=document.getElementById('mdSub');
   if(subEl) subEl.textContent=`${d.co} · ${d.person} · ${fmt(d.amt)}`;
@@ -6204,12 +6212,7 @@ async function loadInvData() {
       sb.from('stock_transactions').select('*').order('created_at',{ascending:false}),
       sb.from('purchase_orders').select('*').order('order_date',{ascending:false}),
     ]);
-    invItems = (r1.data||[]).map(i => {
-      if(i.note) { const m = i.note.match(/[|][|]sale:([0-9]+)/); if(m) { i.sale_price = parseInt(m[1]); i.note = i.note.replace(/[|][|]sale:[0-9]+/,'').trim()||null; } }
-      if(!i.sale_price) i.sale_price = 0;
-      return i;
-    });
-    bomData = r2.data||[]; stockTx = r3.data||[]; poOrders = r4.data||[];
+    invItems = r1.data||[]; bomData = r2.data||[]; stockTx = r3.data||[]; poOrders = r4.data||[];
     await loadCodeRules();
   } catch(e) { console.error('loadInvData:', e); }
 }
@@ -6259,18 +6262,6 @@ async function renderInvOverview() {
     </div>`;
 
   // Raw materials list
-  // 전체 원재료 예상이익 계산
-  const rawWithPrice = raw.filter(i => i.sale_price > 0);
-  const totalProfit = rawWithPrice.reduce((s,i) => s + (i.sale_price-(i.unit_cost||0))*(i.current_stock||0), 0);
-  const profitCard  = document.getElementById('inv-raw-profit-card');
-  if(profitCard) {
-    if(rawWithPrice.length > 0) {
-      profitCard.style.display = '';
-      profitCard.innerHTML = '전체 예상이익 ' + (totalProfit>=0?'+':'') + totalProfit.toLocaleString() + '원';
-    } else {
-      profitCard.style.display = 'none';
-    }
-  }
   document.getElementById('inv-raw-list').innerHTML = raw.length ?
     raw.map(i => itemRow(i)).join('') :
     `<div style="text-align:center;padding:32px;color:var(--t3)">
@@ -6399,7 +6390,6 @@ function itemRow(i) {
     <div style="flex:1;min-width:0">
       <div style="font-weight:700;font-size:13px">${i.name}</div>
       <div style="font-size:11px;color:var(--t3);margin-top:2px">${i.code||''} ${i.supplier?`· ${i.supplier}`:''} ${!isFinished&&i.lead_time_days?`· 리드타임 ${Math.round(i.lead_time_days/7)}주`:''}</div>
-      ${!isFinished && (i.unit_cost || i.sale_price) ? `<div style="font-size:11px;margin-top:5px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">${i.unit_cost ? `<span style="color:var(--t3)">원가 <b style="color:var(--t1)">${i.unit_cost.toLocaleString()}원</b></span>` : ''}${i.sale_price ? `<span style="color:var(--t3)">판매가 <b style="color:var(--accent)">${i.sale_price.toLocaleString()}원</b></span>` : ''}${i.sale_price ? `<span style="background:#dcfce7;color:#16a34a;border-radius:4px;padding:2px 8px;font-weight:700">예상이익 ${((i.sale_price-(i.unit_cost||0))*(i.current_stock||0))>=0?'+':''}${((i.sale_price-(i.unit_cost||0))*(i.current_stock||0)).toLocaleString()}원</span>` : ''}</div>` : ''}
       ${stockSection}
     </div>
     ${stockDisplay}
@@ -6924,6 +6914,33 @@ async function renderCashflow() {
 // ══════════════════════════════════════════════════════════
 // 수금 관리
 // ══════════════════════════════════════════════════════════
+async 
+// 기존 설치 단계 딜 수금 일괄 등록
+async function bulkRegisterInstallDeals() {
+  if(!sb) { showToast('로그인이 필요합니다', 'warn'); return; }
+  showToast('데이터 불러오는 중...');
+  if(!deals || !deals.length) await loadData();
+  if(!recvList || !recvList.length) await loadFinData();
+  const installDeals = deals.filter(d => d.stage === '설치');
+  if(!installDeals.length) { showToast('설치 단계 딜이 없습니다', 'warn'); return; }
+  let added = 0;
+  const today = new Date().toISOString().slice(0,10);
+  for(const d of installDeals) {
+    const existing = recvList.find(r => r.deal_id === d.id);
+    if(!existing) {
+      const recvData = { deal_id:d.id, company_name:d.co, amount:d.amt||0, payment_basis:'install', basis_date:today, expected_date:today, status:'pending', note:d.name+' 설치 단계 일괄 등록' };
+      const {data} = await sb.from('receivables').insert([recvData]).select().single();
+      if(data) { recvList.push(data); added++; }
+    }
+  }
+  if(added > 0) {
+    showToast(added + '건 수금관리에 등록됐습니다 ✓', 'success');
+    renderReceivables();
+  } else {
+    showToast('이미 모두 등록된 딜입니다', 'warn');
+  }
+}
+
 async function renderReceivables() {
   if(!recvList.length) await loadFinData();
   const statusF  = document.getElementById('recv-status-filter')?.value||'';
@@ -7157,12 +7174,8 @@ function openRawItemModal(prefillFinishedId, editId, editItemDirect) {
             <input class="form-input" id="raw-lead" type="number" min="1" max="52" placeholder="예: 10">
           </div>
           <div class="form-field">
-            <label class="form-label">원가 / 매입단가 (원)</label>
+            <label class="form-label">단가 (원)</label>
             <input class="form-input" id="raw-cost" type="number" value="0">
-          </div>
-          <div class="form-field">
-            <label class="form-label">판매가 / 매출단가 (원)</label>
-            <input class="form-input" id="raw-sale-price" type="number" value="0">
           </div>
           <div class="form-field">
             <label class="form-label">공급업체</label>
@@ -7205,11 +7218,8 @@ function openRawItemModal(prefillFinishedId, editId, editItemDirect) {
     set('raw-stock',    editItem.current_stock ?? 0);
     set('raw-safety',   editItem.safety_stock  ?? 0);
     set('raw-lead',     weeks);
-    set('raw-cost', editItem.unit_cost ?? 0);
-    const _rawSP = editItem.sale_price || (() => { const m=(editItem.note||'').match(/[|][|]sale:([0-9]+)/); return m?parseInt(m[1]):0; })();
-    set('raw-sale-price', _rawSP);
-    const _noteEl=document.getElementById('raw-note'); if(_noteEl) _noteEl.value=(editItem.note||'').replace(/[|][|]sale:[0-9]+/,'').trim();
-    set('raw-supplier', editItem.supplier || '');
+    set('raw-cost',     editItem.unit_cost  ?? 0);
+    set('raw-supplier', editItem.supplier   || '');
     const noteEl = document.getElementById('raw-note');
     if(noteEl) noteEl.value = editItem.note || '';
   }
@@ -7238,23 +7248,17 @@ async function saveRawItem() {
     lead_time_days:(parseInt(document.getElementById('raw-lead').value)||10)*7,
     unit_cost:parseInt(document.getElementById('raw-cost').value)||0,
     supplier:document.getElementById('raw-supplier').value.trim()||null,
-    note: (() => {
-      const base = document.getElementById('raw-note').value.trim()||'';
-      const sp = parseInt(document.getElementById('raw-sale-price')?.value)||0;
-      const clean = base.replace(/[|][|]sale:[0-9]+/,'');
-      return sp > 0 ? (clean ? clean+'||sale:'+sp : '||sale:'+sp) : clean||null;
-    })(),
+    note:document.getElementById('raw-note').value.trim()||null,
   };
-  const parseSalePrice = (note) => { if(!note) return 0; const m = note.match(/[|][|]sale:([0-9]+)/); return m ? parseInt(m[1]) : 0; };
   if(editId) {
     if(sb){ await sb.from('items').update(data).eq('id',editId); }
     const idx=invItems.findIndex(i=>i.id===editId);
-    if(idx>=0) invItems[idx]={...invItems[idx],...data, sale_price: parseSalePrice(data.note)};
+    if(idx>=0) invItems[idx]={...invItems[idx],...data};
     showToast('원재료가 수정됐습니다 ✓');
   } else {
     let newItem;
-    if(sb){ const {data:d}=await sb.from('items').insert([data]).select().single(); newItem=d; if(d) invItems.push({...d, sale_price: parseSalePrice(d.note)}); }
-    else { newItem={id:Date.now(),...data}; invItems.push({...newItem, sale_price: parseSalePrice(data.note)}); }
+    if(sb){ const {data:d}=await sb.from('items').insert([data]).select().single(); newItem=d; if(d)invItems.push(d); }
+    else { newItem={id:Date.now(),...data}; invItems.push(newItem); }
     const rows = document.querySelectorAll('.raw-bom-row');
     for(const row of rows) {
       const finId=parseInt(row.querySelector('.raw-finished-sel')?.value)||0;
