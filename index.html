@@ -366,7 +366,7 @@ tbody tr:hover{background:var(--s2)}
 .team-info{flex:1;min-width:0}
 .team-nm{font-size:13px;font-weight:600}
 .team-deals{font-size:11px;color:var(--t3)}
-.team-amt{font-size:12px;font-weight:700;text-align:right;width:72px}
+.team-amt{font-size:11px;font-weight:700;text-align:right;min-width:90px;max-width:110px;word-break:break-all;line-height:1.4}
 
 /* ════════════════════════════════════════
    PIPELINE KANBAN
@@ -1696,7 +1696,6 @@ tbody tr:hover{background:var(--s2)}
               <option value="amount_asc">금액 낮은순</option>
             </select>
             <button class="btn btn-s btn-sm" onclick="document.getElementById('recv-search').value='';document.getElementById('recv-status-filter').value='';document.getElementById('recv-date-from').value='';document.getElementById('recv-date-to').value='';document.getElementById('recv-sort').value='basis_date_asc';renderReceivables()">초기화</button>
-            <button onclick="bulkRegisterInstallDeals()" style="padding:5px 12px;font-size:12px;border:1px solid var(--accent);color:var(--accent);background:none;border-radius:6px;cursor:pointer;white-space:nowrap">설치 딕 일괄 등록</button>
           </div>
           <!-- 합계 표시 -->
           <div id="recv-summary" style="display:flex;gap:16px;font-size:12px;padding:6px 10px;background:var(--s2);border-radius:var(--r);flex-wrap:wrap"></div>
@@ -2252,12 +2251,6 @@ tbody tr:hover{background:var(--s2)}
     <div class="modal-body">
       <input type="hidden" id="recv-id">
       <div class="form-grid">
-        <div class="form-field full">
-          <label class="form-label">딜에서 불러오기 <span style="font-weight:400;color:var(--t3)">(선택사항)</span></label>
-          <select class="form-select" id="recv-deal-select" onchange="onRecvDealSelect()">
-            <option value="">— 딜 선택 (계약완료·설치 단계) —</option>
-          </select>
-        </div>
         <div class="form-field full"><label class="form-label">고객사 *</label><input class="form-input" id="recv-company" placeholder="고객사명"></div>
         <div class="form-field full"><label class="form-label">수금 금액 (만원) *</label><input class="form-input" id="recv-amount" type="number" min="0" placeholder="예: 1275 → 1,275만원"></div>
         <div class="form-field full"><label class="form-label">수금 기준</label>
@@ -2667,12 +2660,15 @@ let CU = null; // current user
 // HELPERS
 // ══════════════════════════════════════════════
 const fmt = v => {
+  // 단위: 원 (deals.amount 등 원 단위 필드용)
   if(!v || v === 0) return '₩0';
-  return '₩' + Math.abs(v).toLocaleString() + '원';
+  const a = Math.abs(v);
+  if(a >= 100000000000) return '₩' + Math.round(a/100000000).toLocaleString() + '억';
+  if(a >= 10000000000)  return '₩' + (a/100000000).toFixed(1) + '억';
+  if(a >= 100000000)    return '₩' + (a/100000000).toFixed(1) + '억';
+  if(a >= 100000000)    return '₩' + Math.round(a/10000).toLocaleString() + '만';
+  return '₩' + a.toLocaleString() + '원';
 };
-const fmtKPI = v => { if(!v||v===0) return '₩0'; return '₩' + Math.abs(v).toLocaleString() + '원'; };
-const fmtKPImw = v => fmtMW(v||0);
-
 const sk = s => STAGE_KEYS[STAGES.indexOf(s)] || 'lead';
 const spCls = s => STAGE_SP[STAGES.indexOf(s)] || 'sp-lead';
 const today = new Date();
@@ -2770,8 +2766,12 @@ function orgAmtToWon(v) {
 }
 // 만원 단위 값을 표시 (수금/지출용)
 const fmtMW = v => {
-  if(!v || v === 0) return '₩0';
-  return '₩' + (Math.abs(v) * 10000).toLocaleString() + '원';
+  if(!v || v===0) return '₩0';
+  const a = Math.abs(v);
+  if(a >= 10000000) return '₩' + Math.round(a/10000).toLocaleString() + '억';
+  if(a >= 10000)    return '₩' + (a/10000).toFixed(1) + '억';
+  if(a >= 1000)     return '₩' + a.toLocaleString() + '만';
+  return '₩' + a.toLocaleString() + '만';
 };
 function fmtWon(v) {
   // 원 단위 숫자를 읽기 좋게 표시
@@ -3312,12 +3312,12 @@ function renderSuperAdminKPI() {
 
   // KPI 업데이트
   const v=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-  v('sa-backlog', fmtKPI(backlog));
+  v('sa-backlog', fmt(backlog));
   v('sa-backlog-c', `${active.length}건 진행`);
-  v('sa-recv-month', fmtKPImw(recvThisMonth));
+  v('sa-recv-month', fmtMW(recvThisMonth));
   v('sa-recv-month-c', `${recvList.filter(r=>r.expected_date?.startsWith(thisMonth)).length}건`);
   const netEl=document.getElementById('sa-net-cash');
-  if(netEl){netEl.textContent=fmtKPImw(Math.abs(netCash3M));netEl.style.color=netCash3M>=0?'var(--green)':'var(--red)';}
+  if(netEl){netEl.textContent=fmtMW(Math.abs(netCash3M));netEl.style.color=netCash3M>=0?'var(--green)':'var(--red)';}
   const netChip=document.getElementById('sa-net-cash-c');
   if(netChip){netChip.textContent=netCash3M>=0?`+${fmtMW(netCash3M)} 순유입`:`-${fmtMW(Math.abs(netCash3M))} 순유출`;netChip.className=`chip ${netCash3M>=0?'chip-green':'chip-red'}`;}
   v('sa-conv-rate', `${convRate}%`);
@@ -3418,10 +3418,7 @@ function renderSuperAdminKPI() {
   const maxV = Math.max(...r6,...e6,1);
   const chartEl = document.getElementById('sa-cashflow-chart');
   const BAR_H = 96; // 막대 영역 고정 높이(px)
-  const fmtM = v => {
-  if(!v||v===0) return '–';
-  return '₩' + (Math.abs(v) * 10000).toLocaleString() + '원';
-}
+  const fmtM = v => { if(!v||v===0) return '–'; const a=Math.abs(v); if(a>=10000) return (a/10000).toFixed(1)+'억'; if(a>=1) return Math.round(a).toLocaleString()+'만'; return a.toLocaleString()+'만'; };
   if(chartEl) chartEl.innerHTML = `
     <div style="display:flex;align-items:flex-end;gap:6px;width:100%">
       ${months6.map((m,i)=>{
@@ -3557,7 +3554,7 @@ function renderSuperAdminKPI() {
       <div class="av av${m.idx%12}" style="width:30px;height:30px;font-size:10px;flex-shrink:0">${m.name.slice(-2)}</div>
       <div class="team-info"><div class="team-nm">${m.name}</div><div class="team-deals">${md.length}건 · ${ROLE_LABELS[m.role]||''}</div>
       <div class="bar-track" style="margin-top:4px;height:4px"><div class="bar-fill" style="width:${Math.round(tot/mxP*100)}%;background:var(--accent)"></div></div></div>
-      <div class="team-amt">${fmt(tot)}</div>
+      <div class="team-amt" style="font-size:11px;text-align:right;min-width:90px;white-space:normal;line-height:1.4">${fmt(tot)}</div>
     </div>`;
   }).join('');
 }
@@ -3619,7 +3616,7 @@ function renderDashboard() {
       <div class="av av${m.idx%12}" style="width:30px;height:30px;font-size:10px;flex-shrink:0">${m.name.slice(-2)}</div>
       <div class="team-info"><div class="team-nm">${m.name}</div><div class="team-deals">${md.length}건 진행</div>
       <div class="bar-track" style="margin-top:4px;height:4px"><div class="bar-fill b-contact" style="width:${Math.round(tot/mxA*100)}%;background:var(--accent)"></div></div></div>
-      <div class="team-amt">${fmt(tot)}</div>
+      <div class="team-amt" style="font-size:11px;text-align:right;min-width:90px;white-space:normal;line-height:1.4">${fmt(tot)}</div>
     </div>`;
   }).join('');
 
@@ -4428,17 +4425,6 @@ function _doChangeDealStage(d, os, stage){
   if(stage==='계약 완료'){
     setTimeout(()=>onDealContractComplete(d), 500);
   }
-  if(stage==='설치'){
-    setTimeout(async()=>{
-      const existing = recvList.find(r=>r.deal_id===d.id);
-      if(!existing && sb) {
-        const today = new Date().toISOString().slice(0,10);
-        const recvData = { deal_id:d.id, company_name:d.co, amount:Math.round((d.amt||0)/10000), payment_basis:'install', basis_date:today, expected_date:today, status:'pending', note:d.name+' 설치 단계 자동 생성' };
-        const {data} = await sb.from('receivables').insert([recvData]).select().single();
-        if(data) { recvList.push(data); showToast('수금관리에 자동 등록됨 ✓'); }
-      }
-    }, 600);
-  }
   buildDealInfo(d);
   const subEl=document.getElementById('mdSub');
   if(subEl) subEl.textContent=`${d.co} · ${d.person} · ${fmt(d.amt)}`;
@@ -4993,7 +4979,7 @@ function renderStats(){
       <div class="av av${m.idx%12}" style="width:30px;height:30px;font-size:10px;flex-shrink:0">${m.name.slice(-2)}</div>
       <div class="team-info"><div class="team-nm">${m.name}</div><div class="team-deals">${md.length}건 / 완료 ${wn}건</div>
       <div class="bar-track" style="margin-top:4px;height:4px"><div class="bar-fill" style="width:${Math.round(tot/mxP*100)}%;background:var(--accent)"></div></div></div>
-      <div class="team-amt">${fmt(tot)}</div>
+      <div class="team-amt" style="font-size:11px;text-align:right;min-width:90px;white-space:normal;line-height:1.4">${fmt(tot)}</div>
     </div>`;
   }).join('');
 
@@ -5281,43 +5267,7 @@ function openAddAccountModal(){
   ).join('');
   openModal('addAccountModal');
 }
-function openRecvModal(editId){
-  const sel = document.getElementById('recv-deal-select');
-  if(sel) {
-    sel.innerHTML = '<option value="">— 딜 선택 (계약완료·설치 단계) —</option>';
-    const eligibleDeals = (deals||[]).filter(d => d.stage==='계약 완료' || d.stage==='설치');
-    eligibleDeals.sort((a,b) => (a.co||'').localeCompare(b.co||''));
-    eligibleDeals.forEach(d => {
-      const opt = document.createElement('option');
-      opt.value = d.id;
-      opt.textContent = d.co + ' — ' + d.name + ' (' + fmt(d.amt||0) + ')';
-      sel.appendChild(opt);
-    });
-  }
-  if(!editId) {
-    document.getElementById('recv-id').value = '';
-    document.getElementById('recv-company').value = '';
-    document.getElementById('recv-amount').value = '';
-    document.getElementById('recv-basis-date').value = new Date().toISOString().slice(0,10);
-    document.getElementById('recv-note').value = '';
-    if(sel) sel.value = '';
-  }
-  openModal('recvModal');
-}
-
-function onRecvDealSelect() {
-  const sel = document.getElementById('recv-deal-select');
-  const dealId = parseInt(sel.value);
-  if(!dealId) return;
-  const d = (deals||[]).find(x => x.id === dealId);
-  if(!d) return;
-  document.getElementById('recv-company').value = d.co || '';
-  document.getElementById('recv-amount').value = Math.round((d.amt||0)/10000) || '';
-  document.getElementById('recv-basis-date').value = new Date().toISOString().slice(0,10);
-  document.getElementById('recv-note').value = d.name || '';
-  calcExpectedDate();
-}
-
+function openRecvModal(){ openModal('recvModal'); }
 function openExpModal(){
   document.getElementById('exp-date').value = new Date().toISOString().slice(0,10);
   openModal('expModal');
@@ -6910,7 +6860,7 @@ async function renderCashflow() {
     const rh = Math.round(recv/maxVal*120), eh = Math.round(exp/maxVal*120);
     return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
       <div style="font-size:10px;font-weight:700;color:${net>=0?'var(--green)':'var(--red)'}">
-        ${net>=0?'+':''}${fmtKPImw(Math.abs(net))}
+        ${net>=0?'+':''}${fmtMW(Math.abs(net))}
       </div>
       <div style="display:flex;align-items:flex-end;gap:2px;width:100%">
         <div style="flex:1;background:var(--green);border-radius:3px 3px 0 0;height:${rh}px;opacity:.85"></div>
@@ -6952,28 +6902,6 @@ async function renderCashflow() {
 // ══════════════════════════════════════════════════════════
 // 수금 관리
 // ══════════════════════════════════════════════════════════
-async 
-async function bulkRegisterInstallDeals() {
-  if(!sb) { showToast('로그인이 필요합니다', 'warn'); return; }
-  showToast('데이터 불러오는 중...');
-  if(!deals || !deals.length) await loadData();
-  if(!recvList || !recvList.length) await loadFinData();
-  const installDeals = deals.filter(d => d.stage === '설치');
-  if(!installDeals.length) { showToast('설치 단계 딜이 없습니다', 'warn'); return; }
-  let added = 0;
-  const today = new Date().toISOString().slice(0,10);
-  for(const d of installDeals) {
-    const existing = recvList.find(r => r.deal_id === d.id);
-    if(!existing) {
-      const recvData = { deal_id:d.id, company_name:d.co, amount:Math.round((d.amt||0)/10000), payment_basis:'install', basis_date:today, expected_date:today, status:'pending', note:d.name+' 설치 단계 일괄 등록' };
-      const {data} = await sb.from('receivables').insert([recvData]).select().single();
-      if(data) { recvList.push(data); added++; }
-    }
-  }
-  if(added > 0) { showToast(added + '건 수금관리에 등록됐습니다 ✓', 'success'); renderReceivables(); }
-  else { showToast('이미 모두 등록된 딜입니다', 'warn'); }
-}
-
 async function renderReceivables() {
   if(!recvList.length) await loadFinData();
   const statusF  = document.getElementById('recv-status-filter')?.value||'';
@@ -7548,8 +7476,6 @@ function openRecvEdit(id) {
 }
 async function saveRecv() {
   const id=parseInt(document.getElementById('recv-id').value)||null;
-  const dealIdFromSel = parseInt(document.getElementById('recv-deal-select')?.value)||null;
-  const linkedDealId = dealIdFromSel || null;
   const data={company_name:document.getElementById('recv-company').value.trim(),amount:parseInt(document.getElementById('recv-amount').value)||0,payment_basis:document.getElementById('recv-basis').value,basis_date:document.getElementById('recv-basis-date').value||null,expected_date:document.getElementById('recv-expected-date').value||null,tax_invoice_date:document.getElementById('recv-tax-date').value||null,received_date:document.getElementById('recv-received-date').value||null,note:document.getElementById('recv-note').value.trim(),status:document.getElementById('recv-received-date').value?'received':'pending'};
   if(!data.company_name||!data.amount){showToast('고객사와 금액은 필수입니다','warn');return;}
   if(sb){
