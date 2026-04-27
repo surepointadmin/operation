@@ -366,7 +366,7 @@ tbody tr:hover{background:var(--s2)}
 .team-info{flex:1;min-width:0}
 .team-nm{font-size:13px;font-weight:600}
 .team-deals{font-size:11px;color:var(--t3)}
-.team-amt{font-size:11px;font-weight:700;text-align:right;min-width:90px;max-width:110px;word-break:break-all;line-height:1.4}
+.team-amt{font-size:12px;font-weight:700;text-align:right;width:72px}
 
 /* ════════════════════════════════════════
    PIPELINE KANBAN
@@ -2261,7 +2261,15 @@ tbody tr:hover{background:var(--s2)}
           </select>
         </div>
         <div class="form-field"><label class="form-label">기준일 *</label><input class="form-input" id="recv-basis-date" type="date" onchange="calcExpectedDate()"></div>
-        <div class="form-field"><label class="form-label">지급 기한 (일)</label><input class="form-input" id="recv-days" type="number" value="60" onchange="calcExpectedDate()"></div>
+        <div class="form-field" style="grid-column:1/-1">
+          <label class="form-label">지급 기한 (일)</label>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <input class="form-input" id="recv-days" type="number" value="60" onchange="calcExpectedDate()" style="width:100px;flex-shrink:0">
+            <button type="button" onclick="setRecvEOM(1)" style="padding:5px 10px;font-size:12px;border:1px solid var(--bd);border-radius:6px;background:var(--surface);cursor:pointer;white-space:nowrap;font-family:inherit">익월 말</button>
+            <button type="button" onclick="setRecvEOM(2)" style="padding:5px 10px;font-size:12px;border:1px solid var(--bd);border-radius:6px;background:var(--surface);cursor:pointer;white-space:nowrap;font-family:inherit">익익월 말</button>
+            <button type="button" onclick="setRecvEOM(3)" style="padding:5px 10px;font-size:12px;border:1px solid var(--bd);border-radius:6px;background:var(--surface);cursor:pointer;white-space:nowrap;font-family:inherit">익익익월 말</button>
+          </div>
+        </div>
         <div class="form-field full"><label class="form-label">예상 수금일 — 자동계산</label><input class="form-input auto" id="recv-expected-date" type="date"></div>
         <div class="form-field"><label class="form-label">세금계산서 발행일</label><input class="form-input" id="recv-tax-date" type="date"></div>
         <div class="form-field"><label class="form-label">실제 수금일</label><input class="form-input" id="recv-received-date" type="date"></div>
@@ -3554,7 +3562,7 @@ function renderSuperAdminKPI() {
       <div class="av av${m.idx%12}" style="width:30px;height:30px;font-size:10px;flex-shrink:0">${m.name.slice(-2)}</div>
       <div class="team-info"><div class="team-nm">${m.name}</div><div class="team-deals">${md.length}건 · ${ROLE_LABELS[m.role]||''}</div>
       <div class="bar-track" style="margin-top:4px;height:4px"><div class="bar-fill" style="width:${Math.round(tot/mxP*100)}%;background:var(--accent)"></div></div></div>
-      <div class="team-amt" style="font-size:11px;text-align:right;min-width:90px;white-space:normal;line-height:1.4">${fmt(tot)}</div>
+      <div class="team-amt">${fmt(tot)}</div>
     </div>`;
   }).join('');
 }
@@ -3616,7 +3624,7 @@ function renderDashboard() {
       <div class="av av${m.idx%12}" style="width:30px;height:30px;font-size:10px;flex-shrink:0">${m.name.slice(-2)}</div>
       <div class="team-info"><div class="team-nm">${m.name}</div><div class="team-deals">${md.length}건 진행</div>
       <div class="bar-track" style="margin-top:4px;height:4px"><div class="bar-fill b-contact" style="width:${Math.round(tot/mxA*100)}%;background:var(--accent)"></div></div></div>
-      <div class="team-amt" style="font-size:11px;text-align:right;min-width:90px;white-space:normal;line-height:1.4">${fmt(tot)}</div>
+      <div class="team-amt">${fmt(tot)}</div>
     </div>`;
   }).join('');
 
@@ -4979,7 +4987,7 @@ function renderStats(){
       <div class="av av${m.idx%12}" style="width:30px;height:30px;font-size:10px;flex-shrink:0">${m.name.slice(-2)}</div>
       <div class="team-info"><div class="team-nm">${m.name}</div><div class="team-deals">${md.length}건 / 완료 ${wn}건</div>
       <div class="bar-track" style="margin-top:4px;height:4px"><div class="bar-fill" style="width:${Math.round(tot/mxP*100)}%;background:var(--accent)"></div></div></div>
-      <div class="team-amt" style="font-size:11px;text-align:right;min-width:90px;white-space:normal;line-height:1.4">${fmt(tot)}</div>
+      <div class="team-amt">${fmt(tot)}</div>
     </div>`;
   }).join('');
 
@@ -7454,6 +7462,18 @@ async function savePO() {
 // ══════════════════════════════════════════════════════════
 // CRUD — 수금
 // ══════════════════════════════════════════════════════════
+function setRecvEOM(months) {
+  const basisVal = document.getElementById('recv-basis-date')?.value;
+  const base = basisVal ? new Date(basisVal + 'T00:00:00') : new Date();
+  const m = base.getMonth() + months;
+  const eom = new Date(base.getFullYear(), m + 1, 0);
+  const yyyy = eom.getFullYear();
+  const mm = String(eom.getMonth() + 1).padStart(2, '0');
+  const dd = String(eom.getDate()).padStart(2, '0');
+  document.getElementById('recv-expected-date').value = yyyy + '-' + mm + '-' + dd;
+  document.getElementById('recv-days').value = '';
+}
+
 function calcExpectedDate() {
   const basis=document.getElementById('recv-basis-date')?.value;
   const days=parseInt(document.getElementById('recv-days')?.value)||0;
