@@ -1061,7 +1061,7 @@ tbody tr:hover{background:var(--s2)}
         조직도
       </div>
       <!-- surepoint 견적서 -->
-      <a href="https://surepointadmin.github.io/surepoint-quotation" target="_blank" rel="noopener"
+      <a href="https://surepoint-quotation.vercel.app" target="_blank" rel="noopener"
         style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--r-sm);font-size:13px;font-weight:600;color:var(--purple-text,#6d28d9);text-decoration:none;transition:background .12s;margin-bottom:2px"
         onmouseenter="this.style.background='var(--pl,#f5f3ff)'" onmouseleave="this.style.background=''">
         <svg viewBox="0 0 16 16" fill="none" style="width:15px;height:15px;flex-shrink:0"><rect x="2" y="1" width="12" height="14" rx="1.5" stroke="currentColor" stroke-width="1.3"/><line x1="5" y1="5" x2="11" y2="5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="5" y1="8" x2="11" y2="8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="5" y1="11" x2="8" y2="11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
@@ -2261,15 +2261,7 @@ tbody tr:hover{background:var(--s2)}
           </select>
         </div>
         <div class="form-field"><label class="form-label">기준일 *</label><input class="form-input" id="recv-basis-date" type="date" onchange="calcExpectedDate()"></div>
-        <div class="form-field" style="grid-column:1/-1">
-          <label class="form-label">지급 기한 (일)</label>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <input class="form-input" id="recv-days" type="number" value="60" onchange="calcExpectedDate()" style="width:100px;flex-shrink:0">
-            <button type="button" onclick="setRecvEOM(1)" style="padding:5px 10px;font-size:12px;border:1px solid var(--bd);border-radius:6px;background:var(--surface);cursor:pointer;white-space:nowrap;font-family:inherit">익월 말</button>
-            <button type="button" onclick="setRecvEOM(2)" style="padding:5px 10px;font-size:12px;border:1px solid var(--bd);border-radius:6px;background:var(--surface);cursor:pointer;white-space:nowrap;font-family:inherit">익익월 말</button>
-            <button type="button" onclick="setRecvEOM(3)" style="padding:5px 10px;font-size:12px;border:1px solid var(--bd);border-radius:6px;background:var(--surface);cursor:pointer;white-space:nowrap;font-family:inherit">익익익월 말</button>
-          </div>
-        </div>
+        <div class="form-field"><label class="form-label">지급 기한 (일)</label><input class="form-input" id="recv-days" type="number" value="60" onchange="calcExpectedDate()"></div>
         <div class="form-field full"><label class="form-label">예상 수금일 — 자동계산</label><input class="form-input auto" id="recv-expected-date" type="date"></div>
         <div class="form-field"><label class="form-label">세금계산서 발행일</label><input class="form-input" id="recv-tax-date" type="date"></div>
         <div class="form-field"><label class="form-label">실제 수금일</label><input class="form-input" id="recv-received-date" type="date"></div>
@@ -4048,6 +4040,10 @@ function saveSectionEdit() {
 let curDealId=null;
 async function openDeal(id) {
   const d=deals.find(x=>x.id===id); if(!d) return;
+  const grid = document.getElementById('dealEditGrid');
+  if(grid && grid.dataset.builtFor != id) {
+    grid.dataset.builtFor = '';
+  }
   curDealId=id;
   document.getElementById('mdTitle').textContent=d.name;
   document.getElementById('mdSub').textContent=`${d.co} · ${d.person} · ${fmt(d.amt)}`;
@@ -4095,7 +4091,15 @@ function switchMTab(ctx,name,el){
   const contents=el.closest('.modal-body').querySelectorAll('.mtc');
   tabs.forEach(t=>t.classList.remove('on'));contents.forEach(t=>t.classList.remove('on'));
   el.classList.add('on');document.getElementById(`${ctx}-tab-${name}`).classList.add('on');
-  if(ctx==='deal'&&name==='edit')buildDealEdit(curDealId);
+  if(ctx==='deal'&&name==='edit'){
+    const grid = document.getElementById('dealEditGrid');
+    const alreadyBuilt = grid && grid.querySelector('#de-name');
+    const builtForSameDeal = alreadyBuilt && grid.dataset.builtFor == curDealId;
+    if(!builtForSameDeal) {
+      buildDealEdit(curDealId);
+      if(grid) grid.dataset.builtFor = curDealId;
+    }
+  }
   if(ctx==='deal'&&name==='log')buildDealLog(curDealId);
 }
 
@@ -7462,18 +7466,6 @@ async function savePO() {
 // ══════════════════════════════════════════════════════════
 // CRUD — 수금
 // ══════════════════════════════════════════════════════════
-function setRecvEOM(months) {
-  const basisVal = document.getElementById('recv-basis-date')?.value;
-  const base = basisVal ? new Date(basisVal + 'T00:00:00') : new Date();
-  const m = base.getMonth() + months;
-  const eom = new Date(base.getFullYear(), m + 1, 0);
-  const yyyy = eom.getFullYear();
-  const mm = String(eom.getMonth() + 1).padStart(2, '0');
-  const dd = String(eom.getDate()).padStart(2, '0');
-  document.getElementById('recv-expected-date').value = yyyy + '-' + mm + '-' + dd;
-  document.getElementById('recv-days').value = '';
-}
-
 function calcExpectedDate() {
   const basis=document.getElementById('recv-basis-date')?.value;
   const days=parseInt(document.getElementById('recv-days')?.value)||0;
