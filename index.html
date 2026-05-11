@@ -7304,11 +7304,26 @@ function saveRecvStatusEdit(dealId) {
   if(window.sb) {
     sb.from('deals').update({recv_status: newStatus, recv_expected_date: newDate||null}).eq('id', dealId)
       .then(({error})=>{
-        if(error) { d.recvStatus=prev.status; d.recvExpectedDate=prev.date; showToast('저장 실패','error'); return; }
+        if(error) {
+          console.error('saveRecvStatusEdit DB 오류:', error);
+          // 컬럼 없는 경우 — deals 테이블에 컬럼 추가 필요 안내
+          if(error.code === '42703' || error.message?.includes('column')) {
+            showToast('DB 컬럼 없음. Supabase에서 SQL 실행 필요', 'error');
+          } else {
+            showToast('저장 실패: '+error.message, 'error');
+          }
+          d.recvStatus = prev.status;
+          d.recvExpectedDate = prev.date;
+          renderReceivables();
+          return;
+        }
         showToast('수정됐습니다 ✓');
         renderReceivables();
       });
-  } else { showToast('수정됐습니다 ✓'); renderReceivables(); }
+  } else {
+    showToast('수정됐습니다 ✓');
+    renderReceivables();
+  }
 }
 
 // 딜 수금 완료 처리
