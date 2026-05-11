@@ -1741,9 +1741,27 @@ tbody tr:hover{background:var(--s2)}
           <!-- 합계 표시 -->
           <div id="recv-summary" style="display:flex;gap:16px;font-size:12px;padding:6px 10px;background:var(--s2);border-radius:var(--r);flex-wrap:wrap"></div>
         </div>
+        <!-- 납품완료 딜 기반 수금 현황 -->
+        <div style="padding:10px 16px 6px;font-size:12px;font-weight:700;color:var(--t3);display:flex;align-items:center;justify-content:space-between">
+          <span>📋 영업(납품완료) 딜 수금 현황 <span id="recv-deal-count" style="font-weight:400;color:var(--t3)"></span></span>
+          <span id="recv-deal-total" style="font-weight:800;color:var(--t1)"></span>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr>
+            <th>딜명</th><th>고객사</th><th>예상 금액</th><th>수금액(VAT포함)</th>
+            <th>납품일</th><th>예상 수금일</th><th>세금계산서</th><th>상태</th><th>관리</th>
+          </tr></thead>
+          <tbody id="recv-table-body"></tbody></table>
+        </div>
+
+        <!-- 직접 등록 수금 현황 -->
+        <div style="padding:10px 16px 6px;margin-top:8px;font-size:12px;font-weight:700;color:var(--t3);border-top:2px solid var(--bd);display:flex;align-items:center;justify-content:space-between">
+          <span>📝 직접 등록 수금 건</span>
+          <button class="btn btn-s btn-sm" onclick="openNewRecv()">+ 직접 등록</button>
+        </div>
         <div class="table-wrap">
           <table><thead><tr><th>고객사</th><th>딜</th><th>금액(공급가)</th><th>수금액(VAT포함)</th><th>수금 기준</th><th>기준일</th><th>예상 수금일</th><th>세금계산서</th><th>상태</th><th>관리</th></tr></thead>
-          <tbody id="recv-table-body"></tbody></table>
+          <tbody id="recv-manual-body"></tbody></table>
         </div>
 
         <!-- 제품 판매건 수금 현황 -->
@@ -4276,7 +4294,7 @@ function buildDealEdit(id){
         if(products.length > 0) {
           const wrap = document.getElementById('de-product-rows');
           if(wrap) {
-            wrap.innerHTML = products.map(p => deProdRowHtml(p.prod, p.qty, p.unit_price)).join('');
+            wrap.innerHTML = products.map(p => deProdRowHtml(p.prod, p.qty, p.unit_price, p.install_fee||0)).join('');
             calcDeTotal();
           }
         }
@@ -4371,7 +4389,7 @@ async function saveDealEdit(){
     d.prod  = prodLabel;
     d.qty   = deProducts.reduce((s,p)=>s+p.qty, 0);
     d.unit  = deProducts[0].unitPrice;
-    d.amt   = deProducts.reduce((s,p)=>s+p.qty*p.unitPrice, 0);
+    d.amt   = deProducts.reduce((s,p)=>s+p.qty*(p.unitPrice+(p.installFee||0)), 0);
   }
   d.option=document.getElementById('de-option')?.value.trim()||'';
   d.person=document.getElementById('de-person').value;
@@ -4999,7 +5017,7 @@ function showRecvMonthDetail() {
 
   // 영업 수금 건 (receivables 테이블 - expected_date 기준)
   const salesRecv = recvList.filter(r => {
-    const dt = r.expected_date || r.basis_date || '';
+    const dt = r.recv_expected_date || r.expected_date || r.basis_date || '';
     return dt.startsWith(thisMonth) && r.status !== 'received';
   });
   const salesTotal = salesRecv.reduce((s,r)=>s+r.amount, 0);
@@ -5403,6 +5421,8 @@ async function loadDealsFromDB(){
       contactName: d.contact_name||'',
       contactPhone: d.contact_phone||'',
       contactEmail: d.contact_email||'',
+      recvStatus: d.recv_status||'pending',
+      recvExpectedDate: d.recv_expected_date||'',
       logs: dbLogs.filter(l=>l.deal_id===d.id).map(l=>({
         type: l.type,
         text: l.text,
@@ -5448,6 +5468,8 @@ async function saveDealToDB(deal){
       contact_name: deal.contactName||null,
       contact_phone: deal.contactPhone||null,
       contact_email: deal.contactEmail||null,
+      recv_status: deal.recvStatus||null,
+      recv_expected_date: deal.recvExpectedDate||null,
       priority: deal.priority,
       linked_project: deal.linkedProject||null,
       created_at: new Date().toISOString()
@@ -7111,83 +7133,89 @@ async function renderCashflow() {
 // 수금 관리
 // ══════════════════════════════════════════════════════════
 async function renderReceivables() {
-  if(!recvList.length) await loadFinData();
   const statusF  = document.getElementById('recv-status-filter')?.value||'';
   const searchF  = (document.getElementById('recv-search')?.value||'').trim().toLowerCase();
   const dateFrom = document.getElementById('recv-date-from')?.value||'';
   const dateTo   = document.getElementById('recv-date-to')?.value||'';
-  const sortV    = document.getElementById('recv-sort')?.value||'basis_date_asc';
 
-  let data = [...recvList];
+  // ── 납품완료 딜 기반 수금 현황 ──
+  let dealData = deals.filter(d => d.stage === '납품 완료');
 
-  // 필터
-  if(statusF) data = data.filter(r=>r.status===statusF);
-  if(searchF) data = data.filter(r=>
-    (r.company_name||'').toLowerCase().includes(searchF) ||
-    (r.deal_id ? `딜 #${r.deal_id}` : '').toLowerCase().includes(searchF) ||
-    (r.note||'').toLowerCase().includes(searchF)
+  // 필터 적용
+  if(searchF) dealData = dealData.filter(d =>
+    (d.name||'').toLowerCase().includes(searchF) ||
+    (d.co||'').toLowerCase().includes(searchF)
   );
-  if(dateFrom) data = data.filter(r=>(r.basis_date||'')>=dateFrom);
-  if(dateTo)   data = data.filter(r=>(r.basis_date||'')<=dateTo);
-
-  // 정렬
-  data.sort((a,b)=>{
-    if(sortV==='basis_date_asc')  return (a.basis_date||'').localeCompare(b.basis_date||'');
-    if(sortV==='basis_date_desc') return (b.basis_date||'').localeCompare(a.basis_date||'');
-    if(sortV==='company_asc')     return (a.company_name||'').localeCompare(b.company_name||'');
-    if(sortV==='company_desc')    return (b.company_name||'').localeCompare(a.company_name||'');
-    if(sortV==='amount_desc')     return (b.amount||0)-(a.amount||0);
-    if(sortV==='amount_asc')      return (a.amount||0)-(b.amount||0);
-    return 0;
-  });
-
-  // 합계 계산
-  const totalAmt   = data.reduce((s,r)=>s+r.amount,0);
-  const totalVat   = Math.round(totalAmt*1.1);
-  const cntByStatus = {};
-  data.forEach(r=>{ cntByStatus[r.status]=(cntByStatus[r.status]||0)+1; });
-  const sumEl = document.getElementById('recv-summary');
-  if(sumEl) {
-    const statusLbls = {pending:'수금대기',invoiced:'계산서발행',received:'수금완료',overdue:'연체'};
-    const statusColors = {pending:'var(--t2)',invoiced:'var(--accent)',received:'var(--green)',overdue:'var(--red)'};
-    sumEl.innerHTML = `
-      <span style="font-weight:700;color:var(--text)">${data.length}건</span>
-      <span style="color:var(--t3)">|</span>
-      <span>공급가 합계 <strong>${fmtMW(totalAmt)}</strong></span>
-      <span>VAT포함 합계 <strong style="color:var(--accent)">${fmtMW(totalVat)}</strong></span>
-      ${Object.entries(cntByStatus).map(([s,c])=>`<span style="color:${statusColors[s]||'var(--t2)'}">${statusLbls[s]||s} ${c}건</span>`).join('')}
-    `;
+  if(statusF) {
+    // 딜의 recvStatus 필드 기반 (없으면 pending으로 간주)
+    dealData = dealData.filter(d => (d.recvStatus||'pending') === statusF);
   }
+  if(dateFrom) dealData = dealData.filter(d => (d.deliveryDate||d.closeDate||'') >= dateFrom);
+  if(dateTo)   dealData = dealData.filter(d => (d.deliveryDate||d.closeDate||'') <= dateTo);
 
-  // 고객사별 그룹핑 표시 (company/amount 정렬일 때)
-  const isGrouped = sortV.startsWith('company');
-  let rows = '';
-  if(isGrouped && data.length) {
-    // 고객사별 소계 행 삽입
-    const groups = {};
-    data.forEach(r=>{ if(!groups[r.company_name]) groups[r.company_name]=[]; groups[r.company_name].push(r); });
-    const groupOrder = sortV==='company_asc'
-      ? Object.keys(groups).sort()
-      : Object.keys(groups).sort().reverse();
-    rows = groupOrder.map(co=>{
-      const items = groups[co];
-      const subTotal = items.reduce((s,r)=>s+r.amount,0);
-      return `
-        <tr style="background:var(--s2)">
-          <td colspan="10" style="padding:6px 10px;font-size:12px;font-weight:700;color:var(--t2)">
-            ${co} — ${items.length}건 · 공급가 합계 ${fmtMW(subTotal)} / VAT포함 ${fmtMW(Math.round(subTotal*1.1))}
+  // KPI
+  const dealTotal = dealData.reduce((s,d)=>s+d.amt,0);
+  const cntEl = document.getElementById('recv-deal-count');
+  const totEl = document.getElementById('recv-deal-total');
+  if(cntEl) cntEl.textContent = `${dealData.length}건`;
+  if(totEl) totEl.textContent = fmt(dealTotal);
+
+  const statusLb = {pending:'수금대기', invoiced:'계산서발행', received:'수금완료', overdue:'연체'};
+  const statusCl = {pending:'chip-amber', invoiced:'chip-blue', received:'chip-green', overdue:'chip-red'};
+
+  const tbody = document.getElementById('recv-table-body');
+  if(tbody) {
+    if(!dealData.length) {
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--t3)">납품 완료 딜이 없습니다</td></tr>`;
+    } else {
+      tbody.innerHTML = dealData.map(d => {
+        const st = d.recvStatus||'pending';
+        // recvList에서 이 딜과 연결된 수금 건 찾기
+        const linked = recvList.find(r => r.deal_id === d.id);
+        const expectedDate = d.recvExpectedDate || linked?.expected_date || d.deliveryDate || '–';
+        const taxIssued = linked?.tax_invoice_issued || false;
+        const taxDate   = linked?.tax_invoice_date || '';
+        return `<tr style="cursor:pointer" onclick="openDealFromRecv(${d.id})">
+          <td style="font-weight:600;color:var(--accent)">${d.name}</td>
+          <td style="color:var(--t2)">${d.co}</td>
+          <td style="font-weight:700">${fmt(d.amt)}</td>
+          <td style="font-weight:700;color:var(--accent)">${fmt(Math.round(d.amt*1.1))}<span style="font-size:9px;color:var(--t3);font-weight:400"> (VAT)</span></td>
+          <td style="color:var(--t3)">${d.deliveryDate||d.closeDate||'–'}</td>
+          <td style="${st==='overdue'?'color:var(--red);font-weight:700':''}">${expectedDate}</td>
+          <td style="text-align:center">
+            ${taxIssued
+              ? `<span class="chip chip-green">✓ ${taxDate}</span>`
+              : `<button class="btn btn-s btn-sm" onclick="event.stopPropagation();markTaxInvoice(${linked?.id||'null'},${d.id})" style="font-size:10px">발행</button>`}
           </td>
-        </tr>
-        ${items.map(r=>recvRow(r)).join('')}`;
-    }).join('');
-  } else {
-    rows = data.map(r=>recvRow(r)).join('');
+          <td>
+            <span class="chip ${statusCl[st]||'chip-gray'}">${statusLb[st]||st}</span>
+          </td>
+          <td onclick="event.stopPropagation()">
+            <div style="display:flex;gap:4px">
+              <button class="btn btn-s btn-sm" onclick="openRecvStatusEdit(${d.id})" style="font-size:11px">상태수정</button>
+              ${st!=='received'?`<button class="btn btn-sm" onclick="markDealReceived(${d.id})" style="font-size:11px;background:var(--g2);color:var(--green);border:1px solid #bbf7d0">수금완료</button>`:''}
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    }
   }
 
-  document.getElementById('recv-table-body').innerHTML = rows ||
-    `<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--t3)">수금 내역이 없습니다</td></tr>`;
+  // ── 직접 등록 수금 건 (기존 recvList 중 deal_id 없는 것) ──
+  let manualData = recvList.filter(r => !r.deal_id);
+  if(statusF) manualData = manualData.filter(r=>r.status===statusF);
+  if(searchF) manualData = manualData.filter(r=>(r.company_name||'').toLowerCase().includes(searchF));
+  if(dateFrom) manualData = manualData.filter(r=>(r.basis_date||'')>=dateFrom);
+  if(dateTo)   manualData = manualData.filter(r=>(r.basis_date||'')<=dateTo);
 
-  // 제품 판매건 수금 현황 렌더링
+  const manualBody = document.getElementById('recv-manual-body');
+  if(manualBody) {
+    manualBody.innerHTML = manualData.length
+      ? manualData.map(r=>recvRow(r)).join('')
+      : `<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--t3)">직접 등록된 수금 건이 없습니다</td></tr>`;
+  }
+
+  // ── 제품 판매건 수금 현황 ──
   const psFiltered = (productSales||[]).filter(p => {
     if(statusF && p.status !== statusF) return false;
     if(searchF && !p.company.toLowerCase().includes(searchF) && !p.products.toLowerCase().includes(searchF)) return false;
@@ -7218,6 +7246,119 @@ async function renderReceivables() {
     }
   }
 }
+
+// 딜 클릭 → 영업툴 딜 정보 팝업
+function openDealFromRecv(dealId) {
+  openDeal(dealId);
+}
+
+// 딜 수금 상태 수정
+function openRecvStatusEdit(dealId) {
+  const d = deals.find(x=>x.id===dealId);
+  if(!d) { showToast('딜을 찾을 수 없습니다','error'); return; }
+  const labels = {pending:'수금대기', invoiced:'계산서발행', received:'수금완료', overdue:'연체'};
+  const cur = d.recvStatus||'pending';
+  let panel = document.getElementById('recv-edit-panel');
+  if(!panel) {
+    panel = document.createElement('div');
+    panel.id = 'recv-edit-panel';
+    panel.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:4000;display:flex;align-items:center;justify-content:center';
+    document.body.appendChild(panel);
+  }
+  panel.innerHTML = `
+    <div style="background:var(--surface);border-radius:var(--r-lg);width:380px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+      <div style="font-size:15px;font-weight:800;margin-bottom:4px">${d.name}</div>
+      <div style="font-size:12px;color:var(--t3);margin-bottom:20px">${d.co}</div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:6px;display:block">수금 상태</label>
+          <select id="recv-edit-status" class="form-select">
+            <option value="pending" \${cur==='pending'?'selected':''}>수금대기</option>
+            <option value="invoiced" \${cur==='invoiced'?'selected':''}>계산서발행</option>
+            <option value="received" \${cur==='received'?'selected':''}>수금완료</option>
+            <option value="overdue" \${cur==='overdue'?'selected':''}>연체</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:6px;display:block">예상 수금일</label>
+          <input type="date" id="recv-edit-date" class="form-input" value="\${d.recvExpectedDate||d.deliveryDate||''}">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:20px">
+        <button class="btn btn-g" style="flex:1" onclick="document.getElementById('recv-edit-panel').style.display='none'">취소</button>
+        <button class="btn btn-p" style="flex:1" onclick="saveRecvStatusEdit(${dealId})">저장</button>
+      </div>
+    </div>`;
+  panel.style.display = 'flex';
+}
+
+function saveRecvStatusEdit(dealId) {
+  const d = deals.find(x=>x.id===dealId);
+  if(!d) return;
+  const newStatus = document.getElementById('recv-edit-status').value;
+  const newDate   = document.getElementById('recv-edit-date').value;
+  const prev = {status: d.recvStatus, date: d.recvExpectedDate};
+  d.recvStatus = newStatus;
+  d.recvExpectedDate = newDate;
+  document.getElementById('recv-edit-panel').style.display = 'none';
+  if(window.sb) {
+    sb.from('deals').update({recv_status: newStatus, recv_expected_date: newDate||null}).eq('id', dealId)
+      .then(({error})=>{
+        if(error) { d.recvStatus=prev.status; d.recvExpectedDate=prev.date; showToast('저장 실패','error'); return; }
+        showToast('수정됐습니다 ✓');
+        renderReceivables();
+      });
+  } else { showToast('수정됐습니다 ✓'); renderReceivables(); }
+}
+
+// 딜 수금 완료 처리
+function markDealReceived(dealId) {
+  const d = deals.find(x=>x.id===dealId);
+  if(!d) return;
+  if(!confirm(`"${d.name}"
+수금 완료 처리할까요?`)) return;
+  d.recvStatus = 'received';
+  if(window.sb) sb.from('deals').update({recv_status:'received'}).eq('id',dealId).then(({error})=>{
+    if(error) { d.recvStatus='pending'; showToast('저장 실패','error'); return; }
+    showToast('수금 완료 처리됐습니다 ✓');
+    renderReceivables();
+  });
+  else renderReceivables();
+}
+
+// 세금계산서 발행 (딜 기반)
+function markTaxInvoice(recvId, dealId) {
+  const today = new Date().toISOString().slice(0,10);
+  const d = deals.find(x=>x.id===dealId);
+  if(d && !d.recvStatus) { d.recvStatus = 'invoiced'; }
+  if(recvId && recvId!=='null' && window.sb) {
+    sb.from('receivables').update({tax_invoice_issued:true, tax_invoice_date:today, status:'invoiced'}).eq('id',recvId).then(()=>{
+      showToast('세금계산서 발행 처리됐습니다');
+      renderReceivables();
+    });
+  } else {
+    // recvList에 없으면 새로 생성
+    if(d && window.sb) {
+      const payload = {
+        company_name: d.co, amount: Math.round(d.amt/10000),
+        deal_id: dealId, status:'invoiced',
+        tax_invoice_issued:true, tax_invoice_date:today,
+        expected_date: d.deliveryDate||d.closeDate||today,
+        payment_basis:'delivery', basis_date: d.deliveryDate||today,
+        created_at: new Date().toISOString()
+      };
+      sb.from('receivables').insert([payload]).select().single().then(({data})=>{
+        if(data) recvList.push(data);
+        showToast('세금계산서 발행 처리됐습니다');
+        renderReceivables();
+      });
+    } else {
+      showToast('세금계산서 발행 처리됐습니다');
+      renderReceivables();
+    }
+  }
+}
+
 
 function recvRow(r) {
   return `<tr>
