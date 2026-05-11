@@ -946,6 +946,10 @@ tbody tr:hover{background:var(--s2)}
           <svg viewBox="0 0 16 16" fill="none"><polyline points="2,12 5,7 8,10 11,4 14,8" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
           통계
         </div>
+        <div class="nav-item" onclick="showView('product-sales',this)" id="ni-product-sales">
+          <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="2" width="10" height="12" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M4 6h6M4 9h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="12" cy="12" r="3" fill="var(--surface)" stroke="currentColor" stroke-width="1.3"/><path d="M11 12h2M12 11v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          제품 판매
+        </div>
         <div class="nav-item" id="ni-team" onclick="showView('team',this)">
           <svg viewBox="0 0 16 16" fill="none"><circle cx="5.5" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M1 13c0-2 2-3 4.5-3s4.5 1 4.5 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="11.5" cy="4.5" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M10 12.5c.5-.3 1-.5 1.5-.5s3 .8 3 2.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
           팀 현황
@@ -1062,7 +1066,7 @@ tbody tr:hover{background:var(--s2)}
         조직도
       </div>
       <!-- surepoint 견적서 -->
-      <a href="https://surepointadmin.github.io/surepoint-quotation" target="_blank" rel="noopener"
+      <a href="https://surepoint-quotation.vercel.app" target="_blank" rel="noopener"
         style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--r-sm);font-size:13px;font-weight:600;color:var(--purple-text,#6d28d9);text-decoration:none;transition:background .12s;margin-bottom:2px"
         onmouseenter="this.style.background='var(--pl,#f5f3ff)'" onmouseleave="this.style.background=''">
         <svg viewBox="0 0 16 16" fill="none" style="width:15px;height:15px;flex-shrink:0"><rect x="2" y="1" width="12" height="14" rx="1.5" stroke="currentColor" stroke-width="1.3"/><line x1="5" y1="5" x2="11" y2="5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="5" y1="8" x2="11" y2="8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="5" y1="11" x2="8" y2="11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
@@ -1157,8 +1161,8 @@ tbody tr:hover{background:var(--s2)}
               <div class="kpi-val" id="sa-backlog">₩0</div>
               <span class="chip chip-blue" id="sa-backlog-c">0건 진행</span>
             </div>
-            <div class="kpi-card" style="border-left:3px solid var(--green)">
-              <div class="kpi-label">이달 수금 예정</div>
+            <div class="kpi-card" style="border-left:3px solid var(--green);cursor:pointer" onclick="showRecvMonthDetail()">
+              <div class="kpi-label">이달 수금 예정 <span style="font-size:9px;opacity:.6">▼ 상세</span></div>
               <div class="kpi-val" id="sa-recv-month">₩0</div>
               <span class="chip chip-green" id="sa-recv-month-c">0건</span>
             </div>
@@ -1242,21 +1246,21 @@ tbody tr:hover{background:var(--s2)}
               <div class="card-body"><div class="team-rows" id="sa-person-pipeline"></div></div>
             </div>
           </div>
-        </div>
-
-        <!-- 제품별 판매 현황 (superadmin) -->
-        <div class="card" style="margin:16px 0">
+        
+        <!-- 제품별 판매 현황 -->
+        <div class="card" style="margin:20px 0">
           <div class="card-hd" style="padding-bottom:12px">
             <div class="card-title">📦 제품별 판매 현황</div>
             <div style="display:flex;align-items:center;gap:8px">
-              <input type="month" id="home-prod-month-picker-normal"
+              <input type="month" id="home-prod-month-picker"
                 style="border:1px solid var(--bd2);border-radius:var(--r-sm);padding:4px 10px;font-size:12px;font-family:var(--font);color:var(--t1);background:var(--surface);cursor:pointer"
                 onchange="renderProdSalesCard()">
-              <span style="font-size:11px;color:var(--t3)" id="home-prod-month-label-normal"></span>
+              <span style="font-size:11px;color:var(--t3)" id="home-prod-month-label"></span>
             </div>
           </div>
-          <div id="home-prod-sales-normal" style="padding:0 20px 16px"></div>
+          <div id="home-prod-sales" style="padding:0 20px 16px"></div>
         </div>
+</div>
 
         <!-- 일반 유저 홈 -->
         <div id="home-normal">
@@ -1310,13 +1314,13 @@ tbody tr:hover{background:var(--s2)}
               <div class="card-hd" style="padding-bottom:12px">
                 <div class="card-title">📦 제품별 판매 현황</div>
                 <div style="display:flex;align-items:center;gap:8px">
-                  <input type="month" id="home-prod-month-picker"
+                  <input type="month" id="home-prod-month-picker-normal"
                     style="border:1px solid var(--bd2);border-radius:var(--r-sm);padding:4px 10px;font-size:12px;font-family:var(--font);color:var(--t1);background:var(--surface);cursor:pointer"
                     onchange="renderProdSalesCard()">
-                  <span style="font-size:11px;color:var(--t3)" id="home-prod-month-label"></span>
+                  <span style="font-size:11px;color:var(--t3)" id="home-prod-month-label-normal"></span>
                 </div>
               </div>
-              <div id="home-prod-sales" style="padding:0 20px 16px"></div>
+              <div id="home-prod-sales-normal" style="padding:0 20px 16px"></div>
             </div>
 
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px" id="homeSummaryGrid">
@@ -1505,6 +1509,64 @@ tbody tr:hover{background:var(--s2)}
         </div>
       </div>
 
+
+      <!-- 제품 판매 (대리점 납품건) -->
+      <div class="view" id="view-product-sales">
+        <div style="display:flex;flex-direction:column;gap:8px;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--bd)">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <input class="f-input" id="ps-search" placeholder="🔍 거래처 / 제품 검색" oninput="renderProductSales()" style="flex:1;min-width:160px">
+            <select class="f-select" id="ps-status-filter" onchange="renderProductSales()">
+              <option value="">전체 상태</option>
+              <option value="pending">수금대기</option>
+              <option value="invoiced">계산서발행</option>
+              <option value="received">수금완료</option>
+            </select>
+            <input class="f-input" type="month" id="ps-month-filter" onchange="renderProductSales()" style="width:140px">
+            <button class="btn btn-p btn-sm" onclick="openNewProductSale()">+ 판매 추가</button>
+          </div>
+        </div>
+
+        <!-- KPI 배너 -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-bottom:1px solid var(--bd)">
+          <div style="padding:14px 20px;border-right:1px solid var(--bd)">
+            <div style="font-size:10px;font-weight:700;color:var(--t3);margin-bottom:4px">이번 달 판매</div>
+            <div style="font-size:20px;font-weight:800;color:var(--t1)" id="ps-kpi-month">₩0</div>
+            <div style="font-size:11px;color:var(--t3)" id="ps-kpi-month-c">0건</div>
+          </div>
+          <div style="padding:14px 20px;border-right:1px solid var(--bd)">
+            <div style="font-size:10px;font-weight:700;color:var(--t3);margin-bottom:4px">수금 대기</div>
+            <div style="font-size:20px;font-weight:800;color:var(--amber)" id="ps-kpi-pending">₩0</div>
+            <div style="font-size:11px;color:var(--t3)" id="ps-kpi-pending-c">0건</div>
+          </div>
+          <div style="padding:14px 20px">
+            <div style="font-size:10px;font-weight:700;color:var(--t3);margin-bottom:4px">연간 누계</div>
+            <div style="font-size:20px;font-weight:800;color:var(--accent)" id="ps-kpi-year">₩0</div>
+            <div style="font-size:11px;color:var(--t3)" id="ps-kpi-year-c">0건</div>
+          </div>
+        </div>
+
+        <!-- 판매 목록 테이블 -->
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>판매일</th>
+                <th>거래처</th>
+                <th>제품 구성</th>
+                <th style="text-align:right">수량</th>
+                <th style="text-align:right">금액 <span style="font-weight:400;font-size:10px;opacity:.6">(VAT별도)</span></th>
+                <th>세금계산서</th>
+                <th>상태</th>
+                <th>수금예정일</th>
+                <th>담당자</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="ps-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- INV: 재고 현황 -->
       <div class="view" id="view-inv-overview">
         <!-- 품번 규칙 패널 (접기 가능) -->
@@ -1682,6 +1744,18 @@ tbody tr:hover{background:var(--s2)}
         <div class="table-wrap">
           <table><thead><tr><th>고객사</th><th>딜</th><th>금액(공급가)</th><th>수금액(VAT포함)</th><th>수금 기준</th><th>기준일</th><th>예상 수금일</th><th>세금계산서</th><th>상태</th><th>관리</th></tr></thead>
           <tbody id="recv-table-body"></tbody></table>
+        </div>
+
+        <!-- 제품 판매건 수금 현황 -->
+        <div style="padding:12px 16px;border-top:2px solid var(--bd);margin-top:4px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-size:13px;font-weight:700;color:var(--t1)">📦 제품 판매건 수금 현황</div>
+            <span style="font-size:11px;color:var(--t3)" id="ps-recv-summary"></span>
+          </div>
+          <div class="table-wrap">
+            <table><thead><tr><th>판매일</th><th>거래처</th><th>제품 구성</th><th style="text-align:right">금액 <span style="font-weight:400;font-size:10px">(VAT별도)</span></th><th>세금계산서</th><th>상태</th><th>수금예정일</th><th>담당자</th></tr></thead>
+            <tbody id="ps-recv-tbody"></tbody></table>
+          </div>
         </div>
       </div>
 
@@ -3239,6 +3313,9 @@ function renderSuperAdminKPI() {
   const nm2 = `${nextM2.getFullYear()}-${String(nextM2.getMonth()+1).padStart(2,'0')}`;
 
   const recvThisMonth = recvList.filter(r=>r.expected_date?.startsWith(thisMonth)&&r.status!=='received').reduce((s,r)=>s+r.amount,0);
+  // 제품판매건 수금 합산
+  const psThisMonth = (productSales||[]).filter(p=>p.recvDate?.startsWith(thisMonth)&&p.status!=='received').reduce((s,p)=>s+Math.round(p.amt/10000),0);
+  const recvThisMonthTotal = recvThisMonth + psThisMonth;
   const recv3M = recvList.filter(r=>{
     const m=r.expected_date?.slice(0,7)||'';
     return m>=thisMonth && m<=nm2 && r.status!=='received';
@@ -3258,8 +3335,8 @@ function renderSuperAdminKPI() {
   const v=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
   v('sa-backlog', fmt(backlog));
   v('sa-backlog-c', `${active.length}건 진행`);
-  v('sa-recv-month', fmtMW(recvThisMonth));
-  v('sa-recv-month-c', `${recvList.filter(r=>r.expected_date?.startsWith(thisMonth)).length}건`);
+  v('sa-recv-month', fmtMW(recvThisMonthTotal));
+  v('sa-recv-month-c', `${recvList.filter(r=>r.expected_date?.startsWith(thisMonth)).length + (productSales||[]).filter(p=>p.recvDate?.startsWith(thisMonth)&&p.status!=='received').length}건`);
   const netEl=document.getElementById('sa-net-cash');
   if(netEl){netEl.textContent=fmtMW(Math.abs(netCash3M));netEl.style.color=netCash3M>=0?'var(--green)':'var(--red)';}
   const netChip=document.getElementById('sa-net-cash-c');
@@ -3357,12 +3434,12 @@ function renderSuperAdminKPI() {
 
   // ── 현금흐름 6개월 차트 ──
   const months6 = Array.from({length:6},(_,i)=>{const d=new Date(now.getFullYear(),now.getMonth()+i,1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;});
-  const r6 = months6.map(m=>recvList.filter(r=>r.expected_date?.startsWith(m)).reduce((s,r)=>s+r.amount,0));
+  const r6 = months6.map(m=>recvList.filter(r=>r.expected_date?.startsWith(m)).reduce((s,r)=>s+r.amount,0) + (productSales||[]).filter(p=>p.recvDate?.startsWith(m)&&p.status!=='received').reduce((s,p)=>s+p.amt/10000,0));
   const e6 = months6.map(m=>expList.filter(e=>e.expense_date?.startsWith(m)).reduce((s,e)=>s+e.amount,0));
   const maxV = Math.max(...r6,...e6,1);
   const chartEl = document.getElementById('sa-cashflow-chart');
   const BAR_H = 96; // 막대 영역 고정 높이(px)
-  const fmtM = v => { if(!v||v===0) return '–'; const a=Math.abs(v); if(a>=100000000000) return Math.round(a/100000000).toLocaleString()+'억'; if(a>=100000000) return (a/100000000).toFixed(1)+'억'; if(a>=10000000) return Math.round(a/10000).toLocaleString()+'만'; if(a>=10000) return Math.round(a/10000).toLocaleString()+'만'; return a.toLocaleString()+'원'; };
+  const fmtM = v => { if(!v||v===0) return '–'; const a=Math.abs(v); if(a>=100000) return Math.round(a/10000).toLocaleString()+'억'; if(a>=1000) return (a/10000).toFixed(1)+'억'; if(a>=1) return a.toLocaleString()+'만'; return a.toLocaleString()+'만'; };
   if(chartEl) chartEl.innerHTML = `
     <div style="display:flex;align-items:flex-end;gap:6px;width:100%">
       ${months6.map((m,i)=>{
@@ -3397,16 +3474,16 @@ function renderSuperAdminKPI() {
       <div style="font-size:11px;color:var(--t2);margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--bd)">
         <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px">
           <span style="display:flex;align-items:center;gap:4px"><span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block"></span>수금</span>
-          <span style="font-weight:700;color:var(--green)">${fmtM2(totalRecv6)}</span>
+          <span style="font-weight:700;color:var(--green)">${fmtMW(totalRecv6)}</span>
         </div>
         <div style="display:flex;justify-content:space-between;gap:8px">
           <span style="display:flex;align-items:center;gap:4px"><span style="width:6px;height:6px;border-radius:50%;background:var(--red);display:inline-block"></span>지출</span>
-          <span style="font-weight:700;color:var(--red)">${fmtM2(totalExp6)}</span>
+          <span style="font-weight:700;color:var(--red)">${fmtMW(totalExp6)}</span>
         </div>
       </div>
       <div style="display:flex;justify-content:space-between;gap:8px">
         <span style="font-size:11px;font-weight:700;color:var(--t2)">순이익</span>
-        <span style="font-size:13px;font-weight:800;color:${net6>=0?'var(--green)':'var(--red)'}">${net6>=0?'+':''}${fmtM2(Math.abs(net6))}</span>
+        <span style="font-size:13px;font-weight:800;color:${net6>=0?'var(--green)':'var(--red)'}">${net6>=0?'+':''}${fmtMW(Math.abs(net6))}</span>
       </div>
     </div>
     ${months6.map((m,i)=>{
@@ -3414,7 +3491,7 @@ function renderSuperAdminKPI() {
       const net=r6[i]-e6[i];
       return `<div style="font-size:10px;padding:3px 0;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center">
         <span style="color:var(--t3)">${mo}월</span>
-        <span style="font-weight:700;color:${net>=0?'var(--green)':'var(--red)'}">${net>=0?'+':''}${fmtM2(Math.abs(net))}</span>
+        <span style="font-weight:700;color:${net>=0?'var(--green)':'var(--red)'}">${net>=0?'+':''}${fmtMW(Math.abs(net))}</span>
       </div>`;
     }).join('')}`;
 
@@ -4110,10 +4187,10 @@ function buildDealEdit(id){
   const existingProducts = dealProductsCache[id] || [];
 
   // 제품 행 HTML 생성
-  function deProdRowHtml(prod, qty, unitPrice) {
+  function deProdRowHtml(prod, qty, unitPrice, installFee) {
     const opts = prods.map(p=>`<option value="${p}"${p===prod?' selected':''}>${p}</option>`).join('');
     return `<div class="de-prod-row" style="background:var(--s2);border-radius:var(--r);padding:10px 12px;display:flex;flex-direction:column;gap:8px;margin-bottom:8px">
-      <div style="display:grid;grid-template-columns:2fr 70px 1fr auto;gap:8px;align-items:end">
+      <div style="display:grid;grid-template-columns:2fr 70px 1fr 1fr auto;gap:8px;align-items:end">
         <div>
           <label class="form-label" style="font-size:10px;margin-bottom:2px">제품</label>
           <select class="form-select de-prod-sel" onchange="calcDeTotal()" style="font-size:13px">
@@ -4128,6 +4205,10 @@ function buildDealEdit(id){
           <label class="form-label" style="font-size:10px;margin-bottom:2px">단가 (원)</label>
           <input class="form-input de-prod-unit" type="number" min="0" value="${unitPrice||''}" placeholder="단가 입력" oninput="calcDeTotal()" style="font-size:13px">
         </div>
+        <div>
+          <label class="form-label" style="font-size:10px;margin-bottom:2px">설치비/대 (원)</label>
+          <input class="form-input de-prod-install" type="number" min="0" value="${installFee||''}" placeholder="설치비 입력" oninput="calcDeTotal()" style="font-size:13px">
+        </div>
         <button type="button" onclick="this.closest('.de-prod-row').remove();calcDeTotal()"
           style="background:var(--rl);border:1px solid #fecaca;border-radius:var(--r-sm);cursor:pointer;width:30px;height:30px;color:var(--red);font-size:16px;flex-shrink:0;margin-top:16px;display:flex;align-items:center;justify-content:center">×</button>
       </div>
@@ -4139,7 +4220,7 @@ function buildDealEdit(id){
   let initialRows = '';
   if(existingProducts.length > 0) {
     // deal_products에 저장된 제품들
-    initialRows = existingProducts.map(p => deProdRowHtml(p.prod, p.qty, p.unit_price)).join('');
+    initialRows = existingProducts.map(p => deProdRowHtml(p.prod, p.qty, p.unit_price, p.install_fee||0)).join('');
   } else if(d.prod) {
     // 기존 단일 제품 (합쳐진 경우 파싱 시도)
     initialRows = deProdRowHtml(d.prod, d.qty, d.unit);
@@ -4234,15 +4315,24 @@ function addDeProdRow() {
 }
 
 function calcDeTotal() {
-  let total = 0;
+  let totalProd = 0, totalInstall = 0;
   document.querySelectorAll('.de-prod-row').forEach(row => {
-    const qty  = parseInt(row.querySelector('.de-prod-qty')?.value)||0;
-    const unit = parseInt(row.querySelector('.de-prod-unit')?.value)||0;
-    const sub  = qty * unit;
-    total += sub;
+    const qty     = parseInt(row.querySelector('.de-prod-qty')?.value)||0;
+    const unit    = parseInt(row.querySelector('.de-prod-unit')?.value)||0;
+    const install = parseInt(row.querySelector('.de-prod-install')?.value)||0;
+    const subProd    = qty * unit;
+    const subInstall = qty * install;
+    totalProd    += subProd;
+    totalInstall += subInstall;
     const el = row.querySelector('.de-prod-subtotal');
-    if(el) el.textContent = sub > 0 ? `소계: ${fmt(sub)} (${qty}대 × ${fmt(unit)})` : '';
+    if(el) {
+      const parts = [];
+      if(subProd > 0)    parts.push(`제품 ${fmt(subProd)} (${qty}대 × ${fmt(unit)})`);
+      if(subInstall > 0) parts.push(`설치 ${fmt(subInstall)} (${qty}대 × ${fmt(install)})`);
+      el.textContent = parts.join('　');
+    }
   });
+  const total = totalProd + totalInstall;
   const el = document.getElementById('de-amt');
   if(el) el.value = total;
   const prev = document.getElementById('de-total-preview');
@@ -4270,9 +4360,10 @@ async function saveDealEdit(){
   // 다중 제품 수집
   const deRows = [...document.querySelectorAll('.de-prod-row')];
   const deProducts = deRows.map(row=>({
-    prod:      row.querySelector('.de-prod-sel')?.value||'',
-    qty:       parseInt(row.querySelector('.de-prod-qty')?.value)||1,
-    unitPrice: parseInt(row.querySelector('.de-prod-unit')?.value)||0,
+    prod:       row.querySelector('.de-prod-sel')?.value||'',
+    qty:        parseInt(row.querySelector('.de-prod-qty')?.value)||1,
+    unitPrice:  parseInt(row.querySelector('.de-prod-unit')?.value)||0,
+    installFee: parseInt(row.querySelector('.de-prod-install')?.value)||0,
   })).filter(p=>p.prod);
 
   if(deProducts.length > 0) {
@@ -4309,7 +4400,7 @@ async function saveDealEdit(){
   // deal_products 업데이트
   if(sb && typeof deProducts !== 'undefined' && deProducts.length > 0) {
     sb.from('deal_products').delete().eq('deal_id', d.id).then(() => {
-      const rows = deProducts.map(p=>({deal_id:d.id, prod:p.prod, qty:p.qty, unit_price:p.unitPrice}));
+      const rows = deProducts.map(p=>({deal_id:d.id, prod:p.prod, qty:p.qty, unit_price:p.unitPrice, install_fee:p.installFee||0}));
       sb.from('deal_products').insert(rows).select().then(({data}) => {
         dealProductsCache[d.id] = data || [];
       });
@@ -4533,7 +4624,7 @@ async function createDeal(){
   if(sb && newDeal?.id && products.length > 0){
     const rows = products.map(p=>({
       deal_id: newDeal.id, prod: p.prod,
-      qty: p.qty, unit_price: p.unitPrice
+      qty: p.qty, unit_price: p.unitPrice, install_fee: p.installFee||0
     }));
     await sb.from('deal_products').insert(rows);
     newDeal._products = products;
@@ -4870,6 +4961,284 @@ async function addAccount(){
 // ══════════════════════════════════════════════
 // STATS
 // ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+// 제품 판매 (대리점 납품건)
+// ══════════════════════════════════════════════════════════
+let productSales = [];
+let editingPsId  = null;
+
+async function loadProductSales() {
+  if(!sb) return;
+  try {
+    const {data, error} = await sb.from('product_sales').select('*').order('sale_date', {ascending:false});
+    if(error) throw error;
+    productSales = (data||[]).map(d=>({
+      id: d.id,
+      date: d.sale_date||'',
+      company: d.company||'',
+      products: d.products||'',
+      qty: d.qty||1,
+      amt: d.amount||0,
+      taxInvoice: d.tax_invoice||false,
+      invoiceDate: d.invoice_date||'',
+      recvDate: d.recv_date||'',
+      status: d.status||'pending',
+      memo: d.memo||'',
+      person: d.person||'',
+      createdAt: d.created_at||''
+    }));
+  } catch(e) {
+    console.error('loadProductSales:', e);
+  }
+}
+
+function showRecvMonthDetail() {
+  const now = new Date();
+  const thisMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const monthLabel = `${now.getFullYear()}년 ${now.getMonth()+1}월`;
+
+  // 영업 수금 건 (receivables 테이블 - expected_date 기준)
+  const salesRecv = recvList.filter(r => {
+    const dt = r.expected_date || r.basis_date || '';
+    return dt.startsWith(thisMonth) && r.status !== 'received';
+  });
+  const salesTotal = salesRecv.reduce((s,r)=>s+r.amount, 0);
+
+  // 제품 판매 수금 건
+  const psRecv = (productSales||[]).filter(p => p.recvDate?.startsWith(thisMonth) && p.status !== 'received');
+  const psTotal = psRecv.reduce((s,p)=>s+p.amt, 0);
+
+  const grandTotal = salesTotal + psTotal;
+
+  const statusLabel = {pending:'수금대기', invoiced:'계산서발행', received:'수금완료', overdue:'연체'};
+  const statusColor = {pending:'var(--amber)', invoiced:'#2563eb', received:'var(--green)', overdue:'var(--red)'};
+
+  let html = `
+    <!-- 합계 -->
+    <div style="background:var(--s2);border-radius:var(--r);padding:14px 16px;display:flex;gap:0">
+      <div style="flex:1;border-right:1px solid var(--bd);padding-right:16px">
+        <div style="font-size:10px;font-weight:700;color:var(--t3)">영업(설치)건</div>
+        <div style="font-size:20px;font-weight:800;color:var(--t1)">${fmtMW(salesTotal)}</div>
+        <div style="font-size:11px;color:var(--t3)">${salesRecv.length}건</div>
+      </div>
+      <div style="flex:1;border-right:1px solid var(--bd);padding:0 16px">
+        <div style="font-size:10px;font-weight:700;color:var(--t3)">제품 판매건</div>
+        <div style="font-size:20px;font-weight:800;color:var(--accent)">${fmtMW(Math.round(psTotal/10000))}</div>
+        <div style="font-size:11px;color:var(--t3)">${psRecv.length}건</div>
+      </div>
+      <div style="flex:1;padding-left:16px">
+        <div style="font-size:10px;font-weight:700;color:var(--t3)">합계</div>
+        <div style="font-size:20px;font-weight:800;color:var(--green)">${fmtMW(salesTotal + Math.round(psTotal/10000))}</div>
+        <div style="font-size:11px;color:var(--t3)">${salesRecv.length + psRecv.length}건</div>
+      </div>
+    </div>`;
+
+  // 영업(설치)건 목록
+  if(salesRecv.length) {
+    html += `<div>
+      <div style="font-size:12px;font-weight:700;color:var(--t3);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--bd)">📋 영업(설치)건 — ${salesRecv.length}건</div>
+      ${salesRecv.map(r=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bd)">
+          <div>
+            <div style="font-weight:600;font-size:13px">${r.company_name||r.company||'–'}</div>
+            <div style="font-size:11px;color:var(--t3)">${r.expected_date||r.basis_date||'–'}${r.note?' · '+r.note:''}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-weight:700;font-size:13px">${fmtMW(r.amount)}</div>
+            <span style="padding:2px 6px;border-radius:8px;font-size:10px;font-weight:700;background:${statusColor[r.status]||'var(--s2)'}22;color:${statusColor[r.status]||'var(--t3)'}">${statusLabel[r.status]||r.status}</span>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  } else {
+    html += `<div style="color:var(--t3);font-size:13px;text-align:center;padding:8px">이달 영업 수금 예정건 없음</div>`;
+  }
+
+  // 제품 판매건 목록
+  if(psRecv.length) {
+    html += `<div>
+      <div style="font-size:12px;font-weight:700;color:var(--t3);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--bd)">📦 제품 판매건 — ${psRecv.length}건</div>
+      ${psRecv.map(p=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bd)">
+          <div>
+            <div style="font-weight:600;font-size:13px">${p.company}</div>
+            <div style="font-size:11px;color:var(--t3)">${p.recvDate||'–'} · ${p.products}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-weight:700;font-size:13px">${fmtMW(Math.round(p.amt/10000))}</div>
+            <span style="padding:2px 6px;border-radius:8px;font-size:10px;font-weight:700;background:${statusColor[p.status]||'var(--s2)'}22;color:${statusColor[p.status]||'var(--t3)'}">${statusLabel[p.status]||p.status}</span>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  } else {
+    html += `<div style="color:var(--t3);font-size:13px;text-align:center;padding:8px">이달 제품판매 수금 예정건 없음</div>`;
+  }
+
+  document.getElementById('recv-detail-title').textContent = `${monthLabel} 수금 예정 상세`;
+  document.getElementById('recv-detail-body').innerHTML = html;
+  document.getElementById('recvMonthDetailPanel').style.display = 'flex';
+}
+
+
+function renderProductSales() {
+  const search  = (document.getElementById('ps-search')?.value||'').toLowerCase();
+  const statusF = document.getElementById('ps-status-filter')?.value||'';
+  const monthF  = document.getElementById('ps-month-filter')?.value||'';
+
+  let fd = productSales.filter(p => {
+    if(statusF && p.status !== statusF) return false;
+    if(monthF && !p.date.startsWith(monthF)) return false;
+    if(search && !p.company.toLowerCase().includes(search) && !p.products.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  // KPI
+  const now = new Date();
+  const thisM = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const thisY = `${now.getFullYear()}`;
+  const monthItems = productSales.filter(p=>p.date.startsWith(thisM));
+  const pendItems  = productSales.filter(p=>['pending','invoiced'].includes(p.status));
+  const yearItems  = productSales.filter(p=>p.date.startsWith(thisY));
+
+  const setKpi = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  setKpi('ps-kpi-month',   fmt(monthItems.reduce((s,p)=>s+p.amt,0)));
+  setKpi('ps-kpi-month-c', monthItems.length+'건');
+  setKpi('ps-kpi-pending', fmt(pendItems.reduce((s,p)=>s+p.amt,0)));
+  setKpi('ps-kpi-pending-c', pendItems.length+'건');
+  setKpi('ps-kpi-year',   fmt(yearItems.reduce((s,p)=>s+p.amt,0)));
+  setKpi('ps-kpi-year-c', yearItems.length+'건');
+
+  const statusLabel = {pending:'수금대기', invoiced:'계산서발행', received:'수금완료'};
+  const statusColor = {pending:'var(--amber)', invoiced:'#2563eb', received:'var(--green)'};
+
+  const tbody = document.getElementById('ps-tbody');
+  if(!tbody) return;
+  if(!fd.length) {
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--t3)">등록된 판매건이 없습니다</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = fd.map(p => `
+    <tr style="cursor:default">
+      <td style="white-space:nowrap">${p.date}</td>
+      <td style="font-weight:600">${p.company}</td>
+      <td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${p.products}">${p.products}</td>
+      <td style="text-align:right">${p.qty}개</td>
+      <td style="text-align:right;font-weight:700">${fmt(p.amt)}</td>
+      <td style="text-align:center">${p.taxInvoice?`<span style="color:var(--green);font-weight:700">✓ 발행</span>`:`<span style="color:var(--t3)">미발행</span>`}</td>
+      <td><span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;background:${statusColor[p.status]}22;color:${statusColor[p.status]}">${statusLabel[p.status]||p.status}</span></td>
+      <td style="white-space:nowrap;color:var(--t3)">${p.recvDate||'–'}</td>
+      <td>${p.person||'–'}</td>
+      <td>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-s btn-sm" onclick="editProductSale(${p.id})" style="font-size:11px">수정</button>
+          <button class="btn btn-sm" onclick="deleteProductSale(${p.id})" style="font-size:11px;background:var(--rl);color:var(--red);border:1px solid #fecaca">삭제</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openNewProductSale() {
+  editingPsId = null;
+  document.getElementById('ps-modal-title').textContent = '제품 판매 추가';
+  const today = new Date().toISOString().slice(0,10);
+  ['ps-date','ps-invoice-date','ps-recv-date'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = id==='ps-date' ? today : '';
+  });
+  ['ps-company','ps-products','ps-memo','ps-person'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('ps-qty').value = 1;
+  document.getElementById('ps-amount').value = '';
+  document.getElementById('ps-tax').value = '0';
+  document.getElementById('ps-status').value = 'pending';
+  const m = document.getElementById('productSaleModal');
+  if(m) { m.style.display='flex'; }
+}
+
+function editProductSale(id) {
+  const p = productSales.find(x=>x.id===id);
+  if(!p) return;
+  editingPsId = id;
+  document.getElementById('ps-modal-title').textContent = '제품 판매 수정';
+  document.getElementById('ps-date').value = p.date;
+  document.getElementById('ps-company').value = p.company;
+  document.getElementById('ps-products').value = p.products;
+  document.getElementById('ps-qty').value = p.qty;
+  document.getElementById('ps-amount').value = p.amt;
+  document.getElementById('ps-tax').value = p.taxInvoice ? '1' : '0';
+  document.getElementById('ps-invoice-date').value = p.invoiceDate||'';
+  document.getElementById('ps-status').value = p.status;
+  document.getElementById('ps-recv-date').value = p.recvDate||'';
+  document.getElementById('ps-person').value = p.person||'';
+  document.getElementById('ps-memo').value = p.memo||'';
+  const m = document.getElementById('productSaleModal');
+  if(m) m.style.display='flex';
+}
+
+function closeProductSaleModal() {
+  const m = document.getElementById('productSaleModal');
+  if(m) m.style.display='none';
+}
+
+async function saveProductSale() {
+  const date    = document.getElementById('ps-date').value;
+  const company = document.getElementById('ps-company').value.trim();
+  const products= document.getElementById('ps-products').value.trim();
+  const amt     = parseInt(document.getElementById('ps-amount').value)||0;
+  if(!date||!company||!products||!amt) { showToast('필수 항목을 입력하세요','error'); return; }
+
+  const payload = {
+    sale_date:    date,
+    company,
+    products,
+    qty:          parseInt(document.getElementById('ps-qty').value)||1,
+    amount:       amt,
+    tax_invoice:  document.getElementById('ps-tax').value==='1',
+    invoice_date: document.getElementById('ps-invoice-date').value||null,
+    status:       document.getElementById('ps-status').value,
+    recv_date:    document.getElementById('ps-recv-date').value||null,
+    person:       document.getElementById('ps-person').value.trim()||null,
+    memo:         document.getElementById('ps-memo').value.trim()||null,
+    updated_at:   new Date().toISOString()
+  };
+
+  try {
+    if(editingPsId) {
+      const {error} = await sb.from('product_sales').update(payload).eq('id', editingPsId);
+      if(error) throw error;
+      const idx = productSales.findIndex(p=>p.id===editingPsId);
+      if(idx>=0) productSales[idx] = {...productSales[idx], date:payload.sale_date, company:payload.company, products:payload.products, qty:payload.qty, amt:payload.amount, taxInvoice:payload.tax_invoice, invoiceDate:payload.invoice_date||'', status:payload.status, recvDate:payload.recv_date||'', person:payload.person||'', memo:payload.memo||''};
+      showToast('수정됐습니다');
+    } else {
+      payload.created_at = new Date().toISOString();
+      const {data, error} = await sb.from('product_sales').insert([payload]).select().single();
+      if(error) throw error;
+      productSales.unshift({id:data.id, date:payload.sale_date, company:payload.company, products:payload.products, qty:payload.qty, amt:payload.amount, taxInvoice:payload.tax_invoice, invoiceDate:payload.invoice_date||'', status:payload.status, recvDate:payload.recv_date||'', person:payload.person||'', memo:payload.memo||'', createdAt:payload.created_at});
+      showToast('판매건이 추가됐습니다');
+    }
+    closeProductSaleModal();
+    renderProductSales();
+  } catch(e) {
+    console.error('saveProductSale:', e);
+    showToast('저장 실패: '+e.message, 'error');
+  }
+}
+
+async function deleteProductSale(id) {
+  if(!confirm('삭제하시겠습니까?')) return;
+  try {
+    const {error} = await sb.from('product_sales').delete().eq('id', id);
+    if(error) throw error;
+    productSales = productSales.filter(p=>p.id!==id);
+    showToast('삭제됐습니다');
+    renderProductSales();
+  } catch(e) {
+    showToast('삭제 실패: '+e.message, 'error');
+  }
+}
+
+
 function renderStats(){
   buildDFB('statsDfb',sP,'setSP');
   const fd=getFD(sP,sF,sT);
@@ -5031,6 +5400,9 @@ async function loadDealsFromDB(){
       created_at: d.created_at||'',
       deliveryDate: d.delivery_date||'',
       site: d.site||'',
+      contactName: d.contact_name||'',
+      contactPhone: d.contact_phone||'',
+      contactEmail: d.contact_email||'',
       logs: dbLogs.filter(l=>l.deal_id===d.id).map(l=>({
         type: l.type,
         text: l.text,
@@ -5065,7 +5437,7 @@ async function loadProductsFromDB(){
 async function saveDealToDB(deal){
   if(!sb){ return deal; }
   try{
-    const {data, error} = await sb.from('deals').insert([{
+    const insertPayload = {
       name: deal.name, co: deal.co, prod: deal.prod,
       option_items: deal.option, inflow: deal.inflow,
       qty: deal.qty, unit_price: deal.unit, amount: deal.amt,
@@ -5073,10 +5445,20 @@ async function saveDealToDB(deal){
       close_date: deal.closeDate||null,
       delivery_date: deal.deliveryDate||null,
       site: deal.site||null,
+      contact_name: deal.contactName||null,
+      contact_phone: deal.contactPhone||null,
+      contact_email: deal.contactEmail||null,
       priority: deal.priority,
       linked_project: deal.linkedProject||null,
       created_at: new Date().toISOString()
-    }]).select().single();
+    };
+    let {data, error} = await sb.from('deals').insert([insertPayload]).select().single();
+    // 컬럼 없음 에러 시 신규 컬럼 제외 후 재시도
+    if(error && (error.code==='42703'||error.message?.includes('column'))) {
+      const {site:_s, contact_name:_cn, contact_phone:_cp, contact_email:_ce, ...safePayload} = insertPayload;
+      const r2 = await sb.from('deals').insert([safePayload]).select().single();
+      data = r2.data; error = r2.error;
+    }
     if(error) throw error;
     // Save initial log if exists
     if(deal.logs && deal.logs.length > 0){
@@ -5099,7 +5481,7 @@ async function saveDealToDB(deal){
 async function updateDealInDB(deal){
   if(!sb){ return; }
   try{
-    const {error} = await sb.from('deals').update({
+    const updatePayload = {
       name: deal.name, co: deal.co, prod: deal.prod,
       option_items: deal.option, inflow: deal.inflow,
       qty: deal.qty, unit_price: deal.unit, amount: deal.amt,
@@ -5107,10 +5489,14 @@ async function updateDealInDB(deal){
       close_date: deal.closeDate||null,
       delivery_date: deal.deliveryDate||null,
       site: deal.site||null,
+      contact_name: deal.contactName||null,
+      contact_phone: deal.contactPhone||null,
+      contact_email: deal.contactEmail||null,
       priority: deal.priority,
       linked_project: deal.linkedProject||null,
       updated_at: new Date().toISOString()
-    }).eq('id', deal.id);
+    };
+    let {error} = await sb.from('deals').update(updatePayload).eq('id', deal.id);
     if(error) throw error;
   } catch(e){
     console.error('updateDealInDB:', e);
@@ -5303,6 +5689,93 @@ document.getElementById('loginId').addEventListener('keydown',e=>{if(e.key==='En
     </div>
   </div>
 </div>
+
+<!-- 제품 판매 추가/수정 모달 -->
+<div class="overlay" id="productSaleModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:3500;display:none;align-items:center;justify-content:center">
+  <div class="modal" style="width:560px;max-width:95vw;max-height:90vh;overflow-y:auto">
+    <div class="modal-hd">
+      <div class="modal-hd-info"><div class="modal-title" id="ps-modal-title">제품 판매 추가</div></div>
+      <button class="modal-close" onclick="closeProductSaleModal()">×</button>
+    </div>
+    <div class="modal-body" style="display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;padding:20px">
+
+      <div class="form-field">
+        <label class="form-label">판매일 *</label>
+        <input class="form-input" id="ps-date" type="date">
+      </div>
+      <div class="form-field">
+        <label class="form-label">거래처 *</label>
+        <input class="form-input" id="ps-company" placeholder="예: 유신상사, AJ네트웍스">
+      </div>
+
+      <div class="form-field full" style="grid-column:1/-1">
+        <label class="form-label">제품 구성 *</label>
+        <input class="form-input" id="ps-products" placeholder="예: AI-S2 모니터세트 3개, AI-G1 카메라 2개">
+      </div>
+
+      <div class="form-field">
+        <label class="form-label">총 수량</label>
+        <input class="form-input" id="ps-qty" type="number" min="1" value="1">
+      </div>
+      <div class="form-field">
+        <label class="form-label">판매 금액 (원) * <span style="font-weight:400;color:var(--t3);font-size:10px">VAT 별도 (공급가액)</span></label>
+        <input class="form-input" id="ps-amount" type="number" min="0" placeholder="세금계산서 공급가액">
+      </div>
+
+      <div class="form-field">
+        <label class="form-label">세금계산서 발행</label>
+        <select class="form-select" id="ps-tax">
+          <option value="0">미발행</option>
+          <option value="1">발행 완료</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label class="form-label">발행일</label>
+        <input class="form-input" id="ps-invoice-date" type="date">
+      </div>
+
+      <div class="form-field">
+        <label class="form-label">상태</label>
+        <select class="form-select" id="ps-status">
+          <option value="pending">수금대기</option>
+          <option value="invoiced">계산서발행</option>
+          <option value="received">수금완료</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label class="form-label">수금예정일</label>
+        <input class="form-input" id="ps-recv-date" type="date">
+      </div>
+
+      <div class="form-field">
+        <label class="form-label">담당자</label>
+        <input class="form-input" id="ps-person" placeholder="예: 백승정">
+      </div>
+      <div class="form-field" style="grid-column:1/-1">
+        <label class="form-label">메모</label>
+        <input class="form-input" id="ps-memo" placeholder="특이사항, 계약 조건 등">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-g" onclick="closeProductSaleModal()">취소</button>
+      <button class="btn btn-p" onclick="saveProductSale()">저장</button>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 이달 수금 예정 상세 팝업 -->
+<div id="recvMonthDetailPanel" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:3400;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border-radius:var(--r-lg);width:640px;max-width:95vw;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+    <div style="padding:20px 24px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:16px;font-weight:800;color:var(--t1)" id="recv-detail-title">이달 수금 예정</div>
+      <button onclick="document.getElementById('recvMonthDetailPanel').style.display='none'" style="background:none;border:none;font-size:22px;color:var(--t3);cursor:pointer;line-height:1">×</button>
+    </div>
+    <div style="overflow-y:auto;padding:16px 24px;display:flex;flex-direction:column;gap:16px" id="recv-detail-body"></div>
+  </div>
+</div>
+
 
 <!-- 딜 알람 패널 -->
 <div class="deal-alert-panel" id="dealAlertPanel">
@@ -6043,6 +6516,7 @@ async function loadInvData() {
 async function loadFinData() {
   if(!sb) return;
   try {
+    await loadProductSales();
     const [r1,r2,r3] = await Promise.all([
       sb.from('customer_payment_terms').select('*').order('company_name'),
       sb.from('receivables').select('*').order('expected_date'),
@@ -6563,8 +7037,10 @@ async function renderCashflow() {
   const nextMonth = new Date(today.getFullYear(), today.getMonth()+1, 1);
   const nm = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth()+1).padStart(2,'0')}`;
 
-  const inThisMonth = recvList.filter(r=>r.expected_date?.startsWith(thisMonth)&&r.status!=='received').reduce((s,r)=>s+r.amount,0);
-  const inNextMonth = recvList.filter(r=>r.expected_date?.startsWith(nm)&&r.status!=='received').reduce((s,r)=>s+r.amount,0);
+  const inThisMonth = recvList.filter(r=>r.expected_date?.startsWith(thisMonth)&&r.status!=='received').reduce((s,r)=>s+r.amount,0)
+    + (productSales||[]).filter(p=>p.recvDate?.startsWith(thisMonth)&&p.status!=='received').reduce((s,p)=>s+p.amt/10000,0);
+  const inNextMonth = recvList.filter(r=>r.expected_date?.startsWith(nm)&&r.status!=='received').reduce((s,r)=>s+r.amount,0)
+    + (productSales||[]).filter(p=>p.recvDate?.startsWith(nm)&&p.status!=='received').reduce((s,p)=>s+p.amt/10000,0);
   const overdue = recvList.filter(r=>r.status==='overdue');
   const thisMonthExp = expList.filter(e=>e.expense_date?.startsWith(thisMonth)).reduce((s,e)=>s+e.amount,0);
 
@@ -6582,7 +7058,7 @@ async function renderCashflow() {
     const d = new Date(today.getFullYear(), today.getMonth()+i, 1);
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
   });
-  const recvByMonth = months.map(m => recvList.filter(r=>r.expected_date?.startsWith(m)).reduce((s,r)=>s+r.amount,0));
+  const recvByMonth = months.map(m => recvList.filter(r=>r.expected_date?.startsWith(m)).reduce((s,r)=>s+r.amount,0) + (productSales||[]).filter(p=>p.recvDate?.startsWith(m)&&p.status!=='received').reduce((s,p)=>s+p.amt/10000,0));
   const expByMonth  = months.map(m => expList.filter(e=>e.expense_date?.startsWith(m)).reduce((s,e)=>s+e.amount,0));
   const maxVal = Math.max(...recvByMonth, ...expByMonth, 1);
 
@@ -6592,7 +7068,7 @@ async function renderCashflow() {
     const rh = Math.round(recv/maxVal*120), eh = Math.round(exp/maxVal*120);
     return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
       <div style="font-size:10px;font-weight:700;color:${net>=0?'var(--green)':'var(--red)'}">
-        ${net>=0?'+':''}${(net/100).toFixed(0)}억
+        ${net>=0?'+':''}${Math.abs(net)>=10000?(net/10000).toFixed(1)+'억':net.toLocaleString()+'만'}
       </div>
       <div style="display:flex;align-items:flex-end;gap:2px;width:100%">
         <div style="flex:1;background:var(--green);border-radius:3px 3px 0 0;height:${rh}px;opacity:.85"></div>
@@ -6710,6 +7186,37 @@ async function renderReceivables() {
 
   document.getElementById('recv-table-body').innerHTML = rows ||
     `<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--t3)">수금 내역이 없습니다</td></tr>`;
+
+  // 제품 판매건 수금 현황 렌더링
+  const psFiltered = (productSales||[]).filter(p => {
+    if(statusF && p.status !== statusF) return false;
+    if(searchF && !p.company.toLowerCase().includes(searchF) && !p.products.toLowerCase().includes(searchF)) return false;
+    if(dateFrom && (p.recvDate||p.date) < dateFrom) return false;
+    if(dateTo   && (p.recvDate||p.date) > dateTo)   return false;
+    return true;
+  });
+  const psTotal = psFiltered.reduce((s,p)=>s+p.amt,0);
+  const psSumEl = document.getElementById('ps-recv-summary');
+  if(psSumEl) psSumEl.textContent = `${psFiltered.length}건 · 합계 ${fmtMW(Math.round(psTotal/10000))}`;
+  const statusLbPS = {pending:'수금대기', invoiced:'계산서발행', received:'수금완료'};
+  const statusClPS = {pending:'var(--amber)', invoiced:'#2563eb', received:'var(--green)'};
+  const psTbody = document.getElementById('ps-recv-tbody');
+  if(psTbody) {
+    if(!psFiltered.length) {
+      psTbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--t3)">제품 판매건이 없습니다</td></tr>`;
+    } else {
+      psTbody.innerHTML = psFiltered.map(p=>`<tr>
+        <td style="white-space:nowrap">${p.date}</td>
+        <td style="font-weight:600">${p.company}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.products}">${p.products}</td>
+        <td style="text-align:right;font-weight:700">${fmtMW(Math.round(p.amt/10000))}</td>
+        <td style="text-align:center">${p.taxInvoice?'<span style="color:var(--green);font-weight:700">✓</span>':'<span style="color:var(--t3)">–</span>'}</td>
+        <td><span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;background:${statusClPS[p.status]}22;color:${statusClPS[p.status]}">${statusLbPS[p.status]||p.status}</span></td>
+        <td style="white-space:nowrap;color:var(--t3)">${p.recvDate||'–'}</td>
+        <td>${p.person||'–'}</td>
+      </tr>`).join('');
+    }
+  }
 }
 
 function recvRow(r) {
@@ -11966,13 +12473,33 @@ async function deleteDeal(dealId) {
   if(!confirm(`"${d.name}" 딜을 삭제할까요?\n이 작업은 되돌릴 수 없습니다.`)) return;
 
   if(sb) {
-    // 연관 테이블 정리
-    try { await sb.from('deal_products').delete().eq('deal_id', id); } catch(e) {}
-    try { await sb.from('deal_logs').delete().eq('deal_id', id); } catch(e) {}
-    try { await sb.from('receivables').delete().eq('deal_id', id); } catch(e) {}
-    // deals 삭제 — .select() 없이 error만 체크 (select 시 RLS 이중 체크로 빈 배열 반환됨)
+    // 연관 테이블 전부 삭제 시도 — 각각 에러 로그만 출력, 차단 안 함
+    const relTables = ['stock_transactions','mass_projects','deal_products','deal_logs','receivables'];
+    for(const tbl of relTables) {
+      try {
+        const {error: re} = await sb.from(tbl).delete().eq('deal_id', id);
+        if(re) console.warn(`${tbl} 정리 실패(무시):`, re.message);
+      } catch(e) { console.warn(tbl, e); }
+    }
+    // deals 삭제
     const {error} = await sb.from('deals').delete().eq('id', id);
-    if(error) { showToast('삭제 실패: ' + error.message, 'error'); return; }
+    if(error) {
+      // FK 위반이면 어떤 테이블이 남아있는지 찾아서 재시도
+      if(error.code === '23503') {
+        const fkMatch = error.message.match(/on table "([^"]+)"/);
+        const fkTbl = fkMatch ? fkMatch[1] : null;
+        if(fkTbl) {
+          console.warn('FK 잔존 테이블 재시도:', fkTbl);
+          await sb.from(fkTbl).delete().eq('deal_id', id).catch(()=>{});
+          const {error: e2} = await sb.from('deals').delete().eq('id', id);
+          if(e2) { showToast('삭제 실패: ' + e2.message, 'error'); return; }
+        } else {
+          showToast('삭제 실패: ' + error.message, 'error'); return;
+        }
+      } else {
+        showToast('삭제 실패: ' + error.message, 'error'); return;
+      }
+    }
   }
   deals = deals.filter(x=>x.id!==id && x.id!==dealId);
   closeModal('dealModal');
