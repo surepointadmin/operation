@@ -10824,7 +10824,7 @@ function renderRdDetailContent(p, tasks, logs) {
             <div style="background:${t.done?'#94a3b8':color};border-radius:${r};height:18px;
               display:flex;align-items:center;justify-content:center;
               font-size:9px;color:#fff;font-weight:700;overflow:hidden;padding:0 3px">
-              ${isFirst && (wiEnd-wiStart)>=3 ? `<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.title}</span>` : ''}
+              ${isFirst && (wiEnd-wiStart)>=1 ? `<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.title}</span>` : ''}
             </div>
           </td>`;
       }
@@ -10840,7 +10840,7 @@ function renderRdDetailContent(p, tasks, logs) {
           title="${stage} 행 추가">
           ${stage} <span style="display:inline-block;margin-left:4px;font-size:10px;font-weight:800">＋</span>
         </td>`
-      : `<td style="padding:5px 8px;font-size:11px;font-weight:400;color:${color}88;background:${color}05;border:1px solid var(--bd);white-space:nowrap">${stage}</td>`;
+      : `<td style="padding:5px 8px;font-size:11px;font-weight:700;color:${color};background:${color}0d;border:1px solid var(--bd);white-space:nowrap">${stage}</td>`;
 
     return `<tr>
       ${stageCell}
