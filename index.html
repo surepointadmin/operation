@@ -5664,22 +5664,22 @@ document.getElementById('loginId').addEventListener('keydown',e=>{if(e.key==='En
   </div>
 </div>
 
-<!-- ═══ 개발 태스크 추가/수정 모달 ═══ -->
-<div class="overlay" id="rdTaskModal">
+<!-- ═══ 개발 태스크 추가/수정 모달 (LEGACY - 사용 안 함, ID 충돌 방지 위해 _legacy suffix 부여) ═══ -->
+<div class="overlay" id="rdTaskModal_legacy" style="display:none">
   <div class="modal modal-sm">
     <div class="modal-hd">
-      <div class="modal-hd-info"><div class="modal-title" id="rdTaskMT">태스크 추가</div><div class="modal-sub" id="rdTaskStageLbl"></div></div>
-      <button class="modal-close" onclick="closeModal('rdTaskModal')"><svg viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+      <div class="modal-hd-info"><div class="modal-title" id="rdTaskMT_legacy">태스크 추가</div><div class="modal-sub" id="rdTaskStageLbl_legacy"></div></div>
+      <button class="modal-close" onclick="closeModal('rdTaskModal_legacy')"><svg viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
     </div>
     <div class="modal-body">
-      <input type="hidden" id="rdt-id">
-      <input type="hidden" id="rdt-proj-id">
-      <input type="hidden" id="rdt-stage">
+      <input type="hidden" id="rdt-id_legacy">
+      <input type="hidden" id="rdt-proj-id_legacy">
+      <input type="hidden" id="rdt-stage_legacy">
       <div class="form-grid">
-        <div class="form-field full"><label class="form-label">개발 내용 *</label><input class="form-input" id="rdt-title" placeholder="예: 회로 설계 1차"></div>
-        <div class="form-field full"><label class="form-label">설명</label><input class="form-input" id="rdt-desc" placeholder="예: 1차 설계 / 시험 결과 반영"></div>
-        <div class="form-field"><label class="form-label">시작일</label><input class="form-input" id="rdt-start" type="date"></div>
-        <div class="form-field"><label class="form-label">완료 목표일</label><input class="form-input" id="rdt-end" type="date"></div>
+        <div class="form-field full"><label class="form-label">개발 내용 *</label><input class="form-input" id="rdt-title_legacy" placeholder="예: 회로 설계 1차"></div>
+        <div class="form-field full"><label class="form-label">설명</label><input class="form-input" id="rdt-desc_legacy" placeholder="예: 1차 설계 / 시험 결과 반영"></div>
+        <div class="form-field"><label class="form-label">시작일</label><input class="form-input" id="rdt-start_legacy" type="date"></div>
+        <div class="form-field"><label class="form-label">완료 목표일</label><input class="form-input" id="rdt-end_legacy" type="date"></div>
       </div>
       <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px;margin-top:16px" onclick="saveRdTask()">저장</button>
     </div>
@@ -9435,45 +9435,81 @@ async function loadRdData() {
 // ── 칸반 렌더 ──
 async function renderRdPipeline() {
   if(!rdProjects.length && sb) await loadRdData();
-  const board = document.getElementById('rdBoardEl');
-  if(!board) return;
 
-  board.innerHTML = RD_STAGES.map((stage, si) => {
-    const cols = rdProjects.filter(p=>p.stage===stage);
-    return `<div class="rd-col">
-      <div class="rd-col-hd">
-        <div class="rd-col-dot" style="background:${RD_STAGE_DOTS[si]}"></div>
-        <div class="rd-col-name">${stage}</div>
-        <div class="rd-col-meta">${cols.length}</div>
+  const summaryEl = document.getElementById('rd-summary-text');
+  const listEl    = document.getElementById('rd-project-list');
+  if(!listEl) return;
+
+  if(summaryEl) summaryEl.textContent = `총 ${rdProjects.length}개 프로젝트`;
+
+  // 상세 숨기고 목록 표시
+  const listSec   = document.getElementById('rd-list-section');
+  const detailSec = document.getElementById('rd-detail-section');
+  if(listSec)   listSec.style.display   = '';
+  if(detailSec) detailSec.style.display = 'none';
+
+  if(!rdProjects.length) {
+    listEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--t3)">프로젝트가 없습니다<br><button class="btn btn-p" style="margin-top:12px" onclick="openNewRdModal()">+ 프로젝트 추가</button></div>';
+    return;
+  }
+
+  const stageColor = {'분석':'#3b82f6','설계':'#8b5cf6','제작':'#f59e0b','시험':'#10b981','완료':'#22c55e','기타':'#6b7280'};
+
+  listEl.innerHTML = rdProjects.map(p => {
+    const diff = p.target_date ? Math.round((new Date(p.target_date)-new Date())/86400000) : null;
+    const ddayTxt   = diff===null ? '' : diff<0 ? `D+${Math.abs(diff)} 초과 ⚠️` : diff===0 ? 'D-day 🔴' : `D-${diff}`;
+    const ddayColor = diff===null ? '' : diff<=0 ? 'var(--red)' : diff<=14 ? 'var(--amber)' : 'var(--green)';
+    const tasks = rdTasks[p.id]||[];
+    const done  = tasks.filter(t=>t.done).length;
+    const sc    = stageColor[p.stage]||'#6b7280';
+    return `<div style="background:var(--surface);border:1px solid var(--bd);border-radius:var(--r-lg);padding:14px 16px;cursor:pointer;transition:box-shadow .15s" onclick="openRdDetail(${p.id})" onmouseenter="this.style.boxShadow='var(--sh-md)'" onmouseleave="this.style.boxShadow=''">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:${sc}18;color:${sc}">${p.stage||'분석'}</span>
+          <span style="font-size:15px;font-weight:800">${p.name||'–'}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${diff!==null ? `<span style="font-size:11px;font-weight:700;color:${ddayColor}">${ddayTxt}</span>` : ''}
+          ${tasks.length ? `<span style="font-size:11px;font-weight:600;color:${done===tasks.length?'var(--green)':'var(--amber)'}">${done}/${tasks.length}</span>` : ''}
+        </div>
       </div>
-      <div class="rd-col-body">
-        ${cols.map(p => {
-          const tasks  = rdTasks[p.id]||[];
-          const doneCnt= tasks.filter(t=>t.done).length;
-          const pct    = tasks.length ? Math.round(doneCnt/tasks.length*100) : 0;
-          const stageTasksDone = tasks.filter(t=>t.stage===stage&&t.done).length;
-          const stageTasks     = tasks.filter(t=>t.stage===stage).length;
-          return `<div class="rd-card" onclick="openRdDetail(${p.id})">
-            <div class="rd-card-name">${p.name}</div>
-            ${p.description?`<div class="rd-card-desc">${p.description}</div>`:''}
-            <div class="rd-card-foot">
-              ${avEl(p.person,'22px','9px')}
-              <span style="font-size:11px;color:var(--t2);flex:1">${p.person||'담당자 미지정'}</span>
-              ${tasks.length?`<span style="font-size:10px;color:var(--t3)">${doneCnt}/${tasks.length}</span>`:''}
-            </div>
-            ${tasks.length?`<div class="rd-progress" style="margin-top:8px"><div class="rd-progress-fill" style="width:${pct}%"></div></div>`:''}
-          </div>`;
-        }).join('')}
-      </div>
-      <div class="rd-col-foot">
-        <button class="add-btn" onclick="openNewRdModal(null,'${stage}')">+ 프로젝트 추가</button>
+      <div style="display:flex;align-items:center;gap:12px;font-size:12px;color:var(--t2)">
+        ${p.description ? `<span>${p.description}</span>` : ''}
+        ${p.person ? `<span>· ${p.person}</span>` : ''}
+        ${p.target_date ? `<span>· 목표 ${p.target_date}</span>` : ''}
       </div>
     </div>`;
   }).join('');
-  initKanbanDrag();
 }
 
 // ── 상세 뷰 ──
+async function openRdDetail(id) {
+  _rdDetailId = id;
+  const p = rdProjects.find(x=>x.id===id);
+  if(!p) return;
+
+  // 태스크/로그가 아직 없으면 로드 (방어적으로)
+  if(sb && (!rdTasks[id] || !rdLogs[id])) {
+    try {
+      const [r2,r3] = await Promise.all([
+        sb.from('rd_tasks').select('*').eq('rd_project_id',id).order('sort_order'),
+        sb.from('rd_logs').select('*').eq('rd_project_id',id).order('created_at',{ascending:false}),
+      ]);
+      rdTasks[id] = r2.data||[];
+      rdLogs[id]  = r3.data||[];
+    } catch(e) { console.error('openRdDetail load:', e); }
+  }
+
+  const listSec   = document.getElementById('rd-list-section');
+  const detailSec = document.getElementById('rd-detail-section');
+  const detailContent = document.getElementById('rd-detail-content');
+  if(listSec)   listSec.style.display   = 'none';
+  if(detailSec) detailSec.style.display = '';
+  if(detailContent) {
+    detailContent.innerHTML = renderRdDetailContent(p, rdTasks[id]||[], rdLogs[id]||[]);
+  }
+}
+
 
 function renderRdDetail(id) {
   const p = rdProjects.find(x=>x.id===id); if(!p) return;
@@ -10766,24 +10802,20 @@ function renderRdDetailContent(p, tasks, logs) {
   const stageGroups = {};
   stages.forEach(s=>{ stageGroups[s] = taskList.filter(t=>t.stage===s && t.rd_project_id===p.id); });
   function weekIndex(month, week) { return (month - startMonth) * 4 + (week - 1); }
-  const ganttRows = stages.map(stage => {
-    const color = stageColor[stage] || '#6b7280';
-    // 이 단계의 첫 번째 태스크만 사용 (1개 기준)
-    const t = stageGroups[stage]?.[0] || null;
-    const sm = t?.start_month, sw = t?.start_week||1;
-    const em = t?.end_month,   ew = t?.end_week||4;
+
+  // ── 단계별 행 생성: 각 태스크 1개 = 1행, 마지막에 '+ 행 추가' 드래그 행 1개 ──
+  function buildTaskRow(stage, t, color) {
+    const sm = t.start_month, sw = t.start_week||1;
+    const em = t.end_month,   ew = t.end_week||4;
     const wiStart = sm ? weekIndex(sm,sw) : null;
     const wiEnd   = em ? weekIndex(em,ew) : null;
     const hasPeriod = wiStart!==null && wiEnd!==null;
 
     const cells = Array.from({length:ganttCols*4},(_,i)=>{
-      const month = startMonth + Math.floor(i/4);
-      const week  = (i%4)+1;
       const inBar = hasPeriod && i>=wiStart && i<=wiEnd;
       const isFirst = inBar && i===wiStart;
       const isLast  = inBar && i===wiEnd;
-      const r = isFirst&&isLast?'4px':isFirst?'4px 0 0 4px':isLast?'0 4px 4px 0':inBar?'0':'0';
-
+      const r = isFirst&&isLast?'4px':isFirst?'4px 0 0 4px':isLast?'0 4px 4px 0':'0';
       if(inBar) {
         return `<td style="border:1px solid var(--bd);padding:1px;cursor:pointer"
             onclick="rdGanttTaskClick(${p.id},${t.id})"
@@ -10795,26 +10827,44 @@ function renderRdDetailContent(p, tasks, logs) {
             </div>
           </td>`;
       }
-      return `<td style="border:1px solid var(--bd);padding:1px;background:${hasPeriod?'var(--bg)':'var(--s2)'};
-          cursor:pointer;transition:background .08s"
-          onmouseenter="this.style.background='${color}20'"
-          onmouseleave="this.style.background='${hasPeriod?'var(--bg)':'var(--s2)'}'"
-          onclick="openAddRdTask(${p.id},'${stage}',${startMonth+Math.floor(i/4)},${(i%4)+1},${startMonth+Math.floor(i/4)},${(i%4)+1})">
-        </td>`;
+      return `<td style="border:1px solid var(--bd);padding:1px;background:var(--bg)"></td>`;
     }).join('');
-
-    // 개발 내용 + 설명 셀
-    const titleCell = t
-      ? `<td style="padding:4px 8px;font-size:11px;font-weight:600;border:1px solid var(--bd);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;cursor:pointer" onclick="rdGanttTaskClick(${p.id},${t.id})" title="${t.title}">${t.done?'✓ ':''}<span style="${t.done?'text-decoration:line-through;color:var(--t3)':''}">${t.title}</span></td>
-         <td style="padding:4px 8px;font-size:10px;color:var(--t2);border:1px solid var(--bd);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px;cursor:pointer" onclick="rdGanttTaskClick(${p.id},${t.id})">${t.description||''}</td>`
-      : `<td style="padding:4px 8px;font-size:10px;color:var(--accent);border:1px solid var(--bd);white-space:nowrap;cursor:pointer;background:var(--al)" colspan="2" onclick="openAddRdTask(${p.id},'${stage}')">+ 기간 추가</td>`;
 
     return `<tr>
       <td style="padding:5px 8px;font-size:11px;font-weight:700;color:${color};background:${color}0d;border:1px solid var(--bd);white-space:nowrap">${stage}</td>
-      ${titleCell}
+      <td style="padding:4px 8px;font-size:11px;font-weight:600;border:1px solid var(--bd);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;cursor:pointer" onclick="rdGanttTaskClick(${p.id},${t.id})" title="${t.title}">${t.done?'✓ ':''}<span style="${t.done?'text-decoration:line-through;color:var(--t3)':''}">${t.title}</span></td>
+      <td style="padding:4px 8px;font-size:10px;color:var(--t2);border:1px solid var(--bd);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px;cursor:pointer" onclick="rdGanttTaskClick(${p.id},${t.id})">${t.description||''}</td>
       ${cells}
     </tr>`;
+  }
+
+  function buildAddRow(stage, color) {
+    // 단순 + 클릭: 단계 미리 채워서 모달 열기
+    return `<tr>
+      <td style="padding:0;border:1px solid var(--bd);background:var(--surface)" colspan="${3+ganttCols*4}">
+        <button type="button" onclick="openAddRdTask(${p.id},'${stage}')"
+          style="width:100%;padding:6px 12px;background:transparent;border:none;cursor:pointer;text-align:left;font-size:11px;color:${color};font-weight:600;display:flex;align-items:center;gap:6px;transition:background .08s"
+          onmouseenter="this.style.background='${color}10'"
+          onmouseleave="this.style.background='transparent'">
+          <span style="font-size:14px;line-height:1">+</span>
+          <span>${stage} 행 추가</span>
+        </button>
+      </td>
+    </tr>`;
+  }
+
+  const ganttRows = stages.map((stage, sIdx) => {
+    const color = stageColor[stage] || '#6b7280';
+    const stageTasks = (stageGroups[stage]||[]).slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
+    const taskRows = stageTasks.map(t => buildTaskRow(stage, t, color)).join('');
+    const addRow   = buildAddRow(stage, color);
+    // 단계 사이 구분 — 마지막 단계 뒤에는 X
+    const divider = sIdx < stages.length-1
+      ? `<tr><td colspan="${3+ganttCols*4}" style="height:6px;background:var(--bg);padding:0;border:none"></td></tr>`
+      : '';
+    return taskRows + addRow + divider;
   }).join('');
+
 
 const typeIcon = {메모:'💬',이슈:'⚠️',결정:'✅',시험결과:'🧪',설계변경:'📐'};
   const feedHtml = logs.length ? logs.map(l=>`<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--bd)"><div style="font-size:18px;flex-shrink:0">${typeIcon[l.type]||'💬'}</div><div style="flex:1"><div style="display:flex;gap:8px;margin-bottom:3px"><span style="font-size:12px;font-weight:700">${l.author||'익명'}</span><span style="font-size:11px;color:var(--t3)">${l.created_at?.slice(0,10)||''}</span></div><div style="font-size:13px;line-height:1.5">${l.content}</div></div><button class="btn btn-s btn-sm" onclick="deleteRdLog(${l.id},${p.id})">삭제</button></div>`).join('') : '<div style="text-align:center;color:var(--t3);padding:24px;font-size:13px">피드가 없습니다</div>';
@@ -10845,7 +10895,7 @@ const typeIcon = {메모:'💬',이슈:'⚠️',결정:'✅',시험결과:'🧪'
       </div>`;
     }).join('')}
   </div>
-  <div class="card" style="margin-bottom:16px"><div class="card-header" style="display:flex;align-items:center;justify-content:space-between"><div style="font-size:14px;font-weight:700">📅 개발 일정 (간트)</div><div style="display:flex;gap:6px;align-items:center"><span style="font-size:11px;color:var(--t3)">시작월</span><input type="number" min="1" max="12" value="${p.start_month||1}" style="width:48px;border:1px solid var(--bd);border-radius:var(--r-sm);padding:3px 6px;font-size:12px;font-family:var(--font)" onchange="updateRdStartMonth(${p.id},this.value)"><span style="font-size:11px;color:var(--t3)">총</span><input type="number" min="12" max="24" value="${totalMonths}" style="width:52px;border:1px solid var(--bd);border-radius:var(--r-sm);padding:3px 6px;font-size:12px;font-family:var(--font)" onchange="updateRdTotalMonths(${p.id},this.value)"><span style="font-size:11px;color:var(--t3)">개월</span></div></div><div class="card-body" style="padding:0;overflow-x:auto"><div style="font-size:10px;color:var(--t3);padding:5px 10px;background:var(--al);border-bottom:1px solid var(--bd)">💡 회색 추가 행을 좌우 드래그 → 기간 설정. 색상 바 클릭 → 수정/삭제</div><table class="gantt-table" style="border-collapse:collapse;width:max-content;min-width:100%"><thead><tr><th style="padding:5px 6px;font-size:11px;border:1px solid var(--bd);background:var(--s2);white-space:nowrap;width:52px;max-width:52px">단계</th><th style="padding:5px 6px;font-size:11px;border:1px solid var(--bd);background:var(--s2);white-space:nowrap;width:90px;max-width:90px">개발 내용</th><th style="padding:5px 6px;font-size:11px;border:1px solid var(--bd);background:var(--s2);white-space:nowrap;width:110px;max-width:110px">설명</th>${ganttHeaderMonths}</tr><tr><th style="border:1px solid var(--bd);background:var(--s2)"></th><th style="border:1px solid var(--bd);background:var(--s2)"></th><th style="border:1px solid var(--bd);background:var(--s2)"></th>${ganttHeaderWeeks}</tr></thead><tbody>${ganttRows}</tbody></table></div></div><div class="card"><div class="card-header" style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:14px;font-weight:700">💬 개발 피드</div><button class="btn btn-p btn-sm" onclick="openAddRdLog(${p.id})">+ 피드 추가</button></div><div class="card-body feed-body">${feedHtml}</div></div>`;
+  <div class="card" style="margin-bottom:16px"><div class="card-header" style="display:flex;align-items:center;justify-content:space-between"><div style="font-size:14px;font-weight:700">📅 개발 일정 (간트)</div><div style="display:flex;gap:6px;align-items:center"><span style="font-size:11px;color:var(--t3)">시작월</span><input type="number" min="1" max="12" value="${p.start_month||1}" style="width:48px;border:1px solid var(--bd);border-radius:var(--r-sm);padding:3px 6px;font-size:12px;font-family:var(--font)" onchange="updateRdStartMonth(${p.id},this.value)"><span style="font-size:11px;color:var(--t3)">총</span><input type="number" min="12" max="24" value="${totalMonths}" style="width:52px;border:1px solid var(--bd);border-radius:var(--r-sm);padding:3px 6px;font-size:12px;font-family:var(--font)" onchange="updateRdTotalMonths(${p.id},this.value)"><span style="font-size:11px;color:var(--t3)">개월</span></div></div><div class="card-body" style="padding:0;overflow-x:auto"><div style="font-size:10px;color:var(--t3);padding:5px 10px;background:var(--al);border-bottom:1px solid var(--bd)">💡 단계별 '+ 행 추가' 클릭 → 개발 내용·기간 입력. 색상 바 클릭 → 수정/삭제</div><table class="gantt-table" style="border-collapse:collapse;width:max-content;min-width:100%"><thead><tr><th style="padding:5px 6px;font-size:11px;border:1px solid var(--bd);background:var(--s2);white-space:nowrap;width:52px;max-width:52px">단계</th><th style="padding:5px 6px;font-size:11px;border:1px solid var(--bd);background:var(--s2);white-space:nowrap;width:90px;max-width:90px">개발 내용</th><th style="padding:5px 6px;font-size:11px;border:1px solid var(--bd);background:var(--s2);white-space:nowrap;width:110px;max-width:110px">설명</th>${ganttHeaderMonths}</tr><tr><th style="border:1px solid var(--bd);background:var(--s2)"></th><th style="border:1px solid var(--bd);background:var(--s2)"></th><th style="border:1px solid var(--bd);background:var(--s2)"></th>${ganttHeaderWeeks}</tr></thead><tbody>${ganttRows}</tbody></table></div></div><div class="card"><div class="card-header" style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:14px;font-weight:700">💬 개발 피드</div><button class="btn btn-p btn-sm" onclick="openAddRdLog(${p.id})">+ 피드 추가</button></div><div class="card-body feed-body">${feedHtml}</div></div>`;
 }
 
 
