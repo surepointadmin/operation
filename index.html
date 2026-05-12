@@ -5656,8 +5656,13 @@ document.getElementById('loginId').addEventListener('keydown',e=>{if(e.key==='En
       <div class="form-grid">
         <div class="form-field full"><label class="form-label">프로젝트명 *</label><input class="form-input" id="rd-name" placeholder="예: 작업자 생체데이터 관제 기술 개발"></div>
         <div class="form-field full"><label class="form-label">개요 <span style="font-weight:400;color:var(--t3)">(선택)</span></label><textarea class="form-textarea" id="rd-desc" rows="2" placeholder="어떤 기술/제품을 개발하는 프로젝트인지 간단히"></textarea></div>
-        <div class="form-field full"><label class="form-label">담당 연구원</label><select class="form-select" id="rd-person"><option value="">담당자 선택</option></select></div>
-        <div class="form-field full"><label class="form-label">목표 완료일</label><input class="form-input" id="rd-target" type="date"></div>
+        <div class="form-field full">
+          <label class="form-label">담당 연구원 <span style="font-weight:400;color:var(--t3)">(복수 선택 가능)</span></label>
+          <div id="rd-person-list" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px;border:1px solid var(--bd);border-radius:var(--r-md);background:var(--surface);max-height:120px;overflow-y:auto">
+            <!-- JS에서 체크박스 동적 생성 -->
+          </div>
+        </div>
+        <div class="form-field full"><label class="form-label">목표 완료월</label><input class="form-input" id="rd-target" type="month"></div>
       </div>
       <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px;margin-top:16px" onclick="saveRdProject()">저장</button>
     </div>
@@ -9475,8 +9480,8 @@ async function renderRdPipeline() {
       </div>
       <div style="display:flex;align-items:center;gap:12px;font-size:12px;color:var(--t2)">
         ${p.description ? `<span>${p.description}</span>` : ''}
-        ${p.person ? `<span>· ${p.person}</span>` : ''}
-        ${p.target_date ? `<span>· 목표 ${p.target_date}</span>` : ''}
+        ${p.person ? `<span>· ${p.person.split(',').map(s=>s.trim()).join(', ')}</span>` : ''}
+        ${p.target_date ? `<span>· 목표 ${p.target_date.slice(0,7).replace('-','년 ')}월</span>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -9648,16 +9653,58 @@ async function changeRdStage(id, stage) {
 
 // ── 개발 프로젝트 CRUD ──
 function openNewRdModal(editId, prefillStage) {
-  const selPerson = document.getElementById('rd-person');
-  selPerson.innerHTML = '<option value="">담당자 선택</option>' + allMembers().map(m=>`<option>${m.name}</option>`).join('');
+  const personListEl = document.getElementById('rd-person-list');
+  const members = allMembers();
+
+  // 수정 모드면 기존 담당자 set 만들기
+  let preSelected = new Set();
+  if(editId) {
+    const p = rdProjects.find(x=>x.id===editId);
+    if(p?.person) {
+      p.person.split(',').map(s=>s.trim()).filter(Boolean).forEach(n=>preSelected.add(n));
+    }
+  }
+
+  // 체크박스 UI 동적 생성
+  personListEl.innerHTML = members.length
+    ? members.map(m => {
+        const checked = preSelected.has(m.name) ? 'checked' : '';
+        return `<label style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid var(--bd);border-radius:20px;cursor:pointer;font-size:12px;background:var(--surface);transition:all .12s" class="rd-person-chip">
+          <input type="checkbox" class="rd-person-cb" value="${m.name}" ${checked} style="margin:0;cursor:pointer">
+          <span>${m.name}</span>
+        </label>`;
+      }).join('')
+    : '<div style="font-size:11px;color:var(--t3);padding:4px">등록된 멤버가 없습니다</div>';
+
+  // 체크박스 시각 피드백
+  personListEl.querySelectorAll('.rd-person-cb').forEach(cb => {
+    const chip = cb.closest('.rd-person-chip');
+    const sync = () => {
+      if(cb.checked) {
+        chip.style.background = 'var(--accent)';
+        chip.style.borderColor = 'var(--accent)';
+        chip.style.color = '#fff';
+      } else {
+        chip.style.background = 'var(--surface)';
+        chip.style.borderColor = 'var(--bd)';
+        chip.style.color = 'var(--t1)';
+      }
+    };
+    sync();
+    cb.addEventListener('change', sync);
+  });
+
   document.getElementById('rd-edit-id').value = editId||'';
+  // prefillStage를 hidden 필드에 저장해서 saveRdProject가 읽을 수 있게 함
+  document.getElementById('rd-edit-id').dataset.prefillStage = prefillStage||'';
+
   if(editId) {
     const p = rdProjects.find(x=>x.id===editId);
     document.getElementById('newRdMT').textContent = '개발 프로젝트 수정';
     document.getElementById('rd-name').value   = p.name||'';
     document.getElementById('rd-desc').value   = p.description||'';
-    selPerson.value                             = p.person||'';
-    document.getElementById('rd-target').value = p.target_date||'';
+    // target_date(YYYY-MM-DD) → month input은 YYYY-MM 형식만 받음
+    document.getElementById('rd-target').value = p.target_date ? p.target_date.slice(0,7) : '';
   } else {
     document.getElementById('newRdMT').textContent = '개발 프로젝트 추가';
     ['rd-name','rd-desc','rd-target'].forEach(i=>document.getElementById(i).value='');
@@ -9669,10 +9716,20 @@ async function saveRdProject() {
   const id   = parseInt(document.getElementById('rd-edit-id').value)||null;
   const name = document.getElementById('rd-name').value.trim();
   if(!name) { showToast('프로젝트명은 필수입니다','warn'); return; }
+
+  // 담당 연구원: 체크된 모든 멤버를 쉼표로 join
+  const checkedPeople = Array.from(document.querySelectorAll('#rd-person-list .rd-person-cb:checked'))
+    .map(cb => cb.value);
+  const personStr = checkedPeople.length ? checkedPeople.join(',') : null;
+
+  // 목표 완료월(YYYY-MM) → date(YYYY-MM-01) 변환 (DB는 date 타입 그대로)
+  const monthVal = document.getElementById('rd-target').value;
+  const targetDate = monthVal ? `${monthVal}-01` : null;
+
   const data = {
     name, description: document.getElementById('rd-desc').value.trim(),
-    person: document.getElementById('rd-person').value||null,
-    target_date: document.getElementById('rd-target').value||null,
+    person: personStr,
+    target_date: targetDate,
     updated_at: new Date().toISOString()
   };
   if(id) {
@@ -9683,18 +9740,14 @@ async function saveRdProject() {
     showToast('수정됐습니다 ✓');
     renderRdDetail(id);
   } else {
+    // prefillStage는 모달 열 때 hidden 필드에 저장됨 — 직접 변수 참조하면 ReferenceError
+    const prefillStage = document.getElementById('rd-edit-id').dataset.prefillStage || '';
     data.stage = prefillStage||'분석'; data.created_by = CU?.name||'';
     let newProj;
     if(sb) { const {data:d} = await sb.from('rd_projects').insert([data]).select().single(); newProj=d; if(d) rdProjects.unshift(d); }
     else { newProj={id:Date.now(),...data}; rdProjects.unshift(newProj); }
-    // 기본 태스크 자동 생성 (엑셀 구조 반영)
-    if(newProj && sb) {
-      const defaultTasks = Object.entries(RD_DEFAULT_TASKS).flatMap(([stage, list], si) =>
-        list.map((t,ti) => ({rd_project_id:newProj.id, stage, title:t.title, description:t.description, done:false, sort_order:si*100+ti}))
-      );
-      const {data:dt} = await sb.from('rd_tasks').insert(defaultTasks).select();
-      rdTasks[newProj.id] = dt||[];
-    }
+    // 빈 캔버스로 시작 — 사용자가 직접 + 로 단계별 행 추가
+    if(newProj) rdTasks[newProj.id] = [];
     closeModal('newRdModal');
     showToast('개발 프로젝트가 추가됐습니다 ✓');
     renderRdPipeline();
@@ -10889,8 +10942,8 @@ const typeIcon = {메모:'💬',이슈:'⚠️',결정:'✅',시험결과:'🧪'
     <div>
       <div style="font-size:22px;font-weight:800;letter-spacing:-.5px">${p.name}</div>
       <div style="display:flex;align-items:center;gap:12px;margin-top:4px;font-size:12px;color:var(--t2)">
-        ${p.person?`<span>👤 ${p.person}</span>`:''}
-        ${p.target_date?`<span>📅 목표 ${p.target_date}</span>`:''}
+        ${p.person?`<span>👤 ${p.person.split(',').map(s=>s.trim()).join(', ')}</span>`:''}
+        ${p.target_date?`<span>📅 목표 ${p.target_date.slice(0,7).replace('-','년 ')}월</span>`:''}
         ${p.description?`<span style="color:var(--t3)">${p.description}</span>`:''}
       </div>
     </div>
@@ -10899,14 +10952,15 @@ const typeIcon = {메모:'💬',이슈:'⚠️',결정:'✅',시험결과:'🧪'
       <button class="btn btn-danger btn-sm" onclick="deleteRdProject(${p.id})" style="gap:4px">🗑 삭제</button>
     </div>
   </div>
-  <!-- 단계 진행바 -->
+  <!-- 단계 진행바: 일정 행이 있는 단계는 컬러로 채움 -->
   <div style="display:flex;gap:4px;margin-bottom:20px">
     ${['분석','설계','제작','시험','기타'].map((s,i)=>{
-      const idx = ['분석','설계','제작','시험','기타'].indexOf(p.stage||'분석');
       const sc = {'분석':'#3b82f6','설계':'#8b5cf6','제작':'#f59e0b','시험':'#10b981','기타':'#6b7280'};
-      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer" onclick="changeRdStage(${p.id},'${s}')">
-        <div style="width:100%;height:5px;border-radius:3px;background:${i<=idx?(sc[s]||'#6b7280'):'var(--bd)'}"></div>
-        <div style="font-size:10px;font-weight:${i===idx?'800':'400'};color:${i===idx?(sc[s]||'#6b7280'):'var(--t3)'}">${s}</div>
+      // 해당 단계에 일정 행이 있는지 체크
+      const hasTask = (tasks||[]).some(t => t.stage === s);
+      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px" title="${hasTask?s+' 일정 있음':s+' 일정 없음'}">
+        <div style="width:100%;height:5px;border-radius:3px;background:${hasTask?(sc[s]||'#6b7280'):'var(--bd)'}"></div>
+        <div style="font-size:10px;font-weight:${hasTask?'800':'400'};color:${hasTask?(sc[s]||'#6b7280'):'var(--t3)'}">${s}</div>
       </div>`;
     }).join('')}
   </div>
