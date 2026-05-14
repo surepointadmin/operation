@@ -7322,7 +7322,7 @@ function saveRecvStatusEdit(dealId) {
   // 세금계산서 발행일이 입력되면 issued=true 로 자동 마킹
   if(newTaxDate) d.taxInvoiceIssued = true;
   document.getElementById('recv-edit-panel').style.display = 'none';
-  if(window.sb) {
+  if(sb) {
     const updatePayload = {
       recv_status: newStatus,
       recv_expected_date: newDate||null,
@@ -7360,7 +7360,7 @@ function markDealReceived(dealId) {
   if(!confirm(`"${d.name}"
 수금 완료 처리할까요?`)) return;
   d.recvStatus = 'received';
-  if(window.sb) sb.from('deals').update({recv_status:'received'}).eq('id',dealId).then(({error})=>{
+  if(sb) sb.from('deals').update({recv_status:'received'}).eq('id',dealId).then(({error})=>{
     if(error) { d.recvStatus='pending'; showToast('저장 실패','error'); return; }
     showToast('수금 완료 처리됐습니다 ✓');
     renderReceivables();
@@ -7373,14 +7373,14 @@ function markTaxInvoice(recvId, dealId) {
   const today = new Date().toISOString().slice(0,10);
   const d = deals.find(x=>x.id===dealId);
   if(d && !d.recvStatus) { d.recvStatus = 'invoiced'; }
-  if(recvId && recvId!=='null' && window.sb) {
+  if(recvId && recvId!=='null' && sb) {
     sb.from('receivables').update({tax_invoice_issued:true, tax_invoice_date:today, status:'invoiced'}).eq('id',recvId).then(()=>{
       showToast('세금계산서 발행 처리됐습니다');
       renderReceivables();
     });
   } else {
     // recvList에 없으면 새로 생성
-    if(d && window.sb) {
+    if(d && sb) {
       const payload = {
         company_name: d.co, amount: Math.round(d.amt/10000),
         deal_id: dealId, status:'invoiced',
