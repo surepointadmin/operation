@@ -2393,26 +2393,7 @@ tbody tr:hover{background:var(--s2)}
             <option value="delivery">출고 완료일 기준</option>
           </select>
         </div>
-        <div class="form-field">
-          <label class="form-label">지급 기한 *</label>
-          <div style="display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap">
-            <div style="display:flex;gap:4px;flex-wrap:wrap" id="terms-pay-btns">
-              <button type="button" class="inflow-chip" onclick="selectTermsPayMode('days')" id="terms-mode-days" style="background:var(--al);border-color:var(--accent);color:var(--accent)">일수 입력</button>
-              <button type="button" class="inflow-chip" onclick="selectTermsPayMode('eom')" id="terms-mode-eom">익월말</button>
-            </div>
-            <input type="hidden" id="terms-pay-mode" value="days">
-          </div>
-          <div id="terms-days-wrap" style="margin-top:6px">
-            <input class="form-input" id="terms-days" type="number" min="0" value="60" placeholder="예: 60">
-            <div style="font-size:11px;color:var(--t3);margin-top:3px">기준일로부터 N일 후 수금</div>
-          </div>
-          <div id="terms-eom-wrap" style="margin-top:6px;display:none">
-            <div style="font-size:12px;color:var(--at);background:var(--al);border-radius:var(--r-sm);padding:8px 12px">
-              📅 기준일이 속한 달의 <strong>다음 달 말일</strong>로 자동 계산<br>
-              <span style="font-size:11px;color:var(--t3)">예) 5월 23일 → 6월 30일</span>
-            </div>
-          </div>
-        </div>
+        <div class="form-field"><label class="form-label">지급 기한 (일) *</label><input class="form-input" id="terms-days" type="number" min="0" value="60" placeholder="60"></div>
         <div class="form-field"><label class="form-label">세금계산서 마감일 <span style="font-weight:400;color:var(--t3)">(매월 N일)</span></label><input class="form-input" id="terms-inv-day" type="number" min="1" max="31" placeholder="없으면 비워두세요"></div>
         <div class="form-field full"><label class="form-label">메모</label><textarea class="form-textarea" id="terms-note" rows="2" placeholder="예: 매월 25일 마감분 당월 처리"></textarea></div>
       </div>
@@ -2926,16 +2907,10 @@ function openContractModal(deal) {
 
 function calcContractExpected(){
   const basis = document.getElementById('contract-basis-date').value;
-  if(!basis) { updateAmtPreview?.('contract-amount','contract-amount-preview'); return; }
-  // 고객사 수금조건에 익월말 모드가 있으면 반영
-  const dealId = document.getElementById('contract-deal-id')?.value;
-  const deal = dealId ? deals.find(x=>x.id===parseInt(dealId)) : null;
-  const term = deal ? payTerms.find(t=>t.company_name===deal.co) : null;
-  if(term?.pay_mode === 'eom') {
-    document.getElementById('contract-expected').value = calcEndOfNextMonth(basis);
-  } else {
-    const days = parseInt(document.getElementById('contract-days').value)||0;
-    if(days){ const d=new Date(basis); d.setDate(d.getDate()+days); document.getElementById('contract-expected').value=d.toISOString().slice(0,10); }
+  const days  = parseInt(document.getElementById('contract-days').value)||0;
+  if(basis && days){
+    const d = new Date(basis); d.setDate(d.getDate()+days);
+    document.getElementById('contract-expected').value = d.toISOString().slice(0,10);
   }
   updateAmtPreview('contract-amount','contract-amount-preview');
 }
@@ -5448,8 +5423,8 @@ async function loadDealsFromDB(){
       contactEmail: d.contact_email||'',
       recvStatus: d.recv_status||'pending',
       recvExpectedDate: d.recv_expected_date||'',
-      taxInvoiceIssued: d.tax_invoice_issued||false,
       taxInvoiceDate: d.tax_invoice_date||'',
+      taxInvoiceIssued: d.tax_invoice_issued||false,
       logs: dbLogs.filter(l=>l.deal_id===d.id).map(l=>({
         type: l.type,
         text: l.text,
@@ -5497,6 +5472,8 @@ async function saveDealToDB(deal){
       contact_email: deal.contactEmail||null,
       recv_status: deal.recvStatus||null,
       recv_expected_date: deal.recvExpectedDate||null,
+      tax_invoice_date: deal.taxInvoiceDate||null,
+      tax_invoice_issued: deal.taxInvoiceIssued||false,
       priority: deal.priority,
       linked_project: deal.linkedProject||null,
       created_at: new Date().toISOString()
@@ -5541,6 +5518,10 @@ async function updateDealInDB(deal){
       contact_name: deal.contactName||null,
       contact_phone: deal.contactPhone||null,
       contact_email: deal.contactEmail||null,
+      recv_status: deal.recvStatus||null,
+      recv_expected_date: deal.recvExpectedDate||null,
+      tax_invoice_date: deal.taxInvoiceDate||null,
+      tax_invoice_issued: deal.taxInvoiceIssued||false,
       priority: deal.priority,
       linked_project: deal.linkedProject||null,
       updated_at: new Date().toISOString()
@@ -7205,6 +7186,8 @@ async function renderReceivables() {
         // recvList에서 이 딜과 연결된 수금 건 찾기
         const linked = recvList.find(r => r.deal_id === d.id);
         const expectedDate = d.recvExpectedDate || linked?.expected_date || d.deliveryDate || '–';
+        const taxIssued = linked?.tax_invoice_issued || false;
+        const taxDate   = linked?.tax_invoice_date || '';
         return `<tr style="cursor:pointer" onclick="openDealFromRecv(${d.id})">
           <td style="font-weight:600;color:var(--accent)">${d.name}</td>
           <td style="color:var(--t2)">${d.co}</td>
@@ -7213,9 +7196,9 @@ async function renderReceivables() {
           <td style="color:var(--t3)">${d.deliveryDate||d.closeDate||'–'}</td>
           <td style="${st==='overdue'?'color:var(--red);font-weight:700':''}">${expectedDate}</td>
           <td style="text-align:center">
-            ${d.taxInvoiceIssued
-              ? `<span class="chip chip-green" style="font-size:11px">✓ ${d.taxInvoiceDate||''}</span>`
-              : `<button class="btn btn-s btn-sm" onclick="event.stopPropagation();markTaxInvoice(null,${d.id})" style="font-size:10px">발행</button>`}
+            ${taxIssued
+              ? `<span class="chip chip-green">✓ ${taxDate}</span>`
+              : `<button class="btn btn-s btn-sm" onclick="event.stopPropagation();markTaxInvoice(${linked?.id||'null'},${d.id})" style="font-size:10px">발행</button>`}
           </td>
           <td>
             <span class="chip ${statusCl[st]||'chip-gray'}">${statusLb[st]||st}</span>
@@ -7313,6 +7296,10 @@ function openRecvStatusEdit(dealId) {
           <label style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:6px;display:block">예상 수금일</label>
           <input type="date" id="recv-edit-date" class="form-input" value="${d.recvExpectedDate||d.deliveryDate||''}">
         </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:6px;display:block">세금계산서 발행일 <span style="font-weight:400;color:var(--t3)">(선택)</span></label>
+          <input type="date" id="recv-edit-tax-date" class="form-input" value="${d.taxInvoiceDate||''}">
+        </div>
       </div>
       <div style="display:flex;gap:8px;margin-top:20px">
         <button class="btn btn-g" style="flex:1" onclick="document.getElementById('recv-edit-panel').style.display='none'">취소</button>
@@ -7325,131 +7312,94 @@ function openRecvStatusEdit(dealId) {
 function saveRecvStatusEdit(dealId) {
   const d = deals.find(x=>x.id===dealId);
   if(!d) return;
-  const newStatus = document.getElementById('recv-edit-status').value;
-  const newDate   = document.getElementById('recv-edit-date').value;
-  const prev = {status: d.recvStatus, date: d.recvExpectedDate};
+  const newStatus  = document.getElementById('recv-edit-status').value;
+  const newDate    = document.getElementById('recv-edit-date').value;
+  const newTaxDate = document.getElementById('recv-edit-tax-date').value;
+  const prev = {status: d.recvStatus, date: d.recvExpectedDate, taxDate: d.taxInvoiceDate};
   d.recvStatus = newStatus;
   d.recvExpectedDate = newDate;
+  d.taxInvoiceDate = newTaxDate;
+  // 세금계산서 발행일이 입력되면 issued=true 로 자동 마킹
+  if(newTaxDate) d.taxInvoiceIssued = true;
   document.getElementById('recv-edit-panel').style.display = 'none';
   if(window.sb) {
-    sb.from('deals').update({
+    const updatePayload = {
       recv_status: newStatus,
-      recv_expected_date: newDate||null
-    }).eq('id', dealId).then(({error}) => {
-      if(error) {
-        console.error('saveRecvStatusEdit 오류:', error);
-        // 컬럼 없으면 SQL 안내
-        if(error.code === '42703' || (error.message||'').includes('column')) {
-          showToast('DB 컬럼 없음 — Supabase SQL Editor에서 컬럼 추가 필요', 'error');
-        } else {
-          showToast('저장 실패: ' + error.message, 'error');
+      recv_expected_date: newDate||null,
+      tax_invoice_date: newTaxDate||null,
+      tax_invoice_issued: !!newTaxDate
+    };
+    sb.from('deals').update(updatePayload).eq('id', dealId)
+      .then(({error})=>{
+        if(error) {
+          console.error('saveRecvStatusEdit DB 오류:', error);
+          if(error.code === '42703' || error.message?.includes('column')) {
+            showToast('DB 컬럼 없음. Supabase에서 SQL 실행 필요', 'error');
+          } else {
+            showToast('저장 실패: '+error.message, 'error');
+          }
+          d.recvStatus = prev.status;
+          d.recvExpectedDate = prev.date;
+          d.taxInvoiceDate = prev.taxDate;
+          renderReceivables();
+          return;
         }
-        d.recvStatus = prev.status;
-        d.recvExpectedDate = prev.date;
+        showToast('수정됐습니다 ✓');
         renderReceivables();
-        return;
-      }
-      showToast('수정됐습니다 ✓');
-      renderReceivables();
-    });
+      });
   } else {
     showToast('수정됐습니다 ✓');
     renderReceivables();
   }
 }
 
+// 딜 수금 완료 처리
 function markDealReceived(dealId) {
   const d = deals.find(x=>x.id===dealId);
   if(!d) return;
-  if(!confirm(`"${d.name}"\n수금 완료 처리할까요?`)) return;
-  const prev = d.recvStatus;
+  if(!confirm(`"${d.name}"
+수금 완료 처리할까요?`)) return;
   d.recvStatus = 'received';
-  if(window.sb) {
-    sb.from('deals').update({recv_status: 'received'}).eq('id', dealId).then(({error}) => {
-      if(error) {
-        console.error('markDealReceived 오류:', error);
-        d.recvStatus = prev;
-        if(error.code === '42703' || (error.message||'').includes('column')) {
-          showToast('DB 컬럼 없음 — Supabase SQL Editor에서 컬럼 추가 필요', 'error');
-        } else {
-          showToast('저장 실패: ' + error.message, 'error');
-        }
-        return;
-      }
-      showToast('수금 완료 처리됐습니다 ✓');
-      renderReceivables();
-    });
-  } else {
+  if(window.sb) sb.from('deals').update({recv_status:'received'}).eq('id',dealId).then(({error})=>{
+    if(error) { d.recvStatus='pending'; showToast('저장 실패','error'); return; }
     showToast('수금 완료 처리됐습니다 ✓');
     renderReceivables();
-  }
+  });
+  else renderReceivables();
 }
 
+// 세금계산서 발행 (딜 기반)
 function markTaxInvoice(recvId, dealId) {
-  // 세금계산서 발행 — 날짜 입력 팝업
-  const d = deals.find(x=>x.id===dealId);
-  if(!d) return;
   const today = new Date().toISOString().slice(0,10);
-
-  let panel = document.getElementById('tax-invoice-panel');
-  if(!panel) {
-    panel = document.createElement('div');
-    panel.id = 'tax-invoice-panel';
-    panel.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:4000;display:flex;align-items:center;justify-content:center';
-    document.body.appendChild(panel);
-  }
-  panel.innerHTML = `
-    <div style="background:var(--surface);border-radius:var(--r-lg);width:360px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.25)">
-      <div style="font-size:15px;font-weight:800;margin-bottom:4px">세금계산서 발행</div>
-      <div style="font-size:12px;color:var(--t3);margin-bottom:20px">${d.name}</div>
-      <div>
-        <label style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:6px;display:block">발행일</label>
-        <input type="date" id="tax-invoice-input-date" class="form-input" value="${today}">
-      </div>
-      <div style="display:flex;gap:8px;margin-top:20px">
-        <button class="btn btn-g" style="flex:1" onclick="document.getElementById('tax-invoice-panel').style.display='none'">취소</button>
-        <button class="btn btn-p" style="flex:1" onclick="saveTaxInvoice(${dealId})">발행 확인</button>
-      </div>
-    </div>`;
-  panel.style.display = 'flex';
-}
-
-function saveTaxInvoice(dealId) {
   const d = deals.find(x=>x.id===dealId);
-  if(!d) return;
-  const date = document.getElementById('tax-invoice-input-date').value;
-  if(!date) { showToast('발행일을 입력하세요', 'error'); return; }
-  document.getElementById('tax-invoice-panel').style.display = 'none';
-
-  // 로컬 업데이트
-  d.taxInvoiceIssued = true;
-  d.taxInvoiceDate = date;
-  if(!d.recvStatus || d.recvStatus === 'pending') d.recvStatus = 'invoiced';
-
-  if(window.sb) {
-    sb.from('deals').update({
-      tax_invoice_issued: true,
-      tax_invoice_date: date,
-      recv_status: d.recvStatus
-    }).eq('id', dealId).then(({error}) => {
-      if(error) {
-        console.error('saveTaxInvoice 오류:', error);
-        if(error.code === '42703' || (error.message||'').includes('column')) {
-          showToast('DB 컬럼 없음 — Supabase SQL Editor에서 컬럼 추가 필요', 'error');
-        } else {
-          showToast('저장 실패: ' + error.message, 'error');
-        }
-        return;
-      }
-      showToast('세금계산서 발행 처리됐습니다 ✓');
+  if(d && !d.recvStatus) { d.recvStatus = 'invoiced'; }
+  if(recvId && recvId!=='null' && window.sb) {
+    sb.from('receivables').update({tax_invoice_issued:true, tax_invoice_date:today, status:'invoiced'}).eq('id',recvId).then(()=>{
+      showToast('세금계산서 발행 처리됐습니다');
       renderReceivables();
     });
   } else {
-    showToast('세금계산서 발행 처리됐습니다 ✓');
-    renderReceivables();
+    // recvList에 없으면 새로 생성
+    if(d && window.sb) {
+      const payload = {
+        company_name: d.co, amount: Math.round(d.amt/10000),
+        deal_id: dealId, status:'invoiced',
+        tax_invoice_issued:true, tax_invoice_date:today,
+        expected_date: d.deliveryDate||d.closeDate||today,
+        payment_basis:'delivery', basis_date: d.deliveryDate||today,
+        created_at: new Date().toISOString()
+      };
+      sb.from('receivables').insert([payload]).select().single().then(({data})=>{
+        if(data) recvList.push(data);
+        showToast('세금계산서 발행 처리됐습니다');
+        renderReceivables();
+      });
+    } else {
+      showToast('세금계산서 발행 처리됐습니다');
+      renderReceivables();
+    }
   }
 }
-
 
 
 function recvRow(r) {
@@ -7853,35 +7803,10 @@ async function savePO() {
 // ══════════════════════════════════════════════════════════
 // CRUD — 수금
 // ══════════════════════════════════════════════════════════
-function selectTermsPayMode(mode) {
-  document.getElementById('terms-pay-mode').value = mode;
-  document.getElementById('terms-days-wrap').style.display = mode === 'days' ? '' : 'none';
-  document.getElementById('terms-eom-wrap').style.display  = mode === 'eom'  ? '' : 'none';
-  const btnDays = document.getElementById('terms-mode-days');
-  const btnEom  = document.getElementById('terms-mode-eom');
-  if(btnDays) { btnDays.style.background = mode==='days'?'var(--al)':''; btnDays.style.borderColor = mode==='days'?'var(--accent)':''; btnDays.style.color = mode==='days'?'var(--accent)':''; }
-  if(btnEom)  { btnEom.style.background  = mode==='eom' ?'var(--al)':''; btnEom.style.borderColor  = mode==='eom' ?'var(--accent)':''; btnEom.style.color  = mode==='eom' ?'var(--accent)':''; }
-}
-
-// 익월말 계산 유틸
-function calcEndOfNextMonth(basisDate) {
-  // basisDate: 'YYYY-MM-DD' 문자열
-  const d = new Date(basisDate);
-  // 다음달 1일, 그 날짜에서 하루 빼면 이번달 말 → 한번 더 하면 다음달 말
-  const nextMonth = new Date(d.getFullYear(), d.getMonth() + 2, 0); // month+2, day=0 → 익월 말일
-  return nextMonth.toISOString().slice(0, 10);
-}
-
 function calcExpectedDate() {
-  const basis = document.getElementById('recv-basis-date')?.value;
-  const payMode = document.getElementById('terms-pay-mode')?.value || 'days';
-  if(!basis) return;
-  if(payMode === 'eom') {
-    document.getElementById('recv-expected-date').value = calcEndOfNextMonth(basis);
-  } else {
-    const days = parseInt(document.getElementById('recv-days')?.value)||0;
-    if(days) { const d=new Date(basis); d.setDate(d.getDate()+days); document.getElementById('recv-expected-date').value=d.toISOString().slice(0,10); }
-  }
+  const basis=document.getElementById('recv-basis-date')?.value;
+  const days=parseInt(document.getElementById('recv-days')?.value)||0;
+  if(basis&&days){ const d=new Date(basis); d.setDate(d.getDate()+days); document.getElementById('recv-expected-date').value=d.toISOString().slice(0,10); }
 }
 function openRecvEdit(id) {
   const r=recvList.find(x=>x.id===id); if(!r)return;
@@ -7934,7 +7859,6 @@ function openTermsModal() {
   document.getElementById('terms-days').value='60';
   document.getElementById('terms-inv-day').value='';
   document.getElementById('terms-basis').value='contract';
-  selectTermsPayMode('days');
   openModal('termsModal');
 }
 function openTermsEdit(id) {
@@ -7946,23 +7870,11 @@ function openTermsEdit(id) {
   document.getElementById('terms-days').value=t.payment_days||60;
   document.getElementById('terms-inv-day').value=t.tax_invoice_day||'';
   document.getElementById('terms-note').value=t.note||'';
-  // 익월말 모드 복원
-  const mode = t.pay_mode||'days';
-  selectTermsPayMode(mode);
   openModal('termsModal');
 }
 async function saveTerms() {
   const id=parseInt(document.getElementById('terms-id').value)||null;
-  const payMode = document.getElementById('terms-pay-mode')?.value||'days';
-  const payDays = payMode==='eom' ? 0 : (parseInt(document.getElementById('terms-days').value)||60);
-  const data={
-    company_name:document.getElementById('terms-company').value.trim(),
-    payment_basis:document.getElementById('terms-basis').value,
-    payment_days: payDays,
-    pay_mode: payMode,
-    tax_invoice_day:parseInt(document.getElementById('terms-inv-day').value)||null,
-    note:document.getElementById('terms-note').value.trim()
-  };
+  const data={company_name:document.getElementById('terms-company').value.trim(),payment_basis:document.getElementById('terms-basis').value,payment_days:parseInt(document.getElementById('terms-days').value)||60,tax_invoice_day:parseInt(document.getElementById('terms-inv-day').value)||null,note:document.getElementById('terms-note').value.trim()};
   if(!data.company_name){showToast('고객사명은 필수입니다','warn');return;}
   if(sb){
     if(id){await sb.from('customer_payment_terms').update(data).eq('id',id);const idx=payTerms.findIndex(t=>t.id===id);if(idx>=0)payTerms[idx]={...payTerms[idx],...data};}
