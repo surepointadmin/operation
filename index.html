@@ -7344,8 +7344,27 @@ function saveRecvStatusEdit(dealId) {
           renderReceivables();
           return;
         }
-        showToast('수정됐습니다 ✓');
-        renderReceivables();
+        // 연결된 receivables 행도 함께 동기화 (화면 표시가 이쪽에서 옴)
+        const linked = (typeof recvList!=='undefined' && Array.isArray(recvList)) ? recvList.find(r => r.deal_id === dealId) : null;
+        if(linked) {
+          // 메모리 동기화
+          if(newTaxDate) { linked.tax_invoice_date = newTaxDate; linked.tax_invoice_issued = true; }
+          else { linked.tax_invoice_date = null; linked.tax_invoice_issued = false; }
+          if(newDate) linked.expected_date = newDate;
+          // DB 동기화
+          sb.from('receivables').update({
+            tax_invoice_date: newTaxDate||null,
+            tax_invoice_issued: !!newTaxDate,
+            expected_date: newDate||linked.expected_date||null
+          }).eq('id', linked.id).then(({error:e2})=>{
+            if(e2) console.error('receivables 동기화 오류:', e2);
+            showToast('수정됐습니다 ✓');
+            renderReceivables();
+          });
+        } else {
+          showToast('수정됐습니다 ✓');
+          renderReceivables();
+        }
       });
   } else {
     showToast('수정됐습니다 ✓');
