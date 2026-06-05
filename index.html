@@ -4173,7 +4173,15 @@ function buildDealInfo(d) {
     <div class="det-item"><div class="det-label">납품 완료 기한</div><div class="det-val" style="${d.deliveryDate?'color:var(--accent);font-weight:700':'color:var(--t3)'}">${d.deliveryDate||'미설정'}</div></div>
     <div class="det-item"><div class="det-label">등록일</div><div class="det-val" style="color:var(--t2)">${d.createdAt||'–'}</div></div>
     <div class="det-item"><div class="det-label">유입 경로</div><div class="det-val"><span style="padding:4px 12px;border-radius:20px;font-size:13px;${inflowStyle(d.inflow||'direct')}">${inflowLabel(d.inflow||'direct')}</span></div></div>
-    ${d.site?`<div class="det-item" style="grid-column:1/-1"><div class="det-label">📍 도입 현장</div><div class="det-val" style="color:var(--t1);font-size:15px">${d.site}</div></div>`:''}`;
+    ${d.site?`<div class="det-item" style="grid-column:1/-1"><div class="det-label">📍 도입 현장</div><div class="det-val" style="color:var(--t1);font-size:15px">${d.site}</div></div>`:''}
+    ${(d.contactName||d.contactPhone||d.contactEmail)?`<div class="det-item" style="grid-column:1/-1">
+      <div class="det-label">👤 고객사 담당자</div>
+      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-top:4px">
+        ${d.contactName?`<div style="font-size:15px;font-weight:700;color:var(--t1)">${d.contactName}</div>`:''}
+        ${d.contactPhone?`<a href="tel:${d.contactPhone}" style="font-size:13px;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:4px">📞 ${d.contactPhone}</a>`:''}
+        ${d.contactEmail?`<a href="mailto:${d.contactEmail}" style="font-size:13px;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:4px">✉️ ${d.contactEmail}</a>`:''}
+      </div>
+    </div>`:''}`;
   const pi=document.getElementById('dealProdInfo');
   if(d.prod){
     pi.style.display='block';
