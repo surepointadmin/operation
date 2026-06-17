@@ -1774,7 +1774,7 @@ tbody tr:hover{background:var(--s2)}
             <span style="font-size:11px;color:var(--t3)" id="ps-recv-summary"></span>
           </div>
           <div class="table-wrap">
-            <table><thead><tr><th>판매일</th><th>거래처</th><th>제품 구성</th><th style="text-align:right">금액 <span style="font-weight:400;font-size:10px">(VAT별도)</span></th><th>세금계산서</th><th>상태</th><th>수금예정일</th><th>담당자</th></tr></thead>
+            <table><thead><tr><th>판매일</th><th>거래처</th><th>제품 구성</th><th style="text-align:right">금액 <span style="font-weight:400;font-size:10px">(VAT별도)</span></th><th>세금계산서</th><th>상태</th><th>수금예정일</th><th>담당자</th><th>관리</th></tr></thead>
             <tbody id="ps-recv-tbody"></tbody></table>
           </div>
         </div>
@@ -1900,7 +1900,7 @@ tbody tr:hover{background:var(--s2)}
             <thead><tr>
               <th>주문번호</th><th>고객사</th><th>품목</th>
               <th>수량</th><th>금액(공급가)</th><th>VAT포함</th>
-              <th>주문일</th><th>상태</th><th>배송</th><th>관리</th>
+              <th>주문일</th><th>상태</th><th>배송</th><th>계산서</th><th>수금</th><th>관리</th>
             </tr></thead>
             <tbody id="orders-table-body"></tbody>
           </table>
@@ -5285,6 +5285,7 @@ async function saveProductSale() {
     }
     closeProductSaleModal();
     renderProductSales();
+    if(document.getElementById('view-fin-receivables')?.classList.contains('active')) renderReceivables();
   } catch(e) {
     console.error('saveProductSale:', e);
     showToast('저장 실패: '+e.message, 'error');
@@ -5299,6 +5300,7 @@ async function deleteProductSale(id) {
     productSales = productSales.filter(p=>p.id!==id);
     showToast('삭제됐습니다');
     renderProductSales();
+    if(document.getElementById('view-fin-receivables')?.classList.contains('active')) renderReceivables();
   } catch(e) {
     showToast('삭제 실패: '+e.message, 'error');
   }
@@ -7358,7 +7360,7 @@ async function renderReceivables() {
   const psTbody = document.getElementById('ps-recv-tbody');
   if(psTbody) {
     if(!psFiltered.length) {
-      psTbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--t3)">제품 판매건이 없습니다</td></tr>`;
+      psTbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--t3)">제품 판매건이 없습니다</td></tr>`;
     } else {
       psTbody.innerHTML = psFiltered.map(p=>`<tr>
         <td style="white-space:nowrap">${p.date}</td>
@@ -7369,6 +7371,7 @@ async function renderReceivables() {
         <td><span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;background:${statusClPS[p.status]}22;color:${statusClPS[p.status]}">${statusLbPS[p.status]||p.status}</span></td>
         <td style="white-space:nowrap;color:var(--t3)">${p.recvDate||'–'}</td>
         <td>${p.person||'–'}</td>
+        <td onclick="event.stopPropagation()"><div style="display:flex;gap:4px"><button class="btn btn-s btn-sm" onclick="editProductSale(${p.id})">수정</button><button class="btn btn-danger btn-sm" onclick="deleteProductSale(${p.id})">삭제</button></div></td>
       </tr>`).join('');
     }
   }
@@ -7556,6 +7559,7 @@ function recvRow(r) {
     <td style="display:flex;gap:4px">
       ${r.status!=='received'?`<button class="btn btn-green btn-sm" onclick="markReceived(${r.id})">수금완료</button>`:''}
       <button class="btn btn-s btn-sm" onclick="openRecvEdit(${r.id})">수정</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteReceivable(${r.id})">삭제</button>
     </td>
   </tr>`;
 }
@@ -8022,6 +8026,18 @@ async function deleteTerm(id) {
   if(sb) await sb.from('customer_payment_terms').delete().eq('id',id);
   payTerms = payTerms.filter(t=>t.id!==id);
   renderTerms();
+}
+
+async function deleteReceivable(id) {
+  const r = recvList.find(x=>x.id===id); if(!r) return;
+  if(!confirm(`"${r.company_name}" 수금 건(${fmtMW(r.amount)})을 삭제할까요?`)) return;
+  if(sb) {
+    const {error} = await sb.from('receivables').delete().eq('id', id);
+    if(error) { showToast('삭제 실패: '+error.message, 'error'); return; }
+  }
+  recvList = recvList.filter(x=>x.id!==id);
+  showToast('삭제됐습니다');
+  renderReceivables();
 }
 
 // ══════════════════════════════════════════════════════════
@@ -12233,8 +12249,16 @@ const CARRIERS = ['CJ대한통운','한진택배','롯데택배','로젠택배',
 
 async function loadOrdersData() {
   if(!sb) return;
-  const { data } = await sb.from('orders').select('*').order('created_at', {ascending:false});
-  orders = data || [];
+  const [r1, r2, r3] = await Promise.all([
+    sb.from('orders').select('*').order('created_at', {ascending:false}),
+    sb.from('order_items').select('*').order('id'),
+    sb.from('order_payments').select('*').order('id'),
+  ]);
+  orders = r1.data || [];
+  orderItems = {};
+  (r2.data||[]).forEach(it => { if(!orderItems[it.order_id]) orderItems[it.order_id]=[]; orderItems[it.order_id].push(it); });
+  orderPayments = {};
+  (r3.data||[]).forEach(pm => { if(!orderPayments[pm.order_id]) orderPayments[pm.order_id]=[]; orderPayments[pm.order_id].push(pm); });
 }
 
 async function loadOrderDetail(orderId) {
@@ -12270,25 +12294,43 @@ async function renderOrdersList() {
   if(dateTo)   data = data.filter(o=>(o.ordered_at||'')<=dateTo);
 
   // 합계
+  const grandAmt = data.reduce((s,o)=>{
+    const items = orderItems[o.id]||[];
+    return s + items.reduce((a,i)=>a+(i.qty||0)*(i.unit_price||0),0);
+  },0);
   const sumEl = document.getElementById('order-summary');
-  if(sumEl) sumEl.innerHTML = `총 ${data.length}건`;
+  if(sumEl) sumEl.innerHTML = `총 ${data.length}건 · 공급가 ${fmtMW(grandAmt)} (VAT포함 ${fmtMW(Math.round(grandAmt*1.1))})`;
 
   const tbody = document.getElementById('orders-table-body');
   if(!tbody) return;
 
   if(!data.length) {
-    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--t3)">주문 내역이 없습니다<br><button class="btn btn-p btn-sm" onclick="openOrderModal()" style="margin-top:10px">+ 주문 등록</button></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;padding:40px;color:var(--t3)">주문 내역이 없습니다<br><button class="btn btn-p btn-sm" onclick="openOrderModal()" style="margin-top:10px">+ 주문 등록</button></td></tr>`;
     return;
   }
+
+  const statusLbPay = {pending:'수금대기', invoiced:'계산서발행', received:'수금완료', overdue:'연체'};
+  const statusClPay = {pending:'chip-amber', invoiced:'chip-blue', received:'chip-green', overdue:'chip-red'};
 
   tbody.innerHTML = data.map(o => {
     const items = orderItems[o.id] || [];
     const itemSummary = items.length
       ? items.map(i=>`${i.item_name} ${i.qty}${i.unit||'대'}`).join(', ')
       : '–';
-    const totalAmt = items.reduce((s,i)=>s+(i.amount||0), 0);
+    const totalAmt = items.reduce((s,i)=>s+(i.qty||0)*(i.unit_price||0), 0);
     const totalQty = items.reduce((s,i)=>s+(i.qty||0), 0);
     const hasTracking = items.some(i=>i.tracking_no);
+
+    const pay  = (orderPayments[o.id]||[])[0];
+    const recv = pay ? recvList.find(r=>r.id===pay.recv_id) : null;
+    const taxCell = recv
+      ? (recv.tax_invoice_issued
+          ? `<span class="chip chip-green">✓ ${recv.tax_invoice_date||'발행'}</span>`
+          : `<span style="color:var(--t3);font-size:11px">미발행</span>`)
+      : `<span style="color:var(--t3);font-size:11px">–</span>`;
+    const payCell = recv
+      ? `<span class="chip ${statusClPay[recv.status]||'chip-gray'}">${statusLbPay[recv.status]||recv.status}</span>`
+      : `<span style="color:var(--t3);font-size:11px">–</span>`;
 
     return `<tr onclick="openOrderDetail(${o.id})">
       <td style="font-family:monospace;font-weight:700;font-size:12px;color:var(--accent)">${o.order_no||'–'}</td>
@@ -12300,7 +12342,10 @@ async function renderOrdersList() {
       <td style="color:var(--t2)">${o.ordered_at||'–'}</td>
       <td><span class="chip ${ORDER_STATUS_CLS[o.status]||'chip-gray'}">${ORDER_STATUS[o.status]||o.status}</span></td>
       <td>${hasTracking ? '<span class="chip chip-blue">✓ 송장</span>' : '<span style="color:var(--t3);font-size:11px">미입력</span>'}</td>
+      <td onclick="event.stopPropagation()">${taxCell}</td>
+      <td onclick="event.stopPropagation()">${payCell}</td>
       <td onclick="event.stopPropagation()" style="display:flex;gap:4px">
+        <button class="btn btn-s btn-sm" onclick="openOrderPaymentEdit(${o.id})" title="수금/계산서 상태 수정">💰 수금</button>
         <button class="btn btn-s btn-sm" onclick="openOrderModal(${o.id})">수정</button>
         <button class="btn btn-danger btn-sm" onclick="deleteOrder(${o.id})">삭제</button>
       </td>
@@ -12702,6 +12747,115 @@ async function deleteOrder(orderId) {
   delete orderPayments[orderId];
   showToast('삭제됐습니다');
   renderOrdersList();
+}
+
+// ══ 주문 목록에서 수금/계산서 상태 수정 ══
+function openOrderPaymentEdit(orderId) {
+  const o = orders.find(x=>x.id===orderId); if(!o) return;
+  const pay  = (orderPayments[orderId]||[])[0];
+  const recv = pay ? recvList.find(r=>r.id===pay.recv_id) : null;
+  const items = orderItems[orderId]||[];
+  const totalAmt = items.reduce((s,i)=>s+(i.qty||0)*(i.unit_price||0),0);
+  const cur = recv?.status || 'pending';
+
+  document.getElementById('orderPayEditOv')?.remove();
+  const ov = document.createElement('div');
+  ov.id = 'orderPayEditOv';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:3500;display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.innerHTML = `
+    <div style="background:var(--surface);border-radius:var(--r-xl);width:100%;max-width:400px;box-shadow:var(--sh-lg)">
+      <div style="padding:18px 22px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:16px;font-weight:800">💰 수금 / 계산서 상태</div>
+          <div style="font-size:12px;color:var(--t2);margin-top:2px">${o.order_no} · ${o.co} · ${fmtMW(totalAmt)}</div>
+        </div>
+        <button onclick="document.getElementById('orderPayEditOv').remove()" style="width:30px;height:30px;border-radius:50%;background:var(--s2);border:none;cursor:pointer;font-size:18px">×</button>
+      </div>
+      <div style="padding:18px 22px;display:flex;flex-direction:column;gap:14px">
+        <div>
+          <label class="form-label">수금 상태</label>
+          <select class="form-select" id="ope-status" style="margin-top:4px">
+            <option value="pending"${cur==='pending'?' selected':''}>수금대기</option>
+            <option value="invoiced"${cur==='invoiced'?' selected':''}>계산서발행</option>
+            <option value="received"${cur==='received'?' selected':''}>수금완료</option>
+            <option value="overdue"${cur==='overdue'?' selected':''}>연체</option>
+          </select>
+        </div>
+        <div style="background:var(--s2);border-radius:var(--r);padding:12px 14px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600">
+            <input type="checkbox" id="ope-tax" ${recv?.tax_invoice_issued?'checked':''} style="width:16px;height:16px;accent-color:var(--accent)" onchange="document.getElementById('ope-tax-date-wrap').style.display=this.checked?'block':'none'">
+            세금계산서 발행
+          </label>
+          <div id="ope-tax-date-wrap" style="margin-top:10px;display:${recv?.tax_invoice_issued?'block':'none'}">
+            <label class="form-label">발행일</label>
+            <input class="form-input" id="ope-tax-date" type="date" value="${recv?.tax_invoice_date||new Date().toISOString().slice(0,10)}" style="margin-top:4px">
+          </div>
+        </div>
+        <div>
+          <label class="form-label">예상 수금일</label>
+          <input class="form-input" id="ope-exp-date" type="date" value="${recv?.expected_date||''}" style="margin-top:4px">
+        </div>
+        <div>
+          <label class="form-label">실제 수금일 <span style="font-weight:400;color:var(--t3)">(수금완료 시)</span></label>
+          <input class="form-input" id="ope-recv-date" type="date" value="${recv?.received_date||''}" style="margin-top:4px">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button class="btn btn-p" style="flex:1;justify-content:center;padding:12px" onclick="saveOrderPayment(${orderId})">저장</button>
+          <button class="btn btn-s" style="padding:12px 16px" onclick="document.getElementById('orderPayEditOv').remove()">취소</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+}
+
+async function saveOrderPayment(orderId) {
+  const o = orders.find(x=>x.id===orderId); if(!o) return;
+  const pay  = (orderPayments[orderId]||[])[0];
+  let recv   = pay ? recvList.find(r=>r.id===pay.recv_id) : null;
+  const items = orderItems[orderId]||[];
+  const totalAmt = items.reduce((s,i)=>s+(i.qty||0)*(i.unit_price||0),0);
+
+  const status    = document.getElementById('ope-status')?.value||'pending';
+  const taxIssued = document.getElementById('ope-tax')?.checked||false;
+  const taxDate   = document.getElementById('ope-tax-date')?.value||null;
+  const expDate   = document.getElementById('ope-exp-date')?.value||null;
+  const recvDate  = document.getElementById('ope-recv-date')?.value||null;
+
+  const patch = {
+    status,
+    tax_invoice_issued: taxIssued,
+    tax_invoice_date: taxIssued ? taxDate : null,
+    expected_date: expDate,
+    received_date: recvDate,
+  };
+
+  if(recv) {
+    Object.assign(recv, patch);
+    if(sb) { const {error}=await sb.from('receivables').update(patch).eq('id',recv.id); if(error){showToast('저장 실패: '+error.message,'error');return;} }
+  } else {
+    const recvData = {
+      company_name: o.co, amount: totalAmt,
+      payment_basis: 'contract', basis_date: o.ordered_at||new Date().toISOString().slice(0,10),
+      note: `${o.order_no} 주문`, ...patch,
+      expected_date: expDate || o.ordered_at || new Date().toISOString().slice(0,10),
+    };
+    if(sb) {
+      const {data:newRecv,error} = await sb.from('receivables').insert([recvData]).select().single();
+      if(error){showToast('저장 실패: '+error.message,'error');return;}
+      if(newRecv) {
+        recvList.push(newRecv);
+        await sb.from('order_payments').insert([{order_id:orderId, recv_id:newRecv.id, amount:totalAmt, due_date:expDate, status}]);
+        if(!orderPayments[orderId]) orderPayments[orderId]=[];
+        orderPayments[orderId].push({order_id:orderId, recv_id:newRecv.id, amount:totalAmt, due_date:expDate, status});
+      }
+    } else {
+      recvList.push({id:Date.now(), ...recvData});
+    }
+  }
+  document.getElementById('orderPayEditOv')?.remove();
+  showToast('수금/계산서 상태가 저장됐습니다 ✓');
+  renderOrdersList();
+  if(document.getElementById('view-fin-receivables')?.classList.contains('active')) renderReceivables();
 }
 </script>
 
