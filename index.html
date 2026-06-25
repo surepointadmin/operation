@@ -7352,7 +7352,7 @@ async function renderReceivables() {
     if(dateTo   && (p.recvDate||p.date) > dateTo)   return false;
     return true;
   });
-  const psTotal = psFiltered.reduce((s,p)=>s+p.amt,0);
+  const psTotal = psFiltered.reduce((s,p)=>s+p.amt*(p.qty||1),0);
   const psSumEl = document.getElementById('ps-recv-summary');
   if(psSumEl) psSumEl.textContent = `${psFiltered.length}건 · 합계 ${fmtMW(Math.round(psTotal/10000))}`;
   const statusLbPS = {pending:'수금대기', invoiced:'계산서발행', received:'수금완료'};
@@ -7367,7 +7367,7 @@ async function renderReceivables() {
         <td style="font-weight:600">${p.company}</td>
         <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.products}">${p.products}</td>
         <td style="text-align:right;font-weight:700">${fmtMW(Math.round(p.amt*(p.qty||1)/10000))}</td>
-        <td style="text-align:center">${p.taxInvoice?'<span style="color:var(--green);font-weight:700">✓</span>':'<span style="color:var(--t3)">–</span>'}</td>
+        <td style="text-align:right;font-weight:700;color:var(--accent)">${fmtMW(Math.round(p.amt*(p.qty||1)*1.1/10000))}</td>
         <td><span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;background:${statusClPS[p.status]}22;color:${statusClPS[p.status]}">${statusLbPS[p.status]||p.status}</span></td>
         <td style="white-space:nowrap;color:var(--t3)">${p.recvDate||'–'}</td>
         <td>${p.person||'–'}</td>
