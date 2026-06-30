@@ -1731,6 +1731,14 @@ tbody tr:hover{background:var(--s2)}
               <span style="font-size:11px;color:var(--t3)">~</span>
               <input class="f-input" type="date" id="recv-date-to" onchange="renderReceivables()" style="width:130px;flex:none">
             </div>
+            <!-- 빠른 기간 프리셋 -->
+            <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+              <button class="btn btn-s btn-sm" style="font-size:11px;padding:4px 8px" onclick="applyRecvDatePreset('thisMonth')">이번 달</button>
+              <button class="btn btn-s btn-sm" style="font-size:11px;padding:4px 8px" onclick="applyRecvDatePreset('last3')">최근 3개월</button>
+              <button class="btn btn-s btn-sm" style="font-size:11px;padding:4px 8px" onclick="applyRecvDatePreset('h1')">상반기</button>
+              <button class="btn btn-s btn-sm" style="font-size:11px;padding:4px 8px" onclick="applyRecvDatePreset('h2')">하반기</button>
+              <button class="btn btn-s btn-sm" style="font-size:11px;padding:4px 8px" onclick="applyRecvDatePreset('year')">올해</button>
+            </div>
             <select class="f-select" id="recv-sort" onchange="renderReceivables()" style="flex:none">
               <option value="basis_date_asc">기준일 빠른순 ↑</option>
               <option value="basis_date_desc">기준일 늦은순 ↓</option>
@@ -5045,6 +5053,7 @@ async function loadProductSales() {
       products: d.products||'',
       qty: d.qty||1,
       amt: d.amount||0,
+      items: Array.isArray(d.items) ? d.items : (d.items ? JSON.parse(d.items) : []),
       taxInvoice: d.tax_invoice||false,
       invoiceDate: d.invoice_date||'',
       recvDate: d.recv_date||'',
@@ -5182,25 +5191,81 @@ function renderProductSales() {
     tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--t3)">등록된 판매건이 없습니다</td></tr>`;
     return;
   }
-  tbody.innerHTML = fd.map(p => `
+  tbody.innerHTML = fd.map(p => {
+    const hasMulti = Array.isArray(p.items) && p.items.length > 1;
+    
+    // 제품 칸 표시 — 단일/멀티 모두 같은 행에 압축 표시
+    let productCell;
+    if(hasMulti) {
+      // 여러 제품: 작은 줄로 압축
+      const lines = p.items.map(it => `<div style="font-size:11px;line-height:1.4"><span style="font-weight:600">${it.name}</span> <span style="color:var(--t3)">${it.qty}개 @${fmt(it.price)}</span></div>`).join('');
+      productCell = `<div style="display:flex;align-items:center;gap:6px">
+        <span style="display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;font-size:9px;color:var(--accent);background:var(--al);padding:1px 5px;border-radius:8px;font-weight:700;flex-shrink:0">${p.items.length}</span>
+        <div>${lines}</div>
+      </div>`;
+    } else {
+      productCell = `<span title="${p.products}">${p.products}</span>`;
+    }
+    
+    return `
     <tr style="cursor:default">
-      <td style="white-space:nowrap">${p.date}</td>
-      <td style="font-weight:600">${p.company}</td>
-      <td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${p.products}">${p.products}</td>
-      <td style="text-align:right">${p.qty}개</td>
-      <td style="text-align:right;font-weight:700">${fmt(p.amt)}</td>
-      <td style="text-align:right;font-weight:700;color:var(--accent)">${fmtMW(Math.round(p.amt*(p.qty||1)*1.1/10000))}</td>
-      <td><span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;background:${statusColor[p.status]}22;color:${statusColor[p.status]}">${statusLabel[p.status]||p.status}</span></td>
-      <td style="white-space:nowrap;color:var(--t3)">${p.recvDate||'–'}</td>
-      <td>${p.person||'–'}</td>
-      <td>
+      <td style="white-space:nowrap;vertical-align:middle">${p.date}</td>
+      <td style="font-weight:600;vertical-align:middle">${p.company}</td>
+      <td style="max-width:240px;vertical-align:middle">${productCell}</td>
+      <td style="text-align:right;vertical-align:middle">${p.qty}개</td>
+      <td style="text-align:right;font-weight:700;vertical-align:middle">${fmt(p.amt)}</td>
+      <td style="text-align:right;font-weight:700;color:var(--accent);vertical-align:middle">${fmtMW(Math.round(p.amt*1.1/10000))}</td>
+      <td style="vertical-align:middle"><span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;background:${statusColor[p.status]}22;color:${statusColor[p.status]}">${statusLabel[p.status]||p.status}</span></td>
+      <td style="white-space:nowrap;color:var(--t3);vertical-align:middle">${p.recvDate||'–'}</td>
+      <td style="vertical-align:middle">${p.person||'–'}</td>
+      <td style="vertical-align:middle">
         <div style="display:flex;gap:4px">
           <button class="btn btn-s btn-sm" onclick="editProductSale(${p.id})" style="font-size:11px">수정</button>
           <button class="btn btn-sm" onclick="deleteProductSale(${p.id})" style="font-size:11px;background:var(--rl);color:var(--red);border:1px solid #fecaca">삭제</button>
         </div>
       </td>
-    </tr>
-  `).join('');
+    </tr>`;
+  }).join('');
+}
+
+// ── 제품 행 동적 관리 ──
+function addPsItemRow(prefill) {
+  const wrap = document.getElementById('ps-items-wrap');
+  if(!wrap) return;
+  const row = document.createElement('div');
+  row.className = 'ps-item-row';
+  row.style.cssText = 'display:grid;grid-template-columns:1.4fr 0.7fr 1fr auto;gap:6px;align-items:center;background:var(--surface);padding:8px;border-radius:6px;border:1px solid var(--bd)';
+  row.innerHTML = `
+    <input class="ps-item-name form-input" type="text" placeholder="제품명 (예: AI-S2)" style="padding:6px 8px;font-size:12px" value="${(prefill?.name||'').replace(/"/g,'&quot;')}">
+    <input class="ps-item-qty form-input" type="number" min="1" placeholder="수량" style="padding:6px 8px;font-size:12px;text-align:center" value="${prefill?.qty||1}">
+    <input class="ps-item-price form-input" type="number" min="0" placeholder="단가 (원)" style="padding:6px 8px;font-size:12px;text-align:right" value="${prefill?.price||''}">
+    <button type="button" onclick="this.parentElement.remove();recalcPsTotal()" style="border:none;background:transparent;color:#ef4444;cursor:pointer;font-size:18px;padding:0 6px;line-height:1" title="이 제품 제거">×</button>
+  `;
+  wrap.appendChild(row);
+  // 입력 시 합계 자동 갱신
+  row.querySelectorAll('.ps-item-qty, .ps-item-price').forEach(el => {
+    el.addEventListener('input', recalcPsTotal);
+  });
+  recalcPsTotal();
+}
+
+function recalcPsTotal() {
+  const rows = document.querySelectorAll('#ps-items-wrap .ps-item-row');
+  let total = 0;
+  rows.forEach(r => {
+    const qty = parseInt(r.querySelector('.ps-item-qty').value)||0;
+    const price = parseInt(r.querySelector('.ps-item-price').value)||0;
+    total += qty * price;
+  });
+  const supplyEl = document.getElementById('ps-total-supply');
+  const vatEl    = document.getElementById('ps-total-vat');
+  if(supplyEl) supplyEl.textContent = '₩' + total.toLocaleString();
+  if(vatEl)    vatEl.textContent    = '₩' + Math.round(total*1.1).toLocaleString();
+}
+
+function clearPsItems() {
+  const wrap = document.getElementById('ps-items-wrap');
+  if(wrap) wrap.innerHTML = '';
 }
 
 function openNewProductSale() {
@@ -5211,33 +5276,42 @@ function openNewProductSale() {
     const el = document.getElementById(id);
     if(el) el.value = id==='ps-date' ? today : '';
   });
-  ['ps-company','ps-products','ps-memo','ps-person'].forEach(id => {
+  ['ps-company','ps-memo','ps-person'].forEach(id => {
     const el = document.getElementById(id); if(el) el.value='';
   });
-  document.getElementById('ps-qty').value = 1;
-  document.getElementById('ps-amount').value = '';
   document.getElementById('ps-tax').value = '0';
   document.getElementById('ps-status').value = 'pending';
+  // 제품 행 초기화 — 빈 행 1개로 시작
+  clearPsItems();
+  addPsItemRow();
   const m = document.getElementById('productSaleModal');
-  if(m) { m.style.display='flex'; }
+  if(m) m.style.display='flex';
 }
 
 function editProductSale(id) {
+  // 새 구조: items 배열이 있으면 그걸로 채우고, 없으면 옛 데이터 1행으로
   const p = productSales.find(x=>x.id===id);
   if(!p) return;
   editingPsId = id;
   document.getElementById('ps-modal-title').textContent = '제품 판매 수정';
   document.getElementById('ps-date').value = p.date;
   document.getElementById('ps-company').value = p.company;
-  document.getElementById('ps-products').value = p.products;
-  document.getElementById('ps-qty').value = p.qty;
-  document.getElementById('ps-amount').value = p.amt;
   document.getElementById('ps-tax').value = p.taxInvoice ? '1' : '0';
   document.getElementById('ps-invoice-date').value = p.invoiceDate||'';
   document.getElementById('ps-status').value = p.status;
   document.getElementById('ps-recv-date').value = p.recvDate||'';
   document.getElementById('ps-person').value = p.person||'';
   document.getElementById('ps-memo').value = p.memo||'';
+  
+  // 제품 행 로드 — items 배열 있으면 사용, 없으면 옛 데이터 단일 행
+  clearPsItems();
+  if(Array.isArray(p.items) && p.items.length > 0) {
+    p.items.forEach(it => addPsItemRow({name:it.name, qty:it.qty, price:it.price}));
+  } else {
+    // 옛 데이터: amount는 단가로 가정 (대부분 그렇게 입력됨)
+    addPsItemRow({name:p.products||'', qty:p.qty||1, price:p.amt||0});
+  }
+  
   const m = document.getElementById('productSaleModal');
   if(m) m.style.display='flex';
 }
@@ -5250,16 +5324,31 @@ function closeProductSaleModal() {
 async function saveProductSale() {
   const date    = document.getElementById('ps-date').value;
   const company = document.getElementById('ps-company').value.trim();
-  const products= document.getElementById('ps-products').value.trim();
-  const amt     = parseInt(document.getElementById('ps-amount').value)||0;
-  if(!date||!company||!products||!amt) { showToast('필수 항목을 입력하세요','error'); return; }
+  if(!date||!company) { showToast('판매일, 거래처는 필수입니다','error'); return; }
+  
+  // 제품 행 수집
+  const rows = document.querySelectorAll('#ps-items-wrap .ps-item-row');
+  const items = [];
+  rows.forEach(r => {
+    const name = r.querySelector('.ps-item-name').value.trim();
+    const qty  = parseInt(r.querySelector('.ps-item-qty').value)||0;
+    const price= parseInt(r.querySelector('.ps-item-price').value)||0;
+    if(name && qty > 0 && price > 0) items.push({name, qty, price});
+  });
+  if(items.length === 0) { showToast('최소 1개 제품을 입력해주세요','error'); return; }
+  
+  // 합산 값 계산
+  const totalQty = items.reduce((s,it)=>s+it.qty, 0);
+  const totalAmount = items.reduce((s,it)=>s+(it.qty*it.price), 0);
+  const productsText = items.map(it => `${it.name} ${it.qty}`).join(', ');
 
   const payload = {
     sale_date:    date,
     company,
-    products,
-    qty:          parseInt(document.getElementById('ps-qty').value)||1,
-    amount:       amt,
+    products:     productsText,   // 표시용 요약 텍스트
+    qty:          totalQty,        // 총 수량
+    amount:       totalAmount,     // 총 공급가 (이제 항상 총액)
+    items:        items,           // 제품별 상세 (JSONB)
     tax_invoice:  document.getElementById('ps-tax').value==='1',
     invoice_date: document.getElementById('ps-invoice-date').value||null,
     status:       document.getElementById('ps-status').value,
@@ -5274,13 +5363,13 @@ async function saveProductSale() {
       const {error} = await sb.from('product_sales').update(payload).eq('id', editingPsId);
       if(error) throw error;
       const idx = productSales.findIndex(p=>p.id===editingPsId);
-      if(idx>=0) productSales[idx] = {...productSales[idx], date:payload.sale_date, company:payload.company, products:payload.products, qty:payload.qty, amt:payload.amount, taxInvoice:payload.tax_invoice, invoiceDate:payload.invoice_date||'', status:payload.status, recvDate:payload.recv_date||'', person:payload.person||'', memo:payload.memo||''};
+      if(idx>=0) productSales[idx] = {...productSales[idx], date:payload.sale_date, company:payload.company, products:payload.products, qty:payload.qty, amt:payload.amount, items:payload.items, taxInvoice:payload.tax_invoice, invoiceDate:payload.invoice_date||'', status:payload.status, recvDate:payload.recv_date||'', person:payload.person||'', memo:payload.memo||''};
       showToast('수정됐습니다');
     } else {
       payload.created_at = new Date().toISOString();
       const {data, error} = await sb.from('product_sales').insert([payload]).select().single();
       if(error) throw error;
-      productSales.unshift({id:data.id, date:payload.sale_date, company:payload.company, products:payload.products, qty:payload.qty, amt:payload.amount, taxInvoice:payload.tax_invoice, invoiceDate:payload.invoice_date||'', status:payload.status, recvDate:payload.recv_date||'', person:payload.person||'', memo:payload.memo||'', createdAt:payload.created_at});
+      productSales.unshift({id:data.id, date:payload.sale_date, company:payload.company, products:payload.products, qty:payload.qty, amt:payload.amount, items:payload.items, taxInvoice:payload.tax_invoice, invoiceDate:payload.invoice_date||'', status:payload.status, recvDate:payload.recv_date||'', person:payload.person||'', memo:payload.memo||'', createdAt:payload.created_at});
       showToast('판매건이 추가됐습니다');
     }
     closeProductSaleModal();
@@ -5794,17 +5883,20 @@ document.getElementById('loginId').addEventListener('keydown',e=>{if(e.key==='En
       </div>
 
       <div class="form-field full" style="grid-column:1/-1">
-        <label class="form-label">제품 구성 *</label>
-        <input class="form-input" id="ps-products" placeholder="예: AI-S2 모니터세트 3개, AI-G1 카메라 2개">
-      </div>
-
-      <div class="form-field">
-        <label class="form-label">총 수량</label>
-        <input class="form-input" id="ps-qty" type="number" min="1" value="1">
-      </div>
-      <div class="form-field">
-        <label class="form-label">판매 금액 (원) * <span style="font-weight:400;color:var(--t3);font-size:10px">VAT 별도 (공급가액)</span></label>
-        <input class="form-input" id="ps-amount" type="number" min="0" placeholder="세금계산서 공급가액">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <label class="form-label" style="margin:0">제품 * <span style="font-weight:400;color:var(--t3);font-size:11px">(여러 제품 추가 가능)</span></label>
+          <button type="button" class="btn btn-sm" style="background:var(--accent);color:#fff;padding:5px 10px;font-size:12px;border:none;border-radius:6px;cursor:pointer" onclick="addPsItemRow()">+ 제품 추가</button>
+        </div>
+        <div id="ps-items-wrap" style="display:flex;flex-direction:column;gap:8px;background:var(--s2);padding:10px;border-radius:8px;border:1px solid var(--bd)">
+          <!-- 동적 제품 행 -->
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding:8px 12px;background:var(--al);border-radius:6px">
+          <span style="font-size:11px;color:var(--t2);font-weight:600">예상 총액</span>
+          <span style="font-size:14px;font-weight:800;color:var(--accent)">
+            <span id="ps-total-supply">₩0</span>
+            <span style="font-size:10px;color:var(--t3);font-weight:500;margin-left:6px">VAT 포함 <span id="ps-total-vat">₩0</span></span>
+          </span>
+        </div>
       </div>
 
       <div class="form-field">
@@ -7261,6 +7353,42 @@ async function renderCashflow() {
 // ══════════════════════════════════════════════════════════
 // 수금 관리
 // ══════════════════════════════════════════════════════════
+// 수금 관리 — 기준일 빠른 선택 프리셋
+function applyRecvDatePreset(preset) {
+  const fromEl = document.getElementById('recv-date-from');
+  const toEl   = document.getElementById('recv-date-to');
+  if(!fromEl || !toEl) return;
+  const now = new Date();
+  const y = now.getFullYear();
+  const pad = n => String(n).padStart(2,'0');
+  const ymd = (yr, mo, dy) => `${yr}-${pad(mo)}-${pad(dy)}`;
+  let from, to;
+  if(preset === 'thisMonth') {
+    const m = now.getMonth() + 1;
+    const lastDay = new Date(y, m, 0).getDate();
+    from = ymd(y, m, 1);
+    to   = ymd(y, m, lastDay);
+  } else if(preset === 'last3') {
+    const start = new Date(y, now.getMonth()-2, 1);
+    const m = now.getMonth() + 1;
+    const lastDay = new Date(y, m, 0).getDate();
+    from = ymd(start.getFullYear(), start.getMonth()+1, 1);
+    to   = ymd(y, m, lastDay);
+  } else if(preset === 'h1') {
+    from = ymd(y, 1, 1);
+    to   = ymd(y, 6, 30);
+  } else if(preset === 'h2') {
+    from = ymd(y, 7, 1);
+    to   = ymd(y, 12, 31);
+  } else if(preset === 'year') {
+    from = ymd(y, 1, 1);
+    to   = ymd(y, 12, 31);
+  }
+  fromEl.value = from;
+  toEl.value   = to;
+  renderReceivables();
+}
+
 async function renderReceivables() {
   const statusF  = document.getElementById('recv-status-filter')?.value||'';
   const searchF  = (document.getElementById('recv-search')?.value||'').trim().toLowerCase();
@@ -7352,7 +7480,7 @@ async function renderReceivables() {
     if(dateTo   && (p.recvDate||p.date) > dateTo)   return false;
     return true;
   });
-  const psTotal = psFiltered.reduce((s,p)=>s+p.amt*(p.qty||1),0);
+  const psTotal = psFiltered.reduce((s,p)=>s+p.amt,0);
   const psSumEl = document.getElementById('ps-recv-summary');
   if(psSumEl) psSumEl.textContent = `${psFiltered.length}건 · 합계 ${fmtMW(Math.round(psTotal/10000))}`;
   const statusLbPS = {pending:'수금대기', invoiced:'계산서발행', received:'수금완료'};
@@ -7362,17 +7490,33 @@ async function renderReceivables() {
     if(!psFiltered.length) {
       psTbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--t3)">제품 판매건이 없습니다</td></tr>`;
     } else {
-      psTbody.innerHTML = psFiltered.map(p=>`<tr>
-        <td style="white-space:nowrap">${p.date}</td>
-        <td style="font-weight:600">${p.company}</td>
-        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.products}">${p.products}</td>
-        <td style="text-align:right;font-weight:700">${fmtMW(Math.round(p.amt*(p.qty||1)/10000))}</td>
-        <td style="text-align:right;font-weight:700;color:var(--accent)">${fmtMW(Math.round(p.amt*(p.qty||1)*1.1/10000))}</td>
-        <td><span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;background:${statusClPS[p.status]}22;color:${statusClPS[p.status]}">${statusLbPS[p.status]||p.status}</span></td>
-        <td style="white-space:nowrap;color:var(--t3)">${p.recvDate||'–'}</td>
-        <td>${p.person||'–'}</td>
-        <td onclick="event.stopPropagation()"><div style="display:flex;gap:4px"><button class="btn btn-s btn-sm" onclick="editProductSale(${p.id})">수정</button><button class="btn btn-danger btn-sm" onclick="deleteProductSale(${p.id})">삭제</button></div></td>
-      </tr>`).join('');
+      psTbody.innerHTML = psFiltered.map(p => {
+        const hasMulti = Array.isArray(p.items) && p.items.length > 1;
+        
+        // 제품 칸 표시
+        let productCell;
+        if(hasMulti) {
+          const lines = p.items.map(it => `<div style="font-size:11px;line-height:1.4"><span style="font-weight:600">${it.name}</span> <span style="color:var(--t3)">${it.qty}개 @${fmt(it.price)}</span></div>`).join('');
+          productCell = `<div style="display:flex;align-items:center;gap:6px">
+            <span style="display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;font-size:9px;color:var(--accent);background:var(--al);padding:1px 5px;border-radius:8px;font-weight:700;flex-shrink:0">${p.items.length}</span>
+            <div>${lines}</div>
+          </div>`;
+        } else {
+          productCell = `<span title="${p.products}">${p.products}</span>`;
+        }
+        
+        return `<tr>
+        <td style="white-space:nowrap;vertical-align:middle">${p.date}</td>
+        <td style="font-weight:600;vertical-align:middle">${p.company}</td>
+        <td style="max-width:220px;vertical-align:middle">${productCell}</td>
+        <td style="text-align:right;font-weight:700;vertical-align:middle">${fmtMW(Math.round(p.amt/10000))}</td>
+        <td style="text-align:right;font-weight:700;color:var(--accent);vertical-align:middle">${fmtMW(Math.round(p.amt*1.1/10000))}</td>
+        <td style="vertical-align:middle"><span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;background:${statusClPS[p.status]}22;color:${statusClPS[p.status]}">${statusLbPS[p.status]||p.status}</span></td>
+        <td style="white-space:nowrap;color:var(--t3);vertical-align:middle">${p.recvDate||'–'}</td>
+        <td style="vertical-align:middle">${p.person||'–'}</td>
+        <td onclick="event.stopPropagation()" style="vertical-align:middle"><div style="display:flex;gap:4px"><button class="btn btn-s btn-sm" onclick="editProductSale(${p.id})">수정</button><button class="btn btn-danger btn-sm" onclick="deleteProductSale(${p.id})">삭제</button></div></td>
+      </tr>`;
+      }).join('');
     }
   }
 }
