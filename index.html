@@ -9693,6 +9693,11 @@ async function openRdDetail(id) {
   if(detailSec) detailSec.style.display = '';
   if(detailContent) {
     detailContent.innerHTML = renderRdDetailContent(p, rdTasks[id]||[], rdLogs[id]||[]);
+    // 컬럼 폭 적용 + 핸들 생성 (DOM 안정화 후)
+    requestAnimationFrame(() => {
+      applyRdColumnWidths();
+      bindRdColumnResizers();
+    });
   }
 }
 
@@ -9823,6 +9828,11 @@ function renderRdDetail(id) {
   // 개발 간트 주입
   const _rdgs = document.getElementById('rdGanttSection');
   if(_rdgs) _rdgs.innerHTML = renderRdDetailContent(p, tasks, logs);
+  // 저장된 폭 적용 후 핸들 생성 (다음 프레임에 — DOM 안정화 대기)
+  requestAnimationFrame(() => {
+    applyRdColumnWidths();
+    bindRdColumnResizers();
+  });
 }
 async function changeRdStage(id, stage) {
   const p = rdProjects.find(x=>x.id===id); if(!p) return;
@@ -9986,6 +9996,202 @@ async function deleteRdTask(projId, taskId) {
   showToast('삭제됐습니다');
   renderRdDetail(projId);
 }
+
+// 태스크 순서 이동 (같은 단계 안에서만)
+// direction: -1 (위로) | 1 (아래로)
+async function moveRdTask(taskId, direction) {
+  // rdTasks 구조 통일 (배열/객체)
+  const allTasks = Array.isArray(rdTasks)
+    ? rdTasks
+    : Object.values(rdTasks).flat();
+  const t = allTasks.find(x=>x.id===taskId);
+  if(!t) return;
+  // 같은 프로젝트/단계 태스크들을 sort_order로 정렬
+  const projId = t.rd_project_id;
+  const stage = t.stage;
+  const stageGroup = (Array.isArray(rdTasks)
+    ? rdTasks.filter(x=>x.rd_project_id===projId && x.stage===stage)
+    : (rdTasks[projId]||[]).filter(x=>x.stage===stage)
+  ).slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
+  const idx = stageGroup.findIndex(x=>x.id===taskId);
+  const swapIdx = idx + direction;
+  if(swapIdx < 0 || swapIdx >= stageGroup.length) return; // 범위 밖
+  // 두 태스크의 sort_order 교환
+  const other = stageGroup[swapIdx];
+  const tmp = t.sort_order;
+  t.sort_order = other.sort_order;
+  other.sort_order = tmp;
+  // DB 동기화
+  if(sb) {
+    await Promise.all([
+      sb.from('rd_tasks').update({sort_order: t.sort_order}).eq('id', t.id),
+      sb.from('rd_tasks').update({sort_order: other.sort_order}).eq('id', other.id),
+    ]);
+  }
+  renderRdDetail(projId);
+}
+
+// ── 간트 컬럼 폭 조절 (별도 div 오버레이 핸들 방식) ──
+const RD_COL_WIDTHS_KEY = 'rd_col_widths_v2';
+const RD_COL_DEFAULTS = {title: 90, desc: 110};
+const RD_COL_MIN = {title: 50, desc: 50};
+const RD_COL_MAX = {title: 500, desc: 600};
+
+function getRdColumnWidths() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(RD_COL_WIDTHS_KEY)||'{}');
+    return {...RD_COL_DEFAULTS, ...saved};
+  } catch(e) { return {...RD_COL_DEFAULTS}; }
+}
+function setRdColumnWidth(col, width) {
+  const widths = getRdColumnWidths();
+  widths[col] = width;
+  localStorage.setItem(RD_COL_WIDTHS_KEY, JSON.stringify(widths));
+}
+
+function applyRdColumnWidths() {
+  const widths = getRdColumnWidths();
+  document.querySelectorAll('th.rd-col-title').forEach(el => el.style.width = widths.title+'px');
+  document.querySelectorAll('th.rd-col-desc' ).forEach(el => el.style.width = widths.desc +'px');
+  document.querySelectorAll('td.rd-col-title').forEach(el => { el.style.maxWidth = widths.title+'px'; el.style.minWidth = widths.title+'px'; el.style.width = widths.title+'px'; });
+  document.querySelectorAll('td.rd-col-desc' ).forEach(el => { el.style.maxWidth = widths.desc +'px'; el.style.minWidth = widths.desc +'px'; el.style.width = widths.desc +'px'; });
+}
+
+// 별도 오버레이 div로 핸들 생성 — 테이블 셀의 자식이 아니라서 border-collapse 영향 안 받음
+function bindRdColumnResizers() {
+  // 기존 핸들 제거 (재호출 시)
+  document.querySelectorAll('.rd-resizer-overlay').forEach(el => el.remove());
+  
+  // 헤더 셀에서 거꾸로 컨테이너 찾기 (rdGanttSection이든 rd-detail-content든 무관)
+  const titleTh = document.querySelector('th.rd-col-title');
+  const descTh  = document.querySelector('th.rd-col-desc');
+  console.log('[RD Resizer] th 찾음 — title:', !!titleTh, 'desc:', !!descTh);
+  
+  if(!titleTh || !descTh) {
+    console.warn('[RD Resizer] th.rd-col-title/desc 못 찾음. 헤더 클래스 적용 안 됨.');
+    return;
+  }
+  
+  // 가장 가까운 .card-body를 핸들 컨테이너로 사용 (간트 테이블을 감싸는 박스)
+  const cardBody = titleTh.closest('.card-body');
+  console.log('[RD Resizer] cardBody:', !!cardBody);
+  if(!cardBody) {
+    console.warn('[RD Resizer] .card-body 못 찾음. 핸들 위치 기준점 없음.');
+    return;
+  }
+  
+  cardBody.style.position = 'relative';
+  
+  // 각 컬럼에 대해 핸들 생성
+  ['title','desc'].forEach(col => {
+    const th = document.querySelector(`th.rd-col-${col}`);
+    if(!th) return;
+    
+    // 핸들 위치 계산: cardBody 기준 좌표
+    const thRect = th.getBoundingClientRect();
+    const containerRect = cardBody.getBoundingClientRect();
+    const leftPos = thRect.right - containerRect.left + cardBody.scrollLeft - 4;
+    
+    const handle = document.createElement('div');
+    handle.className = 'rd-resizer-overlay';
+    handle.dataset.col = col;
+    handle.style.cssText = `
+      position:absolute;
+      left:${leftPos}px;
+      top:0;
+      bottom:0;
+      width:8px;
+      cursor:col-resize;
+      z-index:100;
+      background:transparent;
+      border-left:1px solid transparent;
+      transition:background .12s, border-left .12s;
+    `;
+    handle.title = '드래그하여 폭 조절 ⇔';
+    
+    handle.onmouseenter = () => {
+      handle.style.background = 'rgba(0,0,0,0.06)';
+      handle.style.borderLeft = '1px solid rgba(0,0,0,0.25)';
+    };
+    handle.onmouseleave = () => {
+      if(!handle.dataset.dragging) {
+        handle.style.background = 'transparent';
+        handle.style.borderLeft = '1px solid transparent';
+      }
+    };
+    
+    handle.onmousedown = (e) => {
+      e.preventDefault(); e.stopPropagation();
+      handle.dataset.dragging = '1';
+      handle.style.background = 'rgba(0,0,0,0.12)';
+      handle.style.borderLeft = '1px solid rgba(0,0,0,0.4)';
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      
+      const startX = e.clientX;
+      const startWidth = getRdColumnWidths()[col];
+      const startLeft = parseInt(handle.style.left);
+      
+      const onMove = (ev) => {
+        const dx = ev.clientX - startX;
+        let newW = startWidth + dx;
+        newW = Math.max(RD_COL_MIN[col], Math.min(RD_COL_MAX[col], newW));
+        document.querySelectorAll(`th.rd-col-${col}`).forEach(el => el.style.width = newW+'px');
+        document.querySelectorAll(`td.rd-col-${col}`).forEach(el => { 
+          el.style.maxWidth = newW+'px'; 
+          el.style.minWidth = newW+'px'; 
+          el.style.width = newW+'px';
+        });
+        handle.style.left = (startLeft + (newW - startWidth)) + 'px';
+        repositionRdHandles();
+        handle.dataset.curWidth = newW;
+      };
+      const onUp = () => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        handle.style.background = 'transparent';
+        handle.style.borderLeft = '1px solid transparent';
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        delete handle.dataset.dragging;
+        const finalW = parseInt(handle.dataset.curWidth) || startWidth;
+        setRdColumnWidth(col, finalW);
+        delete handle.dataset.curWidth;
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    };
+    
+    cardBody.appendChild(handle);
+  });
+  
+  console.log('[RD Resizer] 핸들 생성 완료. 총 개수:', document.querySelectorAll('.rd-resizer-overlay').length);
+  
+  if(!cardBody._rdResizerScrollBound) {
+    cardBody.addEventListener('scroll', repositionRdHandles);
+    window.addEventListener('resize', repositionRdHandles);
+    cardBody._rdResizerScrollBound = true;
+  }
+}
+
+// 모든 핸들 위치 재계산
+function repositionRdHandles() {
+  const titleTh = document.querySelector('th.rd-col-title');
+  if(!titleTh) return;
+  const cardBody = titleTh.closest('.card-body');
+  if(!cardBody) return;
+  const containerRect = cardBody.getBoundingClientRect();
+  
+  ['title','desc'].forEach(col => {
+    const th = document.querySelector(`th.rd-col-${col}`);
+    const handle = cardBody.querySelector(`.rd-resizer-overlay[data-col="${col}"]`);
+    if(!th || !handle || handle.dataset.dragging) return;
+    const thRect = th.getBoundingClientRect();
+    const leftPos = thRect.right - containerRect.left + cardBody.scrollLeft - 4;
+    handle.style.left = leftPos + 'px';
+  });
+}
+
 async function addRdLog(projId) {
   const txt = document.getElementById('rdNoteText')?.value.trim();
   if(!txt) return;
@@ -11030,7 +11236,10 @@ function renderRdDetailContent(p, tasks, logs) {
   const totalMonths = Math.max(p.total_months||12, 12);
   const startMonth  = p.start_month||1;
   const ganttCols   = totalMonths;
-  const ganttHeaderMonths = Array.from({length:ganttCols},(_,i)=>`<th colspan="4" style="text-align:center;padding:2px 0;font-size:9px;background:var(--s2);border:1px solid var(--bd);white-space:nowrap;width:64px">${startMonth+i}월</th>`).join('');
+  const ganttHeaderMonths = Array.from({length:ganttCols},(_,i)=>{
+    const m = ((startMonth+i-1)%12)+1;  // 1~12 사이로 wrap
+    return `<th colspan="4" style="text-align:center;padding:2px 0;font-size:9px;background:var(--s2);border:1px solid var(--bd);white-space:nowrap;width:64px">${m}월</th>`;
+  }).join('');
   const ganttHeaderWeeks  = Array.from({length:ganttCols*4},(_,i)=>`<th style="padding:1px 0;font-size:8px;color:var(--t3);border:1px solid var(--bd);background:var(--s2);width:16px;min-width:16px;max-width:16px;text-align:center">${(i%4)+1}</th>`).join('');
   const taskList = tasks || [];
   const stageGroups = {};
@@ -11039,7 +11248,7 @@ function renderRdDetailContent(p, tasks, logs) {
 
   // ── 한 태스크를 한 행으로 그림 ──
   // isFirstInStage=true 이면 단계 라벨 + 아이콘 풀 표시 / false면 단계명 흐리게
-  function buildTaskRow(stage, t, color, isFirstInStage) {
+  function buildTaskRow(stage, t, color, isFirstInStage, stageIdx, stageTotal) {
     const sm = t.start_month, sw = t.start_week||1;
     const em = t.end_month,   ew = t.end_week||4;
     const wiStart = sm ? weekIndex(sm,sw) : null;
@@ -11076,10 +11285,25 @@ function renderRdDetailContent(p, tasks, logs) {
         </td>`
       : `<td style="padding:5px 8px;font-size:11px;font-weight:700;color:${color};background:${color}0d;border:1px solid var(--bd);white-space:nowrap">${stage}</td>`;
 
+    // 순서 변경 ▲▼ 버튼 (같은 단계 안에서만 이동)
+    const isFirstInGroup = stageIdx === 0;
+    const isLastInGroup  = stageIdx === stageTotal - 1;
+    const orderCell = `<td style="padding:2px 4px;border:1px solid var(--bd);white-space:nowrap;width:34px;text-align:center;background:var(--surface)">
+      <div style="display:flex;flex-direction:column;gap:1px;align-items:center;line-height:1">
+        <button type="button" onclick="event.stopPropagation();moveRdTask(${t.id},-1)" ${isFirstInGroup?'disabled':''}
+          style="border:none;background:${isFirstInGroup?'transparent':'var(--s2)'};color:${isFirstInGroup?'var(--bd)':'var(--t2)'};font-size:9px;width:20px;height:14px;border-radius:3px;cursor:${isFirstInGroup?'not-allowed':'pointer'};padding:0;line-height:1"
+          title="위로">▲</button>
+        <button type="button" onclick="event.stopPropagation();moveRdTask(${t.id},1)" ${isLastInGroup?'disabled':''}
+          style="border:none;background:${isLastInGroup?'transparent':'var(--s2)'};color:${isLastInGroup?'var(--bd)':'var(--t2)'};font-size:9px;width:20px;height:14px;border-radius:3px;cursor:${isLastInGroup?'not-allowed':'pointer'};padding:0;line-height:1"
+          title="아래로">▼</button>
+      </div>
+    </td>`;
+
     return `<tr>
       ${stageCell}
-      <td style="padding:4px 8px;font-size:11px;font-weight:600;border:1px solid var(--bd);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;cursor:pointer" onclick="rdGanttTaskClick(${p.id},${t.id})" title="${t.title}">${t.done?'✓ ':''}<span style="${t.done?'text-decoration:line-through;color:var(--t3)':''}">${t.title}</span></td>
-      <td style="padding:4px 8px;font-size:10px;color:var(--t2);border:1px solid var(--bd);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px;cursor:pointer" onclick="rdGanttTaskClick(${p.id},${t.id})">${t.description||''}</td>
+      ${orderCell}
+      <td class="rd-col-cell rd-col-title" style="padding:4px 8px;font-size:11px;font-weight:600;border:1px solid var(--bd);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;cursor:pointer" onclick="rdGanttTaskClick(${p.id},${t.id})" title="${t.title}${t.description?' — '+t.description:''}">${t.done?'✓ ':''}<span style="${t.done?'text-decoration:line-through;color:var(--t3)':''}">${t.title}</span></td>
+      <td class="rd-col-cell rd-col-desc" style="padding:4px 8px;font-size:10px;color:var(--t2);border:1px solid var(--bd);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px;cursor:pointer" onclick="rdGanttTaskClick(${p.id},${t.id})" title="${t.description||''}">${t.description||''}</td>
       ${cells}
     </tr>`;
   }
@@ -11095,7 +11319,7 @@ function renderRdDetailContent(p, tasks, logs) {
           title="${stage} 행 추가">
           ${stage} <span style="display:inline-block;margin-left:4px;font-size:10px;font-weight:800">＋</span>
       </td>
-      <td colspan="2" style="padding:4px 8px;font-size:10px;color:var(--accent);border:1px solid var(--bd);white-space:nowrap;cursor:pointer;background:var(--al)"
+      <td colspan="3" style="padding:4px 8px;font-size:10px;color:var(--accent);border:1px solid var(--bd);white-space:nowrap;cursor:pointer;background:var(--al)"
           onclick="openAddRdTask(${p.id},'${stage}')">
         + 기간 추가
       </td>
@@ -11111,7 +11335,7 @@ function renderRdDetailContent(p, tasks, logs) {
       return buildEmptyRow(stage, color);
     }
     // 데이터 있는 단계: 각 태스크별 1행씩
-    return stageTasks.map((t,i) => buildTaskRow(stage, t, color, i===0)).join('');
+    return stageTasks.map((t,i) => buildTaskRow(stage, t, color, i===0, i, stageTasks.length)).join('');
   }).join('');
 
 
@@ -11145,7 +11369,7 @@ const typeIcon = {메모:'💬',이슈:'⚠️',결정:'✅',시험결과:'🧪'
       </div>`;
     }).join('')}
   </div>
-  <div class="card" style="margin-bottom:16px"><div class="card-header" style="display:flex;align-items:center;justify-content:space-between"><div style="font-size:14px;font-weight:700">📅 개발 일정 (간트)</div><div style="display:flex;gap:6px;align-items:center"><span style="font-size:11px;color:var(--t3)">시작월</span><input type="number" min="1" max="12" value="${p.start_month||1}" style="width:48px;border:1px solid var(--bd);border-radius:var(--r-sm);padding:3px 6px;font-size:12px;font-family:var(--font)" onchange="updateRdStartMonth(${p.id},this.value)"><span style="font-size:11px;color:var(--t3)">총</span><input type="number" min="12" max="24" value="${totalMonths}" style="width:52px;border:1px solid var(--bd);border-radius:var(--r-sm);padding:3px 6px;font-size:12px;font-family:var(--font)" onchange="updateRdTotalMonths(${p.id},this.value)"><span style="font-size:11px;color:var(--t3)">개월</span></div></div><div class="card-body" style="padding:0;overflow-x:auto"><div style="font-size:10px;color:var(--t3);padding:5px 10px;background:var(--al);border-bottom:1px solid var(--bd)">💡 단계명 옆 ＋ 클릭 → 같은 단계에 행 추가. 색상 바 클릭 → 수정/삭제</div><table class="gantt-table" style="border-collapse:collapse;width:max-content;min-width:100%"><thead><tr><th style="padding:5px 6px;font-size:11px;border:1px solid var(--bd);background:var(--s2);white-space:nowrap;width:52px;max-width:52px">단계</th><th style="padding:5px 6px;font-size:11px;border:1px solid var(--bd);background:var(--s2);white-space:nowrap;width:90px;max-width:90px">개발 내용</th><th style="padding:5px 6px;font-size:11px;border:1px solid var(--bd);background:var(--s2);white-space:nowrap;width:110px;max-width:110px">설명</th>${ganttHeaderMonths}</tr><tr><th style="border:1px solid var(--bd);background:var(--s2)"></th><th style="border:1px solid var(--bd);background:var(--s2)"></th><th style="border:1px solid var(--bd);background:var(--s2)"></th>${ganttHeaderWeeks}</tr></thead><tbody>${ganttRows}</tbody></table></div></div><div class="card"><div class="card-header" style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:14px;font-weight:700">💬 개발 피드</div><button class="btn btn-p btn-sm" onclick="openAddRdLog(${p.id})">+ 피드 추가</button></div><div class="card-body feed-body">${feedHtml}</div></div>`;
+  <div class="card" style="margin-bottom:16px"><div class="card-header" style="display:flex;align-items:center;justify-content:space-between"><div style="font-size:14px;font-weight:700">📅 개발 일정 (간트)</div><div style="display:flex;gap:6px;align-items:center"><span style="font-size:11px;color:var(--t3)">시작월</span><input type="number" min="1" max="12" value="${p.start_month||1}" style="width:48px;border:1px solid var(--bd);border-radius:var(--r-sm);padding:3px 6px;font-size:12px;font-family:var(--font)" onchange="updateRdStartMonth(${p.id},this.value)"><span style="font-size:11px;color:var(--t3)">총</span><input type="number" min="12" max="24" value="${totalMonths}" style="width:52px;border:1px solid var(--bd);border-radius:var(--r-sm);padding:3px 6px;font-size:12px;font-family:var(--font)" onchange="updateRdTotalMonths(${p.id},this.value)"><span style="font-size:11px;color:var(--t3)">개월</span></div></div><div class="card-body" style="padding:0;overflow-x:auto"><div style="font-size:10px;color:var(--t3);padding:5px 10px;background:var(--al);border-bottom:1px solid var(--bd)">💡 단계명 옆 ＋ 클릭 → 같은 단계에 행 추가. 색상 바 클릭 → 수정/삭제. ▲▼ 클릭 → 순서 변경. 컬럼 경계선 위에 마우스를 올린 후 드래그 → 폭 조절</div><table class="gantt-table" style="border-collapse:collapse;width:max-content;min-width:100%"><thead><tr><th style="padding:5px 6px;font-size:11px;border:1px solid var(--bd);background:var(--s2);white-space:nowrap;width:52px;max-width:52px">단계</th><th style="padding:5px 4px;font-size:10px;border:1px solid var(--bd);background:var(--s2);white-space:nowrap;width:34px;max-width:34px;color:var(--t3)">순서</th><th class="rd-col-head rd-col-title" style="padding:5px 6px;font-size:11px;border:1px solid var(--bd);background:var(--s2);white-space:nowrap;width:90px">개발 내용</th><th class="rd-col-head rd-col-desc" style="padding:5px 6px;font-size:11px;border:1px solid var(--bd);background:var(--s2);white-space:nowrap;width:110px">설명</th>${ganttHeaderMonths}</tr><tr><th style="border:1px solid var(--bd);background:var(--s2)"></th><th style="border:1px solid var(--bd);background:var(--s2)"></th><th style="border:1px solid var(--bd);background:var(--s2)"></th><th style="border:1px solid var(--bd);background:var(--s2)"></th>${ganttHeaderWeeks}</tr></thead><tbody>${ganttRows}</tbody></table></div></div><div class="card"><div class="card-header" style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:14px;font-weight:700">💬 개발 피드</div><button class="btn btn-p btn-sm" onclick="openAddRdLog(${p.id})">+ 피드 추가</button></div><div class="card-body feed-body">${feedHtml}</div></div>`;
 }
 
 
@@ -11314,15 +11538,17 @@ async function saveRdTask() {
   const sw      = parseInt(document.getElementById('rdt-sw')?.value)||1;
   const em      = parseInt(document.getElementById('rdt-em')?.value)||null;
   const ew      = parseInt(document.getElementById('rdt-ew')?.value)||4;
+  // 이 프로젝트의 태스크 목록 (배열/객체 통일)
+  const taskArr = Array.isArray(rdTasks)
+    ? rdTasks.filter(t=>t.rd_project_id===projId)
+    : (rdTasks[projId]||[]);
   const data = {
     rd_project_id: projId, stage, title,
     description: document.getElementById('rdt-desc')?.value.trim()||'',
     start_month: sm, start_week: sw, end_month: em, end_week: ew,
-    sort_order: (rdTasks.filter?rdTasks.filter(t=>t.rd_project_id===projId):rdTasks[projId]||[]).length * 10
   };
-  // rdTasks 구조 통일 (배열 or 객체)
-  const taskArr = Array.isArray(rdTasks) ? rdTasks.filter(t=>t.rd_project_id===projId) : (rdTasks[projId]||[]);
   if(taskId) {
+    // 수정: sort_order는 손대지 않음 (기존 순서 보존)
     if(sb) await sb.from('rd_tasks').update(data).eq('id', taskId);
     if(Array.isArray(rdTasks)) {
       const i = rdTasks.findIndex(t=>t.id===taskId);
@@ -11332,6 +11558,10 @@ async function saveRdTask() {
       if(i>=0) rdTasks[projId][i] = {...rdTasks[projId][i],...data};
     }
   } else {
+    // 신규: 같은 단계 안에서 가장 끝에 들어가도록 sort_order 계산
+    const sameStage = taskArr.filter(t=>t.stage===stage);
+    const maxSort = sameStage.reduce((m,t)=>Math.max(m,t.sort_order||0), 0);
+    data.sort_order = maxSort + 10;
     if(sb) {
       const {data:d} = await sb.from('rd_tasks').insert([{...data, done:false}]).select().single();
       if(d) {
