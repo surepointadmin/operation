@@ -9748,7 +9748,7 @@ async function loadRdData() {
   if(!sb) return;
   try {
     const [r1,r2,r3] = await Promise.all([
-      sb.from('rd_projects').select('*').order('created_at',{ascending:false}),
+      sb.from('rd_projects').select('*').order('sort_order', {ascending:true, nullsFirst:false}).order('created_at',{ascending:false}),
       sb.from('rd_tasks').select('*').order('sort_order'),
       sb.from('rd_logs').select('*').order('created_at',{ascending:false}),
     ]);
@@ -9785,14 +9785,23 @@ async function renderRdPipeline() {
 
   const stageColor = {'분석':'#3b82f6','설계':'#8b5cf6','제작':'#f59e0b','시험':'#10b981','완료':'#22c55e','기타':'#6b7280'};
 
-  listEl.innerHTML = rdProjects.map(p => {
+  // sort_order 오름차순으로 정렬 (없으면 id 기준)
+  const sortedProjects = [...rdProjects].sort((a,b) => {
+    const sa = a.sort_order ?? 999999;
+    const sb2 = b.sort_order ?? 999999;
+    if(sa !== sb2) return sa - sb2;
+    return (a.id||0) - (b.id||0);
+  });
+
+  listEl.innerHTML = sortedProjects.map(p => {
     const diff = p.target_date ? Math.round((new Date(p.target_date)-new Date())/86400000) : null;
     const ddayTxt   = diff===null ? '' : diff<0 ? `D+${Math.abs(diff)} 초과 ⚠️` : diff===0 ? 'D-day 🔴' : `D-${diff}`;
     const ddayColor = diff===null ? '' : diff<=0 ? 'var(--red)' : diff<=14 ? 'var(--amber)' : 'var(--green)';
     const tasks = rdTasks[p.id]||[];
     const done  = tasks.filter(t=>t.done).length;
     const sc    = stageColor[p.stage]||'#6b7280';
-    return `<div style="background:var(--surface);border:1px solid var(--bd);border-radius:var(--r-lg);padding:14px 16px;cursor:pointer;transition:box-shadow .15s" onclick="openRdDetail(${p.id})" onmouseenter="this.style.boxShadow='var(--sh-md)'" onmouseleave="this.style.boxShadow=''">
+    return `<div class="rd-proj-card" data-pid="${p.id}" draggable="true" style="background:var(--surface);border:1px solid var(--bd);border-radius:var(--r-lg);padding:14px 16px 14px 40px;cursor:pointer;transition:box-shadow .15s, opacity .15s, transform .15s;position:relative" onclick="if(!this.classList.contains('rd-dragging'))openRdDetail(${p.id})" onmouseenter="this.style.boxShadow='var(--sh-md)'" onmouseleave="this.style.boxShadow=''">
+      <span class="rd-drag-handle" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:16px;cursor:grab;user-select:none;padding:4px;line-height:1" title="드래그하여 순서 변경">⋮⋮</span>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <div style="display:flex;align-items:center;gap:8px">
           <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:${sc}18;color:${sc}">${p.stage||'분석'}</span>
@@ -9810,6 +9819,106 @@ async function renderRdPipeline() {
       </div>
     </div>`;
   }).join('');
+
+  // 드래그 앤 드롭 바인딩
+  bindRdProjectDrag();
+}
+
+// ── 프로젝트 카드 드래그 앤 드롭 순서 변경 ──
+function bindRdProjectDrag() {
+  const listEl = document.getElementById('rd-project-list');
+  if(!listEl) return;
+  const cards = listEl.querySelectorAll('.rd-proj-card');
+  let draggedCard = null;
+  
+  cards.forEach(card => {
+    // 드래그 시작
+    card.addEventListener('dragstart', (e) => {
+      draggedCard = card;
+      card.classList.add('rd-dragging');
+      card.style.opacity = '0.4';
+      e.dataTransfer.effectAllowed = 'move';
+      // 드래그 이미지가 이상하게 보이지 않도록 살짝 지연
+      setTimeout(() => card.style.transform = 'scale(0.98)', 0);
+    });
+    
+    // 드래그 종료
+    card.addEventListener('dragend', (e) => {
+      card.classList.remove('rd-dragging');
+      card.style.opacity = '';
+      card.style.transform = '';
+      draggedCard = null;
+      // 모든 카드의 하이라이트 제거
+      cards.forEach(c => {
+        c.style.borderTop = '';
+        c.style.borderBottom = '';
+      });
+    });
+    
+    // 드래그 중 다른 카드 위 통과
+    card.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if(!draggedCard || card === draggedCard) return;
+      // 마우스가 카드 상반부에 있으면 위에, 하반부면 아래에 드롭될 예정
+      const rect = card.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+      // 기존 하이라이트 초기화
+      cards.forEach(c => {
+        if(c !== card) {
+          c.style.borderTop = '';
+          c.style.borderBottom = '';
+        }
+      });
+      if(e.clientY < midY) {
+        card.style.borderTop = '3px solid var(--accent)';
+        card.style.borderBottom = '';
+      } else {
+        card.style.borderTop = '';
+        card.style.borderBottom = '3px solid var(--accent)';
+      }
+    });
+    
+    // 드롭
+    card.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      if(!draggedCard || card === draggedCard) return;
+      
+      const rect = card.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+      const dropBefore = e.clientY < midY;
+      
+      // DOM 재배치
+      if(dropBefore) {
+        card.parentNode.insertBefore(draggedCard, card);
+      } else {
+        card.parentNode.insertBefore(draggedCard, card.nextSibling);
+      }
+      
+      // 새 순서로 sort_order 재계산 (10 간격으로)
+      const newOrder = Array.from(listEl.querySelectorAll('.rd-proj-card'))
+        .map((c, idx) => ({ id: parseInt(c.dataset.pid), sort_order: (idx + 1) * 10 }));
+      
+      // 메모리 업데이트
+      newOrder.forEach(({id, sort_order}) => {
+        const p = rdProjects.find(x => x.id === id);
+        if(p) p.sort_order = sort_order;
+      });
+      
+      // DB 업데이트
+      if(sb) {
+        try {
+          await Promise.all(newOrder.map(({id, sort_order}) =>
+            sb.from('rd_projects').update({sort_order, updated_at: new Date().toISOString()}).eq('id', id)
+          ));
+          showToast('순서가 저장됐습니다');
+        } catch(err) {
+          console.error('sort_order 저장 실패:', err);
+          showToast('순서 저장 실패', 'error');
+        }
+      }
+    });
+  });
 }
 
 // ── 상세 뷰 ──
@@ -12455,7 +12564,15 @@ function openEditRdProject(pid) {
   ov.id = 'rdProjEditOv';
   ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px';
 
-  const memberOpts = allMembers().map(m=>`<option value="${m.name}"${m.name===p.person?' selected':''}>${m.name}</option>`).join('');
+  // 기존 담당자 콤마 분리 → 체크된 상태로 표시
+  const currentPeople = (p.person||'').split(',').map(s=>s.trim()).filter(Boolean);
+  const personChips = allMembers().map(m=>{
+    const isChecked = currentPeople.includes(m.name);
+    return `<label style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid ${isChecked?'var(--accent)':'var(--bd)'};border-radius:20px;cursor:pointer;font-size:12px;background:${isChecked?'var(--al)':'var(--surface)'};transition:all .12s" class="rpe-person-chip">
+      <input type="checkbox" class="rpe-person-cb" value="${m.name}" ${isChecked?'checked':''} style="margin:0;cursor:pointer">
+      <span>${m.name}</span>
+    </label>`;
+  }).join('');
 
   ov.innerHTML = `
     <div style="background:var(--surface);border-radius:var(--r-xl);width:100%;max-width:460px;box-shadow:var(--sh-lg)">
@@ -12473,11 +12590,10 @@ function openEditRdProject(pid) {
           <input class="form-input" id="rpe-desc" value="${p.description||''}" placeholder="프로젝트 설명" style="margin-top:4px">
         </div>
         <div>
-          <label class="form-label">담당자</label>
-          <select class="form-select" id="rpe-person" style="margin-top:4px">
-            <option value="">담당자 선택</option>
-            ${memberOpts}
-          </select>
+          <label class="form-label">담당 연구원 <span style="font-weight:400;color:var(--t3)">(복수 선택 가능)</span></label>
+          <div id="rpe-person-list" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px;border:1px solid var(--bd);border-radius:var(--r-md);background:var(--surface);max-height:120px;overflow-y:auto;margin-top:4px">
+            ${personChips}
+          </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div>
@@ -12500,17 +12616,32 @@ function openEditRdProject(pid) {
       </div>
     </div>`;
   document.body.appendChild(ov);
-  // 외부 클릭 닫기 비활성화
+  // 체크박스 클릭 시 chip 스타일 토글
+  ov.querySelectorAll('.rpe-person-cb').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const chip = cb.closest('.rpe-person-chip');
+      if(cb.checked) {
+        chip.style.borderColor = 'var(--accent)';
+        chip.style.background  = 'var(--al)';
+      } else {
+        chip.style.borderColor = 'var(--bd)';
+        chip.style.background  = 'var(--surface)';
+      }
+    });
+  });
   setTimeout(()=>document.getElementById('rpe-name')?.focus(), 60);
 }
 
 async function saveEditRdProject(pid) {
   const name = document.getElementById('rpe-name')?.value.trim();
   if(!name) { showToast('프로젝트명을 입력해주세요','warn'); return; }
+  // 체크된 담당자들 콤마로 join (신규 추가와 동일한 방식)
+  const checkedPeople = Array.from(document.querySelectorAll('#rpe-person-list .rpe-person-cb:checked'))
+    .map(cb => cb.value);
   const data = {
     name,
     description:  document.getElementById('rpe-desc')?.value.trim()||'',
-    person:       document.getElementById('rpe-person')?.value||null,
+    person:       checkedPeople.length > 0 ? checkedPeople.join(',') : null,
     target_date:  document.getElementById('rpe-target')?.value||null,
     start_month:  parseInt(document.getElementById('rpe-startm')?.value)||1,
     total_months: Math.max(parseInt(document.getElementById('rpe-months')?.value)||12, 12),
