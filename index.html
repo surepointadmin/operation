@@ -247,6 +247,7 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
 .sp-verbal{background:#fdf2ff;color:#7e22ce}.sp-won{background:#f0fdf4;color:#15803d}
 .sp-install{background:#fdf4ff;color:#7e22ce}
 .sp-delivered{background:#ecfeff;color:#0e7490}
+.sp-tax{background:#eef2ff;color:#4338ca}
 .sp-lost{background:#fef2f2;color:#b91c1c}
 
 /* Stage bars */
@@ -257,7 +258,7 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
 .bar-fill{height:100%;border-radius:4px;transition:width .5s ease}
 .bar-cnt{font-size:12px;color:var(--t2);width:22px;text-align:right;font-weight:700}
 .bar-amt{font-size:11px;color:var(--t3);width:74px;text-align:right}
-.b-lead{background:#9ca3af}.b-contact{background:#3b82f6}.b-proposal{background:#eab308}.b-verbal{background:#c026d3}.b-won{background:#22c55e}.b-install{background:#a855f7}.b-delivered{background:#0891b2}.b-lost{background:#ef4444}
+.b-lead{background:#9ca3af}.b-contact{background:#3b82f6}.b-proposal{background:#eab308}.b-verbal{background:#c026d3}.b-won{background:#22c55e}.b-install{background:#a855f7}.b-delivered{background:#0891b2}.b-tax{background:#6366f1}.b-lost{background:#ef4444}
 
 /* Date filter bar */
 .dfb{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--bd);border-radius:var(--r);padding:10px 16px;margin-bottom:20px;flex-wrap:wrap;box-shadow:var(--sh)}
@@ -385,7 +386,7 @@ tbody tr:hover{background:var(--s2)}
 .kanban-col{width:280px;background:var(--s2);border-radius:var(--r-lg);border:1px solid var(--bd);flex-shrink:0}
 .col-hd{padding:14px 14px 12px;display:flex;align-items:flex-start;gap:8px}
 .col-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.d-lead{background:#9ca3af}.d-contact{background:#3b82f6}.d-proposal{background:#eab308}.d-verbal{background:#c026d3}.d-won{background:#22c55e}.d-install{background:#a855f7}.d-delivered{background:#0891b2}.d-lost{background:#ef4444}
+.d-lead{background:#9ca3af}.d-contact{background:#3b82f6}.d-proposal{background:#eab308}.d-verbal{background:#c026d3}.d-won{background:#22c55e}.d-install{background:#a855f7}.d-delivered{background:#0891b2}.d-tax{background:#6366f1}.d-lost{background:#ef4444}
 .col-name{font-size:13px;font-weight:700;flex:1}
 .col-meta{font-size:11px;color:var(--t3)}
 .col-body{padding:0 10px 10px;display:flex;flex-direction:column;gap:8px;min-height:40px}
@@ -949,7 +950,8 @@ tbody tr:hover{background:var(--s2)}
           <svg viewBox="0 0 16 16" fill="none"><polyline points="2,12 5,7 8,10 11,4 14,8" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
           통계
         </div>
-        <div class="nav-item" onclick="showView('product-sales',this)" id="ni-product-sales">
+        <!-- 제품 판매 메뉴 숨김 처리 — 수금 관리에서 통합 조회 (다시 쓰려면 display:none 제거) -->
+        <div class="nav-item" onclick="showView('product-sales',this)" id="ni-product-sales" style="display:none">
           <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="2" width="10" height="12" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M4 6h6M4 9h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="12" cy="12" r="3" fill="var(--surface)" stroke="currentColor" stroke-width="1.3"/><path d="M11 12h2M12 11v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
           제품 판매
         </div>
@@ -1377,7 +1379,7 @@ tbody tr:hover{background:var(--s2)}
         <div class="dfb" id="dashDfb"></div>
         <div class="kpi-grid">
           <div class="kpi-card"><div class="kpi-label">전체 파이프라인</div><div class="kpi-val" id="kp-total">₩0</div><span class="chip chip-blue" id="kp-tc">0건</span></div>
-          <div class="kpi-card"><div class="kpi-label">계약 완료</div><div class="kpi-val" id="kp-won">₩0</div><span class="chip chip-green" id="kp-wc">0건</span></div>
+          <div class="kpi-card"><div class="kpi-label">수주 확정 (설치 이후)</div><div class="kpi-val" id="kp-won">₩0</div><span class="chip chip-green" id="kp-wc">0건</span></div>
           <div class="kpi-card"><div class="kpi-label">진행 중 프로젝트</div><div class="kpi-val" id="kp-proj">0개</div><span class="chip chip-amber" id="kp-pc"></span></div>
           <div class="kpi-card"><div class="kpi-label">이번 달 마감 예정</div><div class="kpi-val" id="kp-cl">0건</div><span class="chip chip-blue">딜 기준</span></div>
         </div>
@@ -1410,6 +1412,11 @@ tbody tr:hover{background:var(--s2)}
 
       <!-- PIPELINE -->
       <div class="view" id="view-pipeline">
+        <div class="filter-bar">
+          <input class="f-input" type="text" placeholder="딜명, 고객사, 제품명, 현장 검색..." id="pipeSearch" oninput="renderPipeline()">
+          <select class="f-select" id="pipePersonF" onchange="renderPipeline()"><option value="">전체 담당자</option></select>
+          <button class="btn btn-s btn-sm" onclick="document.getElementById('pipeSearch').value='';document.getElementById('pipePersonF').value='';renderPipeline()" style="flex-shrink:0">↺ 초기화</button>
+        </div>
         <div class="kanban-wrap" id="kanbanWrap"><div class="kanban-board" id="kanbanBoard"></div></div>
       </div>
 
@@ -1420,7 +1427,7 @@ tbody tr:hover{background:var(--s2)}
           <select class="f-select" id="dealStageF" onchange="filterDeals()">
             <option value="">전체 단계</option>
             <option>잠재 발굴</option><option>미팅·접촉</option><option>제안·견적</option>
-            <option>구두합의</option><option>계약 완료</option><option>설치</option><option>납품 완료</option><option>실패·보류</option>
+            <option>구두합의</option><option>설치</option><option>납품 완료</option><option>세금계산서</option><option>실패·보류</option>
           </select>
           <select class="f-select" id="dealPersonF" onchange="filterDeals()"><option value="">전체 담당자</option></select>
           <select class="f-select" id="dealInflowF" onchange="filterDeals()">
@@ -1477,7 +1484,7 @@ tbody tr:hover{background:var(--s2)}
         <div class="dfb" id="statsDfb"></div>
         <div class="kpi-grid">
           <div class="kpi-card"><div class="kpi-label">기간 파이프라인</div><div class="kpi-val" id="st-total">₩0</div><span class="chip chip-blue" id="st-tc">0건</span></div>
-          <div class="kpi-card"><div class="kpi-label">계약 완료 이후 합산</div><div class="kpi-val" id="st-won">₩0</div><span class="chip chip-green" id="st-wc">0건</span><div style="font-size:10px;color:var(--t3);margin-top:2px">계약완료+설치+납품완료</div></div>
+          <div class="kpi-card"><div class="kpi-label">수주 확정 이후 합산</div><div class="kpi-val" id="st-won">₩0</div><span class="chip chip-green" id="st-wc">0건</span><div style="font-size:10px;color:var(--t3);margin-top:2px">설치+납품완료+세금계산서</div></div>
           <div class="kpi-card"><div class="kpi-label">실패·보류</div><div class="kpi-val" id="st-lost">0건</div><span class="chip chip-red"></span></div>
           <div class="kpi-card"><div class="kpi-label">평균 딜 금액</div><div class="kpi-val" id="st-avg">₩0</div><span class="chip chip-amber"></span></div>
         </div>
@@ -1765,26 +1772,14 @@ tbody tr:hover{background:var(--s2)}
           <tbody id="recv-table-body"></tbody></table>
         </div>
 
-        <!-- 직접 등록 수금 현황 -->
+        <!-- 수금 건 통합 목록 (직접 등록 + 제품 판매) -->
         <div style="padding:10px 16px 6px;margin-top:8px;font-size:12px;font-weight:700;color:var(--t3);border-top:2px solid var(--bd);display:flex;align-items:center;justify-content:space-between">
-          <span>📝 직접 등록 수금 건</span>
+          <span>📝 수금 건 목록 <span style="font-weight:400">(직접 등록 + 제품 판매)</span> <span id="recv-united-summary" style="font-weight:400"></span></span>
           <button class="btn btn-s btn-sm" onclick="openNewRecv()">+ 직접 등록</button>
         </div>
         <div class="table-wrap">
-          <table><thead><tr><th>고객사</th><th>딜</th><th>금액(공급가)</th><th>수금액(VAT포함)</th><th>수금 기준</th><th>기준일</th><th>예상 수금일</th><th>세금계산서</th><th>상태</th><th>관리</th></tr></thead>
-          <tbody id="recv-manual-body"></tbody></table>
-        </div>
-
-        <!-- 제품 판매건 수금 현황 -->
-        <div style="padding:12px 16px;border-top:2px solid var(--bd);margin-top:4px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <div style="font-size:13px;font-weight:700;color:var(--t1)">📦 제품 판매건 수금 현황</div>
-            <span style="font-size:11px;color:var(--t3)" id="ps-recv-summary"></span>
-          </div>
-          <div class="table-wrap">
-            <table><thead><tr><th>판매일</th><th>거래처</th><th>제품 구성</th><th style="text-align:right">금액 <span style="font-weight:400;font-size:10px">(VAT별도)</span></th><th>금액 <span style="font-weight:400;font-size:10px">(VAT포함)<th>상태</th><th>수금예정일</th><th>담당자</th><th>관리</th></tr></thead>
-            <tbody id="ps-recv-tbody"></tbody></table>
-          </div>
+          <table><thead><tr><th>구분</th><th>날짜</th><th>거래처</th><th>내용</th><th>금액(공급가)</th><th>VAT포함</th><th>예상 수금일</th><th>세금계산서</th><th>상태</th><th>관리</th></tr></thead>
+          <tbody id="recv-united-body"></tbody></table>
         </div>
       </div>
 
@@ -2085,7 +2080,7 @@ tbody tr:hover{background:var(--s2)}
         <div class="form-field">
           <label class="form-label">현재 단계</label>
           <select class="form-select" id="nd-stage">
-            <option>잠재 발굴</option><option>미팅·접촉</option><option>제안·견적</option><option>구두합의</option><option>계약 완료</option><option>설치</option><option>납품 완료</option>
+            <option>잠재 발굴</option><option>미팅·접촉</option><option>제안·견적</option><option>구두합의</option><option>설치</option><option>납품 완료</option><option>세금계산서</option>
           </select>
         </div>
 
@@ -2507,8 +2502,8 @@ tbody tr:hover{background:var(--s2)}
   <div class="modal modal-sm">
     <div class="modal-hd">
       <div class="modal-hd-info">
-        <div class="modal-title">✅ 계약 완료 확정</div>
-        <div class="modal-sub">수금 정보를 입력해야 계약 완료로 이동합니다</div>
+        <div class="modal-title">✅ 계약 확정 → 설치 진행</div>
+        <div class="modal-sub">수금 정보를 입력해야 설치 단계로 이동합니다</div>
       </div>
       <button class="modal-close" onclick="closeModal('contractModal')"><svg viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
     </div>
@@ -2576,7 +2571,7 @@ tbody tr:hover{background:var(--s2)}
     </div>
     <div style="padding:0 24px 20px;display:flex;gap:8px">
       <button class="btn btn-s" onclick="closeModal('contractModal')">취소</button>
-      <button class="btn btn-p" style="flex:1;justify-content:center;padding:11px" onclick="confirmContractComplete()">계약 완료 확정 →</button>
+      <button class="btn btn-p" style="flex:1;justify-content:center;padding:11px" onclick="confirmContractComplete()">계약 확정 · 설치로 이동 →</button>
     </div>
   </div>
 </div>
@@ -2703,10 +2698,10 @@ let ROLE_CHIP = {superadmin:'rb-superadmin',admin:'rb-admin',sales:'rb-sales',rd
 // 커스텀 역할은 자동으로 rb-custom 클래스 사용
 function getRoleChip(role){ return ROLE_CHIP[role]||'rb-custom'; }
 
-const STAGES = ['잠재 발굴','미팅·접촉','제안·견적','구두합의','계약 완료','설치','납품 완료','실패·보류'];
-const STAGE_KEYS = ['lead','contact','proposal','verbal','won','install','delivered','lost'];
-const STAGE_SP   = ['sp-lead','sp-contact','sp-proposal','sp-verbal','sp-won','sp-install','sp-delivered','sp-lost'];
-const BAR_CLS    = ['b-lead','b-contact','b-proposal','b-verbal','b-won','b-install','b-delivered'];
+const STAGES = ['잠재 발굴','미팅·접촉','제안·견적','구두합의','설치','납품 완료','세금계산서','실패·보류'];
+const STAGE_KEYS = ['lead','contact','proposal','verbal','install','delivered','tax','lost'];
+const STAGE_SP   = ['sp-lead','sp-contact','sp-proposal','sp-verbal','sp-install','sp-delivered','sp-tax','sp-lost'];
+const BAR_CLS    = ['b-lead','b-contact','b-proposal','b-verbal','b-install','b-delivered','b-tax'];
 
 // 파이프라인 단계 설명
 const STAGE_DESC = {
@@ -2714,9 +2709,9 @@ const STAGE_DESC = {
   '미팅·접촉':  '대면 미팅 또는 구체적 유선 문의 — 제품·서비스 설명 완료',
   '제안·견적':  '공식 제안서 또는 견적서 발송 완료, 고객 검토 중',
   '구두합의':   '내부 OK — 계약서 작성 전 구두로 조건 합의 완료 상태',
-  '계약 완료':  '계약서 서명 및 공식 수주 완료',
-  '설치':       '계약 체결 후 현장 설치 일정이 확정된 딜',
-  '납품 완료':  '설치 완료 후 세금계산서 발행 및 대금 입금까지 완료된 딜. 최종 클로즈.',
+  '설치':       '계약 확정(수금 정보 입력) 후 현장 설치를 진행하는 딜',
+  '납품 완료':  '설치 완료 후 고객사 납품까지 완료된 딜',
+  '세금계산서': '납품 완료 후 세금계산서 발행 단계',
   '실패·보류':  '협의 중단, 예산 부족, 경쟁사 선택 등으로 보류 처리',
 };
 
@@ -2750,8 +2745,10 @@ const fmt = v => {
   if(a >= 10000)        return '₩' + Math.round(a/10000).toLocaleString() + '만';
   return '₩' + a.toLocaleString() + '원';
 };
-const sk = s => STAGE_KEYS[STAGES.indexOf(s)] || 'lead';
-const spCls = s => STAGE_SP[STAGES.indexOf(s)] || 'sp-lead';
+// 기존 '계약 완료' 딜은 화면상 '설치' 단계로 표시 (DB 데이터는 유지)
+const dispStage = d => d.stage==='계약 완료' ? '설치' : d.stage;
+const sk = s => s==='계약 완료' ? 'install' : (STAGE_KEYS[STAGES.indexOf(s)] || 'lead');
+const spCls = s => s==='계약 완료' ? 'sp-won' : (STAGE_SP[STAGES.indexOf(s)] || 'sp-lead');
 const today = new Date();
 const nowStr = () => new Date().toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
 const fmtD = d => { if(!d) return '-'; const dt = new Date(d); return `${dt.getFullYear()}.${String(dt.getMonth()+1).padStart(2,'0')}.${String(dt.getDate()).padStart(2,'0')}`; };
@@ -2945,9 +2942,9 @@ async function confirmContractComplete(){
     updateDealInDB(deal);
   }
   closeModal('contractModal');
-  // 계약 완료 단계 변경 실행
+  // 설치 단계 변경 실행
   const os = deal.stage;
-  _doChangeDealStage(deal, os, '계약 완료');
+  _doChangeDealStage(deal, os, '설치');
   // 수금 예정 자동 등록 (onDealContractComplete가 호출되기 전에 기일 정보 주입)
   deal._contractRecv = {
     basis: document.getElementById('contract-basis').value,
@@ -3229,7 +3226,7 @@ function renderHome() {
     if(el) el.textContent = `${greet}, ${CU?.name||''}님`;
 
     const active = deals.filter(d=>d.stage!=='실패·보류');
-    const won = deals.filter(d=>d.stage==='계약 완료');
+    const won = deals.filter(d=>['계약 완료','설치','납품 완료','세금계산서'].includes(d.stage));
     const el1=document.getElementById('hs-deals'),el2=document.getElementById('hs-won');
     if(el1)el1.textContent=`딜 ${active.length}건`;
     if(el2)el2.textContent=`완료 ${fmt(won.reduce((s,d)=>s+d.amt,0))}`;
@@ -3358,7 +3355,7 @@ function renderSuperAdminKPI() {
 
   // 전환율: 계약완료 / 전체
   const totalDeals = deals.length;
-  const wonDeals = deals.filter(d=>d.stage==='계약 완료').length;
+  const wonDeals = deals.filter(d=>['계약 완료','설치','납품 완료','세금계산서'].includes(d.stage)).length;
   const convRate = totalDeals>0 ? Math.round(wonDeals/totalDeals*100) : 0;
 
   // KPI 업데이트
@@ -3563,7 +3560,7 @@ function renderSuperAdminKPI() {
   const totalPipe = stageDeals[0]||1;
   const healthEl = document.getElementById('sa-sales-health');
   if(healthEl) {
-    const avgCycle = deals.filter(d=>d.stage==='계약 완료').length > 0 ? 47 : 0; // 실제 계산은 로그 기반
+    const avgCycle = deals.filter(d=>['계약 완료','설치','납품 완료','세금계산서'].includes(d.stage)).length > 0 ? 47 : 0; // 실제 계산은 로그 기반
     const weightedPipe = deals.filter(d=>!['계약 완료','실패·보류'].includes(d.stage)).reduce((s,d)=>{
       const prob={'잠재 발굴':0.1,'미팅·접촉':0.2,'제안·견적':0.35,'협상·검토':0.6,'구두합의':0.9}[d.stage]||0;
       return s+d.amt*prob;
@@ -3622,7 +3619,7 @@ function renderProdSalesCard() {
     if(mlEl) mlEl.textContent = monthLabel;
 
     const wonThisMonth = deals.filter(d =>
-      ['계약 완료','설치','납품 완료'].includes(d.stage) &&
+      ['계약 완료','설치','납품 완료','세금계산서'].includes(d.stage) &&
       ((d.created_at||'').startsWith(thisMonthStr) || (d.closeDate||'').startsWith(thisMonthStr))
     );
 
@@ -3708,7 +3705,7 @@ function renderDashboard() {
   buildDFB('dashDfb', dP, 'setDP');
   const fd = getFD(dP,dF,dT);
   const active = fd.filter(d=>d.stage!=='실패·보류');
-  const won = fd.filter(d=>['계약 완료','설치','납품 완료'].includes(d.stage));
+  const won = fd.filter(d=>['계약 완료','설치','납품 완료','세금계산서'].includes(d.stage));
   const activePj = projects.filter(p=>p.status==='진행 중');
   const closing = deals.filter(d=>isThisMonth(d.closeDate)&&!['실패·보류','계약 완료'].includes(d.stage));
 
@@ -3720,10 +3717,10 @@ function renderDashboard() {
   document.getElementById('kp-cl').textContent=`${closing.length}건`;
 
   // Stage bars
-  const mx = Math.max(...STAGES.slice(0,7).map(s=>fd.filter(d=>d.stage===s).length),1);
+  const mx = Math.max(...STAGES.slice(0,7).map(s=>fd.filter(d=>dispStage(d)===s).length),1);
   document.getElementById('dashBars').innerHTML=STAGES.slice(0,7).map((s,i)=>{
-    const cnt=fd.filter(d=>d.stage===s).length;
-    const amt=fd.filter(d=>d.stage===s).reduce((a,d)=>a+d.amt,0);
+    const cnt=fd.filter(d=>dispStage(d)===s).length;
+    const amt=fd.filter(d=>dispStage(d)===s).reduce((a,d)=>a+d.amt,0);
     return`<div class="bar-row"><div class="bar-label">${s}</div><div class="bar-track"><div class="bar-fill ${BAR_CLS[i]}" style="width:${Math.round(cnt/mx*100)}%"></div></div><div class="bar-cnt">${cnt}</div><div class="bar-amt">${amt>0?fmt(amt):'-'}</div></div>`;
   }).join('');
 
@@ -3772,15 +3769,39 @@ function renderDashboard() {
 // ══════════════════════════════════════════════
 // PIPELINE
 // ══════════════════════════════════════════════
+const PIPE_MAX_CARDS = 10; // 칸반 열당 기본 표시 카드 수
+let _pipeExpanded = new Set(); // 더보기로 펼친 열 인덱스
+function togglePipeMore(i){
+  if(_pipeExpanded.has(i)) _pipeExpanded.delete(i);
+  else _pipeExpanded.add(i);
+  renderPipeline();
+}
 function renderPipeline() {
+  // 담당자 드롭다운 채우기 (최초 1회)
+  const pSel=document.getElementById('pipePersonF');
+  if(pSel && pSel.options.length<=1){
+    salesMembers().forEach(m=>{const o=document.createElement('option');o.value=m.name;o.textContent=m.name;pSel.appendChild(o);});
+  }
+  // 검색·담당자 필터
+  const q=(document.getElementById('pipeSearch')?.value||'').trim().toLowerCase();
+  const pf=document.getElementById('pipePersonF')?.value||'';
+  const src=deals.filter(d=>
+    (!q||(d.name||'').toLowerCase().includes(q)||(d.co||'').toLowerCase().includes(q)||(d.prod||'').toLowerCase().includes(q)||(d.site||'').toLowerCase().includes(q)||(d.option||'').toLowerCase().includes(q))&&
+    (!pf||d.person===pf));
   document.getElementById('kanbanBoard').innerHTML=STAGES.map((s,i)=>{
-    const cd=deals.filter(d=>d.stage===s);
+    const cd=src.filter(d=>dispStage(d)===s);
     const tot=cd.reduce((a,d)=>a+d.amt,0);
     const desc=STAGE_DESC[s]||'';
+    const expanded=_pipeExpanded.has(i);
+    const shown=expanded?cd:cd.slice(0,PIPE_MAX_CARDS);
+    const hiddenCnt=cd.length-PIPE_MAX_CARDS;
+    const moreBtn=cd.length>PIPE_MAX_CARDS
+      ? `<button class="add-btn" style="border-style:solid;border-color:var(--accent);color:var(--accent);background:var(--al);font-weight:600" onclick="togglePipeMore(${i})">${expanded?'접기 ▲':`더보기 (+${hiddenCnt}건) ▼`}</button>`
+      : '';
     return`<div class="kanban-col">
       <div class="col-hd"><div class="col-dot d-${STAGE_KEYS[i]}"></div><div style="flex:1;min-width:0"><div class="col-name">${s}</div>${desc?`<div style="font-size:10.5px;color:var(--t3);margin-top:2px;line-height:1.4;font-weight:400">${desc}</div>`:''}</div><div class="col-meta" style="flex-shrink:0;align-self:flex-start;margin-top:2px">${cd.length} · ${tot>0?fmt(tot):'₩0'}</div></div>
-      <div class="col-body">${cd.map(d=>dealCardHtml(d)).join('')}</div>
-      ${!['계약 완료','실패·보류'].includes(s)?`<div class="col-foot"><button class="add-btn" onclick="openNewDealModal('${s}')">+ 딜 추가</button></div>`:''}
+      <div class="col-body">${shown.map(d=>dealCardHtml(d)).join('')}${moreBtn}</div>
+      ${!['세금계산서','실패·보류'].includes(s)?`<div class="col-foot"><button class="add-btn" onclick="openNewDealModal('${s}')">+ 딜 추가</button></div>`:''}
     </div>`;
   }).join('');
 }
@@ -3830,7 +3851,7 @@ function filterDeals() {
   const inf=document.getElementById('dealInflowF')?.value||'';
   renderDeals(deals.filter(d=>
     (!q||d.name.toLowerCase().includes(q)||d.co.toLowerCase().includes(q)||(d.prod||'').toLowerCase().includes(q))&&
-    (!s||d.stage===s)&&(!p||d.person===p)&&(!inf||d.inflow===inf)));
+    (!s||dispStage(d)===s)&&(!p||d.person===p)&&(!inf||d.inflow===inf)));
 }
 
 // ══════════════════════════════════════════════
@@ -3842,7 +3863,7 @@ function renderCustomers() {
   document.getElementById('custGrid').innerHTML=cos.map(co=>{
     const cd=deals.filter(d=>d.co===co);
     const tot=cd.reduce((s,d)=>s+d.amt,0);
-    const won=cd.filter(d=>d.stage==='계약 완료').length;
+    const won=cd.filter(d=>['계약 완료','설치','납품 완료','세금계산서'].includes(d.stage)).length;
     const col=cols[co.charCodeAt(0)%cols.length];
     return`<div class="cust-card">
       <div class="cust-top"><div class="cust-logo" style="background:${col.bg};color:${col.c}">${co.slice(0,2)}</div>
@@ -4170,7 +4191,7 @@ async function openDeal(id) {
 }
 
 function buildDealInfo(d) {
-  const aS=STAGES.slice(0,7); const ci=aS.indexOf(d.stage);
+  const aS=STAGES.slice(0,7); const ci=aS.indexOf(dispStage(d));
   document.getElementById('dealStepper').innerHTML=
     aS.map((s,i)=>`<div class="step ${i<ci?'done':i===ci?'cur':''}" onclick="changeDealStage(${d.id},'${s}')">${s}</div>`).join('')+
     `<div class="step lost-s ${d.stage==='실패·보류'?'cur':''}" onclick="changeDealStage(${d.id},'실패·보류')">실패·보류</div>`;
@@ -4420,8 +4441,8 @@ async function saveDealEdit(){
   d.priority=document.getElementById('de-pri').value==='1';
   d.inflow=document.getElementById('de-inflow')?.value||d.inflow||'direct';
   if(os!==d.stage){
-    if(d.stage==='계약 완료'){
-      // 수정 탭에서 계약완료로 변경 시에도 수금기일 팝업
+    if(d.stage==='설치' && os!=='계약 완료'){
+      // 수정 탭에서 설치로 변경 시에도 수금기일 팝업
       d.stage=os; // 일단 복구하고 팝업으로
       closeModal('dealModal');
       openContractModal(d);
@@ -4489,8 +4510,8 @@ function renderInstallScheduleBox(d) {
 function changeDealStage(id,stage){
   const d=deals.find(x=>x.id===id); if(!d) return;
   const os=d.stage;
-  // 계약 완료로 넘길 때: 수금 기일 필수 입력 팝업
-  if(stage==='계약 완료' && os!=='계약 완료'){
+  // 설치 단계로 넘길 때: 수금 기일 필수 입력 팝업 (기존 '계약 완료' 딜은 재입력 없이 이동)
+  if(stage==='설치' && os!=='설치' && os!=='계약 완료'){
     openContractModal(d);
     return; // 팝업에서 확인 후 실제 저장
   }
@@ -4503,7 +4524,7 @@ function _doChangeDealStage(d, os, stage){
   updateDealInDB(d);
   addLogToDB(d.id, stageLog);
   showToast(`단계 변경: ${stage}`);
-  if(stage==='계약 완료'){
+  if(stage==='설치' && os!=='계약 완료' && os!=='설치'){
     setTimeout(()=>onDealContractComplete(d), 500);
   }
   buildDealInfo(d);
@@ -4770,7 +4791,7 @@ function renderTeam(){
   c.innerHTML=`<div class="member-grid">${salesMembers().map(m=>{
     const md=deals.filter(d=>d.person===m.name);
     const act=md.filter(d=>!['실패·보류','계약 완료'].includes(d.stage));
-    const wn=md.filter(d=>d.stage==='계약 완료');
+    const wn=md.filter(d=>['계약 완료','설치','납품 완료','세금계산서'].includes(d.stage));
     const tot=md.filter(d=>d.stage!=='실패·보류').reduce((s,d)=>s+d.amt,0);
     return`<div class="member-card">
       <div class="mc-hd"><div class="mc-av av${m.idx%12}">${m.name.slice(-2)}</div>
@@ -5400,7 +5421,7 @@ function renderStats(){
   buildDFB('statsDfb',sP,'setSP');
   const fd=getFD(sP,sF,sT);
   const active=fd.filter(d=>d.stage!=='실패·보류');
-  const won=fd.filter(d=>['계약 완료','설치','납품 완료'].includes(d.stage));
+  const won=fd.filter(d=>['계약 완료','설치','납품 완료','세금계산서'].includes(d.stage));
   const wonExact=fd.filter(d=>d.stage==='계약 완료');
   const lost=fd.filter(d=>d.stage==='실패·보류');
   const avg=active.length?Math.round(active.reduce((s,d)=>s+d.amt,0)/active.length):0;
@@ -5410,10 +5431,10 @@ function renderStats(){
   document.getElementById('st-wc').textContent=`${won.length}건`;
   document.getElementById('st-lost').textContent=`${lost.length}건`;
   document.getElementById('st-avg').textContent=fmt(avg);
-  const mx=Math.max(...STAGES.slice(0,7).map(s=>fd.filter(d=>d.stage===s).length),1);
+  const mx=Math.max(...STAGES.slice(0,7).map(s=>fd.filter(d=>dispStage(d)===s).length),1);
   document.getElementById('statsBars').innerHTML=STAGES.slice(0,7).map((s,i)=>{
-    const cnt=fd.filter(d=>d.stage===s).length;
-    const amt=fd.filter(d=>d.stage===s).reduce((a,d)=>a+d.amt,0);
+    const cnt=fd.filter(d=>dispStage(d)===s).length;
+    const amt=fd.filter(d=>dispStage(d)===s).reduce((a,d)=>a+d.amt,0);
     return`<div class="bar-row"><div class="bar-label">${s}</div><div class="bar-track"><div class="bar-fill ${BAR_CLS[i]}" style="width:${Math.round(cnt/mx*100)}%"></div></div><div class="bar-cnt">${cnt}</div><div class="bar-amt">${amt>0?fmt(amt):'-'}</div></div>`;
   }).join('');
   const cos=[...new Set(fd.map(d=>d.co))].sort((a,b)=>
@@ -5428,7 +5449,7 @@ function renderStats(){
   document.getElementById('statsPerson').innerHTML=sm.map(m=>{
     const md=fd.filter(d=>d.person===m.name&&d.stage!=='실패·보류');
     const tot=md.reduce((s,d)=>s+d.amt,0);
-    const wn=fd.filter(d=>d.person===m.name&&d.stage==='계약 완료').length;
+    const wn=fd.filter(d=>d.person===m.name&&['계약 완료','설치','납품 완료','세금계산서'].includes(d.stage)).length;
     return`<div class="team-row">
       <div class="av av${m.idx%12}" style="width:30px;height:30px;font-size:10px;flex-shrink:0">${m.name.slice(-2)}</div>
       <div class="team-info"><div class="team-nm">${m.name}</div><div class="team-deals">${md.length}건 / 완료 ${wn}건</div>
@@ -5719,7 +5740,20 @@ function openAddAccountModal(){
   ).join('');
   openModal('addAccountModal');
 }
-function openRecvModal(){ openModal('recvModal'); }
+function openRecvModal(){
+  // 신규 등록용 — 필드 초기화 후 열기 (이전 수정 값이 남아 덮어쓰는 것 방지)
+  const idEl = document.getElementById('recv-id'); if(idEl) idEl.value='';
+  const titleEl = document.getElementById('recvModalTitle'); if(titleEl) titleEl.textContent='수금 예정 등록';
+  ['recv-company','recv-amount','recv-expected-date','recv-tax-date','recv-received-date','recv-note'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  const basisEl = document.getElementById('recv-basis'); if(basisEl) basisEl.value='contract';
+  const bdEl = document.getElementById('recv-basis-date'); if(bdEl) bdEl.value=new Date().toISOString().slice(0,10);
+  const daysEl = document.getElementById('recv-days'); if(daysEl) daysEl.value='60';
+  calcExpectedDate();
+  openModal('recvModal');
+}
+function openNewRecv(){ openRecvModal(); }
 function openExpModal(){
   document.getElementById('exp-date').value = new Date().toISOString().slice(0,10);
   openModal('expModal');
@@ -7396,7 +7430,7 @@ async function renderReceivables() {
   const dateTo   = document.getElementById('recv-date-to')?.value||'';
 
   // ── 납품완료 딜 기반 수금 현황 ──
-  let dealData = deals.filter(d => d.stage === '납품 완료');
+  let dealData = deals.filter(d => ['납품 완료','세금계산서'].includes(d.stage));
 
   // 필터 적용
   if(searchF) dealData = dealData.filter(d =>
@@ -7458,21 +7492,12 @@ async function renderReceivables() {
     }
   }
 
-  // ── 직접 등록 수금 건 (기존 recvList 중 deal_id 없는 것) ──
+  // ── 수금 건 통합 목록 (직접 등록 + 제품 판매) ──
   let manualData = recvList.filter(r => !r.deal_id);
   if(statusF) manualData = manualData.filter(r=>r.status===statusF);
   if(searchF) manualData = manualData.filter(r=>(r.company_name||'').toLowerCase().includes(searchF));
   if(dateFrom) manualData = manualData.filter(r=>(r.basis_date||'')>=dateFrom);
   if(dateTo)   manualData = manualData.filter(r=>(r.basis_date||'')<=dateTo);
-
-  const manualBody = document.getElementById('recv-manual-body');
-  if(manualBody) {
-    manualBody.innerHTML = manualData.length
-      ? manualData.map(r=>recvRow(r)).join('')
-      : `<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--t3)">직접 등록된 수금 건이 없습니다</td></tr>`;
-  }
-
-  // ── 제품 판매건 수금 현황 ──
   const psFiltered = (productSales||[]).filter(p => {
     if(statusF && p.status !== statusF) return false;
     if(searchF && !p.company.toLowerCase().includes(searchF) && !p.products.toLowerCase().includes(searchF)) return false;
@@ -7480,44 +7505,70 @@ async function renderReceivables() {
     if(dateTo   && (p.recvDate||p.date) > dateTo)   return false;
     return true;
   });
-  const psTotal = psFiltered.reduce((s,p)=>s+p.amt,0);
-  const psSumEl = document.getElementById('ps-recv-summary');
-  if(psSumEl) psSumEl.textContent = `${psFiltered.length}건 · 합계 ${fmtMW(Math.round(psTotal/10000))}`;
-  const statusLbPS = {pending:'수금대기', invoiced:'계산서발행', received:'수금완료'};
-  const statusClPS = {pending:'var(--amber)', invoiced:'#2563eb', received:'var(--green)'};
-  const psTbody = document.getElementById('ps-recv-tbody');
-  if(psTbody) {
-    if(!psFiltered.length) {
-      psTbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--t3)">제품 판매건이 없습니다</td></tr>`;
-    } else {
-      psTbody.innerHTML = psFiltered.map(p => {
-        const hasMulti = Array.isArray(p.items) && p.items.length > 1;
-        
-        // 제품 칸 표시
-        let productCell;
-        if(hasMulti) {
-          const lines = p.items.map(it => `<div style="font-size:11px;line-height:1.4"><span style="font-weight:600">${it.name}</span> <span style="color:var(--t3)">${it.qty}개 @${fmt(it.price)}</span></div>`).join('');
-          productCell = `<div style="display:flex;align-items:center;gap:6px">
-            <span style="display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;font-size:9px;color:var(--accent);background:var(--al);padding:1px 5px;border-radius:8px;font-weight:700;flex-shrink:0">${p.items.length}</span>
-            <div>${lines}</div>
-          </div>`;
-        } else {
-          productCell = `<span title="${p.products}">${p.products}</span>`;
-        }
-        
+  // 합계 (만원 기준)
+  const unitedTotal = manualData.reduce((s,r)=>s+(r.amount||0),0) + psFiltered.reduce((s,p)=>s+Math.round((p.amt||0)/10000),0);
+  const unitedSumEl = document.getElementById('recv-united-summary');
+  if(unitedSumEl) unitedSumEl.textContent = `· 총 ${manualData.length+psFiltered.length}건 · 공급가 합계 ${fmtMW(unitedTotal)}`;
+  // 두 소스를 합쳐 날짜(기준일/판매일) 최신순 정렬
+  const united = [
+    ...manualData.map(r=>({src:'manual', date:r.basis_date||'', r})),
+    ...psFiltered.map(p=>({src:'ps', date:p.date||'', p})),
+  ].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const unitedBody = document.getElementById('recv-united-body');
+  if(unitedBody) {
+    unitedBody.innerHTML = united.length ? united.map(u=>{
+      if(u.src==='manual') {
+        const r = u.r;
         return `<tr>
-        <td style="white-space:nowrap;vertical-align:middle">${p.date}</td>
-        <td style="font-weight:600;vertical-align:middle">${p.company}</td>
-        <td style="max-width:220px;vertical-align:middle">${productCell}</td>
-        <td style="text-align:right;font-weight:700;vertical-align:middle">${fmtMW(Math.round(p.amt/10000))}</td>
-        <td style="text-align:right;font-weight:700;color:var(--accent);vertical-align:middle">${fmtMW(Math.round(p.amt*1.1/10000))}</td>
-        <td style="vertical-align:middle"><span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;background:${statusClPS[p.status]}22;color:${statusClPS[p.status]}">${statusLbPS[p.status]||p.status}</span></td>
-        <td style="white-space:nowrap;color:var(--t3);vertical-align:middle">${p.recvDate||'–'}</td>
-        <td style="vertical-align:middle">${p.person||'–'}</td>
-        <td onclick="event.stopPropagation()" style="vertical-align:middle"><div style="display:flex;gap:4px"><button class="btn btn-s btn-sm" onclick="editProductSale(${p.id})">수정</button><button class="btn btn-danger btn-sm" onclick="deleteProductSale(${p.id})">삭제</button></div></td>
+          <td><span class="chip chip-blue" style="font-size:10px">직접등록</span></td>
+          <td style="white-space:nowrap;color:var(--t2)">${r.basis_date||'–'}</td>
+          <td style="font-weight:600">${r.company_name}</td>
+          <td style="color:var(--t2);font-size:12px">${PAY_BASIS[r.payment_basis]||r.payment_basis||'–'}${r.note?` · ${r.note}`:''}</td>
+          <td style="font-weight:700">${fmtMW(r.amount)}</td>
+          <td style="font-weight:700;color:var(--accent)">${fmtMW(Math.round(r.amount*1.1))}</td>
+          <td style="${r.status==='overdue'?'color:var(--red);font-weight:700':''}">${r.expected_date||'–'}</td>
+          <td>
+            ${r.tax_invoice_issued
+              ? `<div style="display:flex;align-items:center;gap:5px">
+                   <span class="chip chip-green">✓ ${r.tax_invoice_date||''}</span>
+                   <button class="btn btn-danger btn-sm" onclick="cancelInvoice(${r.id})" title="발행 취소">취소</button>
+                 </div>`
+              : `<button class="btn btn-s btn-sm" onclick="markInvoiceIssued(${r.id})">발행 처리</button>`}
+          </td>
+          <td><span class="chip ${RECV_STATUS_CLS[r.status]||'chip-gray'}">${RECV_STATUS[r.status]||r.status}</span></td>
+          <td><div style="display:flex;gap:4px">
+            ${r.status!=='received'?`<button class="btn btn-green btn-sm" onclick="markReceived(${r.id})">수금완료</button>`:''}
+            <button class="btn btn-s btn-sm" onclick="openRecvEdit(${r.id})">수정</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteReceivable(${r.id})">삭제</button>
+          </div></td>
+        </tr>`;
+      }
+      // 제품 판매건 행
+      const p = u.p;
+      const hasMulti = Array.isArray(p.items) && p.items.length > 1;
+      let productCell;
+      if(hasMulti) {
+        const lines = p.items.map(it => `<div style="font-size:11px;line-height:1.4"><span style="font-weight:600">${it.name}</span> <span style="color:var(--t3)">${it.qty}개 @${fmt(it.price)}</span></div>`).join('');
+        productCell = `<div style="display:flex;align-items:center;gap:6px"><span style="display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;font-size:9px;color:var(--accent);background:var(--al);padding:1px 5px;border-radius:8px;font-weight:700;flex-shrink:0">${p.items.length}</span><div>${lines}</div></div>`;
+      } else {
+        productCell = `<span title="${p.products}">${p.products}</span>`;
+      }
+      return `<tr>
+        <td><span class="chip chip-purple" style="font-size:10px">제품판매</span></td>
+        <td style="white-space:nowrap;color:var(--t2)">${p.date||'–'}</td>
+        <td style="font-weight:600">${p.company}</td>
+        <td style="max-width:220px;font-size:12px">${productCell}${p.person?`<div style="font-size:10px;color:var(--t3);margin-top:2px">담당 ${p.person}</div>`:''}</td>
+        <td style="font-weight:700">${fmtMW(Math.round(p.amt/10000))}</td>
+        <td style="font-weight:700;color:var(--accent)">${fmtMW(Math.round(p.amt*1.1/10000))}</td>
+        <td style="white-space:nowrap;color:var(--t3)">${p.recvDate||'–'}</td>
+        <td>${p.taxInvoice?`<span class="chip chip-green">✓ ${p.invoiceDate||'발행'}</span>`:`<span style="font-size:11px;color:var(--t3)">미발행</span>`}</td>
+        <td><span class="chip ${RECV_STATUS_CLS[p.status]||'chip-gray'}">${RECV_STATUS[p.status]||p.status}</span></td>
+        <td><div style="display:flex;gap:4px">
+          <button class="btn btn-s btn-sm" onclick="editProductSale(${p.id})">수정</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteProductSale(${p.id})">삭제</button>
+        </div></td>
       </tr>`;
-      }).join('');
-    }
+    }).join('') : `<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--t3)">수금 건이 없습니다</td></tr>`;
   }
 }
 
@@ -8996,7 +9047,7 @@ function renderDealAlertPanel() {
     const ca = d.createdAt || d.created_at || '';
     const stageCls = {
       '잠재 발굴':'#9ca3af','미팅·접촉':'#3b82f6','제안·견적':'#eab308',
-      '협상·검토':'#a855f7','구두합의':'#22c55e','계약 완료':'#16a34a','실패·보류':'#ef4444'
+      '협상·검토':'#a855f7','구두합의':'#22c55e','계약 완료':'#16a34a','설치':'#a855f7','납품 완료':'#0891b2','세금계산서':'#6366f1','실패·보류':'#ef4444'
     }[d.stage] || '#9ca3af';
 
     return `<div class="deal-alert-item${isRead?'':' unread'}" onclick="onDealAlertClick(${d.id})">
@@ -9157,7 +9208,7 @@ function dealLastActivity(d) {
 
 // 비활동 딜 목록 계산 (본인 담당, 미완료)
 function getStaleDeals() {
-  const SKIP_STAGES = new Set(['계약 완료', '실패·보류']);
+  const SKIP_STAGES = new Set(['계약 완료', '세금계산서', '실패·보류']);
   const now = Date.now();
   const cutoffMs = STALE_DAYS * 24 * 3600 * 1000;
 
