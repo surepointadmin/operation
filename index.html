@@ -1962,6 +1962,20 @@ tbody tr:hover{background:var(--s2)}
           <div id="nd-inflow-btns" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"></div>
           <input type="hidden" id="nd-inflow" value="direct">
         </div>
+        <!-- 문의 경로 -->
+        <div class="form-field full">
+          <label class="form-label">문의 경로</label>
+          <select class="form-select" id="nd-inquiry-path">
+            <option value="">선택</option>
+            <option value="블로그">블로그</option>
+            <option value="홈페이지">홈페이지</option>
+            <option value="전화문의">전화문의</option>
+            <option value="워드프레스">워드프레스</option>
+            <option value="유튜브">유튜브</option>
+            <option value="인스타">인스타</option>
+            <option value="페이스북">페이스북</option>
+          </select>
+        </div>
         <!-- 담당자 / 단계 -->
         <div class="form-field">
           <label class="form-label">담당자</label>
@@ -4363,7 +4377,7 @@ function openNewDealModal(ds){
   // Render inflow chips
   renderInflowChips('nd-inflow-btns','nd-inflow','direct');
   // Reset fields
-  ['nd-co','nd-site','nd-contact-name','nd-contact-phone','nd-contact-email','nd-option','nd-amt','nd-memo','nd-date'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+  ['nd-co','nd-site','nd-contact-name','nd-contact-phone','nd-contact-email','nd-option','nd-amt','nd-memo','nd-date','nd-inquiry-path'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
   document.getElementById('nd-name').value='';
   // nd-qty, nd-unit은 다중 제품 행에서 관리
   autoNdName();
@@ -4428,10 +4442,11 @@ async function createDeal(){
   const memo    = document.getElementById('nd-memo').value.trim();
   const option  = document.getElementById('nd-option').value.trim();
   const inflow  = document.getElementById('nd-inflow')?.value||'direct';
+  const inquiryPath = document.getElementById('nd-inquiry-path')?.value||'';
   let newDeal = {
     id: dealIdCnt++, name, co,
     prod: prodLabel,
-    option, inflow,
+    option, inflow, inquiryPath,
     qty: totalQty,
     unit: products[0].unitPrice,
     amt: totalAmt,
@@ -5245,6 +5260,7 @@ async function loadDealsFromDB(){
       prod: d.prod||'',
       option: d.option_items||'',
       inflow: d.inflow||'direct',
+      inquiryPath: d.inquiry_path||'',
       qty: d.qty||1,
       unit: d.unit_price||0,
       amt: d.amount||0,
@@ -5304,6 +5320,7 @@ async function saveDealToDB(deal){
     const insertPayload = {
       name: deal.name, co: deal.co, prod: deal.prod,
       option_items: deal.option, inflow: deal.inflow,
+      inquiry_path: deal.inquiryPath||null,
       qty: deal.qty, unit_price: deal.unit, amount: deal.amt,
       person: deal.person, stage: deal.stage,
       close_date: deal.closeDate||null,
@@ -5323,7 +5340,7 @@ async function saveDealToDB(deal){
     let {data, error} = await sb.from('deals').insert([insertPayload]).select().single();
     // 컬럼 없음 에러 시 신규 컬럼 제외 후 재시도
     if(error && (error.code==='42703'||error.message?.includes('column'))) {
-      const {site:_s, contact_name:_cn, contact_phone:_cp, contact_email:_ce, ...safePayload} = insertPayload;
+      const {site:_s, contact_name:_cn, contact_phone:_cp, contact_email:_ce, inquiry_path:_ip, ...safePayload} = insertPayload;
       const r2 = await sb.from('deals').insert([safePayload]).select().single();
       data = r2.data; error = r2.error;
     }
