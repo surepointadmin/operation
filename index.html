@@ -6,6 +6,7 @@
 <title>surepoint — 통합 운영툴</title>
 <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 /* ════════════════════════════════════════
    TOKENS
@@ -1542,12 +1543,12 @@ tbody tr:hover{background:var(--s2)}
       <!-- INV: 입출고 이력 -->
       <div class="view" id="view-inv-transactions">
         <!-- 탭 -->
-        <div style="display:flex;gap:4px;margin-bottom:14px;border-bottom:2px solid var(--bd);flex-wrap:wrap">
+        <div style="display:flex;gap:4px;margin-bottom:14px;border-bottom:2px solid var(--bd);flex-wrap:wrap;align-items:center">
           <button class="tx-tab-btn" id="tx-tab-log" onclick="switchTxTab('log')" style="padding:10px 16px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--accent);border-bottom:2px solid var(--accent);margin-bottom:-2px">전체 이력</button>
-          <button class="tx-tab-btn" id="tx-tab-sheet" onclick="switchTxTab('sheet')" style="padding:10px 16px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--t3);border-bottom:2px solid transparent;margin-bottom:-2px">📋 입출고 시트 <span style="font-size:10px;color:var(--amber);font-weight:600">(개발중)</span></button>
-          <button class="tx-tab-btn" id="tx-tab-cin" onclick="switchTxTab('cin')" style="padding:10px 16px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--t3);border-bottom:2px solid transparent;margin-bottom:-2px">업체별 입고</button>
-          <button class="tx-tab-btn" id="tx-tab-cout" onclick="switchTxTab('cout')" style="padding:10px 16px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--t3);border-bottom:2px solid transparent;margin-bottom:-2px">업체별 출고</button>
-          <button class="tx-tab-btn" id="tx-tab-cgs" onclick="switchTxTab('cgs')" style="padding:10px 16px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--t3);border-bottom:2px solid transparent;margin-bottom:-2px">(기전·수성) 출고</button>
+          <button class="tx-tab-btn" id="tx-tab-sheet" onclick="switchTxTab('sheet')" style="padding:10px 16px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--t3);border-bottom:2px solid transparent;margin-bottom:-2px">📋 입출고 시트</button>
+          <!-- 동적 탭 버튼들 -->
+          <span id="tx-dynamic-tabs" style="display:contents"></span>
+          <button onclick="addCompanyTxTab()" title="새 출고/입고 탭 추가" style="padding:8px 12px;border:1px dashed var(--bd);background:none;cursor:pointer;font-size:12px;font-weight:700;color:var(--accent);border-radius:8px;margin-left:6px">+ 탭 추가</button>
         </div>
 
         <!-- 탭 1: 전체 이력 (기존) -->
@@ -1580,36 +1581,25 @@ tbody tr:hover{background:var(--s2)}
 
         <!-- 탭: 입출고 시트 (엑셀형) -->
         <div id="tx-pane-sheet" style="display:none">
-          <div style="display:none;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
-            <button class="btn btn-p btn-sm" onclick="addTxSheetColumn()">+ 열(고객사/작업) 추가</button>
-            <input class="f-input" id="txsheet-search" placeholder="🔍 원재료 검색" oninput="renderTxSheet()" style="min-width:160px">
-            <span style="font-size:12px;color:var(--t3)">셀을 클릭해 수량을 입력하세요. 입고는 양수(+), 출고는 음수(-)</span>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+            <button class="btn btn-p btn-sm" onclick="addTxSheetColumn()">+ 열(업체/작업) 추가</button>
+            <input class="f-input" id="txsheet-search" placeholder="🔍 품명 검색" oninput="renderTxSheet()" style="min-width:160px">
+            <button class="btn btn-s btn-sm" onclick="exportTxSheetExcel()">⬇ 엑셀 다운로드</button>
           </div>
           <div id="txsheet-content" style="overflow-x:auto"></div>
         </div>
-        <!-- 탭: 업체별 입고 -->
-        <div id="tx-pane-cin" style="display:none">
-          <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
-            <button class="btn btn-p btn-sm" onclick="addCompanyTxRow('in')">+ 입고 추가</button>
-            <span style="font-size:12px;color:var(--t3)">업체로부터 받은 제품(원재료) 입고 내역을 기록합니다</span>
+        <!-- 동적 업체별 입출고 탭 (하나의 pane 재사용) -->
+        <div id="tx-pane-company" style="display:none">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+            <button class="btn btn-p btn-sm" onclick="addCompanyTxRow(_curCompanyKind)">+ 행 추가</button>
+            <select class="f-select" id="ctx-month-filter" onchange="renderCompanyTx(_curCompanyKind)" style="min-width:110px">
+              <option value="">전체 월</option>
+            </select>
+            <button class="btn btn-s btn-sm" onclick="exportCompanyTxExcel(_curCompanyKind)">⬇ 엑셀 다운로드</button>
+            <span id="ctx-desc" style="font-size:12px;color:var(--t3)"></span>
+            <button class="btn btn-sm" id="ctx-delete-tab" onclick="deleteCompanyTxTab(_curCompanyKind)" style="margin-left:auto;background:var(--rl);color:var(--red);border:1px solid #fecaca;display:none">🗑 이 탭 삭제</button>
           </div>
-          <div id="cin-content" style="overflow-x:auto"></div>
-        </div>
-        <!-- 탭: 업체별 출고 -->
-        <div id="tx-pane-cout" style="display:none">
-          <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
-            <button class="btn btn-p btn-sm" onclick="addCompanyTxRow('out')">+ 출고 추가</button>
-            <span style="font-size:12px;color:var(--t3)">고객사로 납품한 완제품 출고 내역을 기록합니다</span>
-          </div>
-          <div id="cout-content" style="overflow-x:auto"></div>
-        </div>
-        <!-- 탭: (기전·수성) 출고 -->
-        <div id="tx-pane-cgs" style="display:none">
-          <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
-            <button class="btn btn-p btn-sm" onclick="addCompanyTxRow('gs_out')">+ 출고 추가</button>
-            <span style="font-size:12px;color:var(--t3)">기전·수성 협력사로 나간 제품 출고 내역을 기록합니다</span>
-          </div>
-          <div id="cgs-content" style="overflow-x:auto"></div>
+          <div id="company-content" style="overflow-x:auto"></div>
         </div>
       </div>
       <!-- INV: BOM 관리 -->
@@ -3085,7 +3075,7 @@ function showView(name, navEl) {
   if(name==='admin') renderAdmin();
   if(name==='stats'){if(!sF){const r=getRange('month');sF=r[0];sT=r[1];}renderStats();}
   if(name==='inv-overview') renderInvOverview();
-  if(name==='inv-transactions') renderTransactions();
+  if(name==='inv-transactions') { loadCompanyTxTabs().then(()=>renderCompanyTxTabButtons(null)); renderTransactions(); }
   if(name==='inv-bom') renderBOM();
   if(name==='inv-orders') renderPurchaseOrders();
   if(name==='fin-cashflow') renderCashflow();
@@ -6681,41 +6671,74 @@ function normalizeCompany(reason) {
 }
 
 // 탭 전환
+let companyTxTabs = [];      // 동적 탭 목록
+let _curCompanyKind = null;  // 현재 선택된 업체 탭의 kind_key
+
+async function loadCompanyTxTabs() {
+  if(!sb) return;
+  try {
+    const {data} = await sb.from('company_tx_tabs').select('*').order('sort_order').order('id');
+    companyTxTabs = data||[];
+  } catch(e) { console.error('loadCompanyTxTabs:', e); }
+}
+
+// 동적 탭 버튼 렌더
+function renderCompanyTxTabButtons(activeKind) {
+  const wrap = document.getElementById('tx-dynamic-tabs');
+  if(!wrap) return;
+  wrap.innerHTML = companyTxTabs.map(t => {
+    const active = (t.kind_key === activeKind);
+    return `<button class="tx-tab-btn" onclick="switchTxTab('company:${t.kind_key}')"
+      style="padding:10px 16px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;color:${active?'var(--accent)':'var(--t3)'};border-bottom:2px solid ${active?'var(--accent)':'transparent'};margin-bottom:-2px">${t.name}</button>`;
+  }).join('');
+}
+
 function switchTxTab(tab) {
-  const tabs = ['log','sheet','cin','cout','cgs'];
-  tabs.forEach(t => {
+  // 고정 탭 버튼 상태
+  ['log','sheet'].forEach(t => {
     const btn = document.getElementById(`tx-tab-${t}`);
-    const pane = document.getElementById(`tx-pane-${t}`);
-    const active = (t === tab);
     if(btn) {
+      const active = (t === tab);
       btn.style.color = active ? 'var(--accent)' : 'var(--t3)';
       btn.style.borderBottom = active ? '2px solid var(--accent)' : '2px solid transparent';
     }
-    if(pane) pane.style.display = active ? '' : 'none';
   });
-  if(tab === 'log') renderTransactions();
-  else if(tab === 'sheet') renderTxSheet();
-  else if(tab === 'cin') renderCompanyTx('in');
-  else if(tab === 'cout') renderCompanyTx('out');
-  else if(tab === 'cgs') renderCompanyTx('gs_out');
+  // pane 표시 제어
+  const isCompany = tab.startsWith('company:');
+  document.getElementById('tx-pane-log').style.display    = (tab==='log') ? '' : 'none';
+  document.getElementById('tx-pane-sheet').style.display  = (tab==='sheet') ? '' : 'none';
+  document.getElementById('tx-pane-company').style.display = isCompany ? '' : 'none';
+
+  if(tab === 'log') { renderCompanyTxTabButtons(null); renderTransactions(); }
+  else if(tab === 'sheet') { renderCompanyTxTabButtons(null); renderTxSheet(); }
+  else if(isCompany) {
+    const kind = tab.split(':')[1];
+    _curCompanyKind = kind;
+    renderCompanyTxTabButtons(kind);
+    renderCompanyTx(kind);
+  }
 }
 
-// ── 입출고 시트 (엑셀형 편집 표) ──
+// ── 입출고 시트 (엑셀 원본 재현: 행=원재료, 열=업체/작업) ──
 let txSheetColumns = [];
-let txSheetCells = {};  // txSheetCells[raw_item_id][column_id] = qty
+let txSheetRows = [];
+let txSheetCells = {};  // txSheetCells[sheet_row_id][column_id] = qty
 
 async function loadTxSheetData() {
   if(!sb) return;
   try {
-    const [c1, c2] = await Promise.all([
+    const [c1, c2, c3] = await Promise.all([
       sb.from('tx_sheet_columns').select('*').order('sort_order').order('id'),
       sb.from('tx_sheet_cells').select('*'),
+      sb.from('tx_sheet_rows').select('*').order('sort_order').order('id'),
     ]);
     txSheetColumns = c1.data||[];
+    txSheetRows = c3.data||[];
     txSheetCells = {};
     (c2.data||[]).forEach(cell => {
-      if(!txSheetCells[cell.raw_item_id]) txSheetCells[cell.raw_item_id] = {};
-      txSheetCells[cell.raw_item_id][cell.column_id] = cell.qty;
+      const rowKey = cell.sheet_row_id || cell.raw_item_id;
+      if(!txSheetCells[rowKey]) txSheetCells[rowKey] = {};
+      txSheetCells[rowKey][cell.column_id] = cell.qty;
     });
   } catch(e) { console.error('loadTxSheetData:', e); }
 }
@@ -6723,149 +6746,165 @@ async function loadTxSheetData() {
 async function renderTxSheet() {
   const content = document.getElementById('txsheet-content');
   if(!content) return;
-  // ── 개발 예정: 임시 잠금 ──
-  content.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--t2)">
-    <div style="font-size:40px;margin-bottom:16px">🛠️</div>
-    <div style="font-size:16px;font-weight:800;margin-bottom:8px">입출고 시트는 현재 개발 중입니다</div>
-    <div style="font-size:13px;color:var(--t3);line-height:1.6">
-      기존 엑셀 양식을 그대로 반영하기 위해 준비 중입니다.<br>
-      완료되면 다시 안내드리겠습니다.
-    </div>
-  </div>`;
-  return;
-  // eslint-disable-next-line no-unreachable
-  if(!invItems.length) await loadInvData();
+  content.innerHTML = '<div style="padding:40px;text-align:center;color:var(--t3)">불러오는 중…</div>';
   await loadTxSheetData();
+
   const search = (document.getElementById('txsheet-search')?.value||'').trim().toLowerCase();
+  let rows = txSheetRows.slice();
+  if(search) rows = rows.filter(r => r.name.toLowerCase().includes(search));
 
-  let rawItems = invItems.filter(i=>i.category==='raw');
-  if(search) rawItems = rawItems.filter(i => i.name.toLowerCase().includes(search));
-  rawItems.sort((a,b)=>(a.sort_order-b.sort_order)||(a.id-b.id));
-
-  if(txSheetColumns.length === 0) {
-    content.innerHTML = `<div style="text-align:center;padding:40px;color:var(--t3)">
-      아직 열(고객사/작업)이 없습니다.<br>
-      <button class="btn btn-p btn-sm" style="margin-top:12px" onclick="addTxSheetColumn()">+ 첫 열 추가하기</button>
-    </div>`;
+  if(txSheetColumns.length === 0 && txSheetRows.length === 0) {
+    content.innerHTML = `<div style="text-align:center;padding:40px;color:var(--t3)">데이터가 없습니다.</div>`;
     return;
   }
 
-  // 헤더: 원재료명 | 현재재고 | [열들...] | 행합계
-  const colHeaders = txSheetColumns.map(col=>`
-    <th style="padding:6px 8px;font-size:11px;font-weight:700;background:var(--s2);border:1px solid var(--bd);min-width:90px;white-space:nowrap;text-align:center;position:relative">
-      <div style="display:flex;align-items:center;justify-content:center;gap:4px">
+  // 헤더 3줄: (1) 업체명+삭제 (2) 제품 (3) 출고일/입고일
+  const colHeadName = txSheetColumns.map(col=>`
+    <th style="padding:6px 8px;font-size:11px;font-weight:700;background:#fde8d7;border:1px solid var(--bd);min-width:80px;white-space:nowrap;text-align:center;position:relative">
+      <div style="display:flex;align-items:center;justify-content:center;gap:3px">
         <span>${col.name}</span>
-        <button onclick="renameTxSheetColumn(${col.id})" title="이름 수정" style="border:none;background:none;cursor:pointer;font-size:10px;padding:0;color:var(--t3)">✏️</button>
-        <button onclick="deleteTxSheetColumn(${col.id})" title="열 삭제" style="border:none;background:none;cursor:pointer;font-size:11px;padding:0;color:var(--red)">×</button>
+        <button onclick="deleteTxSheetColumn(${col.id})" title="열 삭제" style="border:none;background:none;cursor:pointer;font-size:10px;padding:0;color:var(--red)">×</button>
       </div>
     </th>`).join('');
+  const colHeadProduct = txSheetColumns.map(col=>`
+    <th style="padding:5px 8px;font-size:10px;font-weight:500;background:#fef3e9;border:1px solid var(--bd);white-space:nowrap;text-align:center;color:var(--t2)">${col.product||''}</th>`).join('');
+  const colHeadOut = txSheetColumns.map(col=>`
+    <th style="padding:4px 6px;font-size:10px;font-weight:500;background:#eef4fb;border:1px solid var(--bd);white-space:nowrap;text-align:center;color:${col.out_date?'var(--red)':'var(--t3)'}">${col.out_date||''}</th>`).join('');
+  const colHeadIn = txSheetColumns.map(col=>`
+    <th style="padding:4px 6px;font-size:10px;font-weight:500;background:#eafaf0;border:1px solid var(--bd);white-space:nowrap;text-align:center;color:${col.in_date?'var(--green)':'var(--t3)'}">${col.in_date||''}</th>`).join('');
 
-  const bodyRows = rawItems.map(item => {
-    const rowCells = txSheetCells[item.id] || {};
-    const rowSum = txSheetColumns.reduce((s,col)=>s+(parseFloat(rowCells[col.id])||0), 0);
+  const bodyRows = rows.map(row => {
+    const rowCells = txSheetCells[row.id] || {};
+    let inSum = 0, outSum = 0;  // 7월 입고/출고 (엑셀 수식대로: 열 구분 기준, 미분류 열 제외)
     const cells = txSheetColumns.map(col=>{
       const v = rowCells[col.id];
+      const num = parseFloat(v);
+      if(!isNaN(num) && col.is_inbound === true) inSum += num;
+      else if(!isNaN(num) && col.is_inbound === false) outSum += num;
       const display = (v===undefined||v===null||v==='') ? '' : v;
       const color = v>0 ? 'var(--green)' : v<0 ? 'var(--red)' : 'var(--t1)';
-      return `<td style="padding:0;border:1px solid var(--bd);text-align:center;min-width:90px">
-        <input type="number" value="${display}" 
-          data-item="${item.id}" data-col="${col.id}"
-          onchange="saveTxSheetCell(${item.id}, ${col.id}, this.value)"
-          style="width:100%;border:none;background:none;text-align:center;padding:6px 4px;font-size:13px;font-weight:700;color:${color};outline:none"
-          placeholder="·">
+      return `<td style="padding:0;border:1px solid var(--bd);text-align:center;min-width:80px">
+        <input type="number" value="${display}" data-row="${row.id}" data-col="${col.id}"
+          onchange="saveTxSheetCell(${row.id}, ${col.id}, this.value)"
+          style="width:100%;border:none;background:none;text-align:center;padding:5px 3px;font-size:12px;font-weight:700;color:${color};outline:none" placeholder="·">
       </td>`;
     }).join('');
+    const sp = (row.stock_prev===null||row.stock_prev===undefined) ? '' : row.stock_prev;
+    const sn = (row.stock_now===null||row.stock_now===undefined) ? '' : row.stock_now;
     return `<tr>
-      <td style="padding:8px 12px;border:1px solid var(--bd);font-weight:700;font-size:12px;background:var(--surface);white-space:nowrap;position:sticky;left:0;z-index:1">${item.name}</td>
-      <td style="padding:8px 12px;border:1px solid var(--bd);text-align:right;font-size:12px;color:var(--t2);background:var(--surface)">${item.current_stock}${item.unit||''}</td>
+      <td style="padding:6px 10px;border:1px solid var(--bd);font-weight:700;font-size:12px;background:var(--surface);white-space:nowrap;position:sticky;left:0;z-index:1">${row.name}</td>
+      <td style="padding:6px 8px;border:1px solid var(--bd);text-align:right;font-size:11px;color:var(--t2);background:#f5f5f5">${sp}</td>
+      <td style="padding:6px 8px;border:1px solid var(--bd);text-align:right;font-size:12px;font-weight:700;background:#f5f5f5">${sn}</td>
+      <td style="border:1px solid var(--bd);background:#fafafa;min-width:20px"></td>
       ${cells}
-      <td style="padding:8px 12px;border:1px solid var(--bd);text-align:right;font-weight:800;font-size:12px;background:var(--s2);color:${rowSum>0?'var(--green)':rowSum<0?'var(--red)':'var(--t1)'}">${rowSum}</td>
+      <td style="padding:6px 8px;border:1px solid var(--bd);text-align:right;font-size:12px;font-weight:800;background:#fffde7;color:var(--green)">${inSum||''}</td>
+      <td style="padding:6px 8px;border:1px solid var(--bd);text-align:right;font-size:12px;font-weight:800;background:#e8f5e9;color:var(--red)">${outSum||''}</td>
     </tr>`;
   }).join('');
 
-  // 열별 합계
-  const colTotals = txSheetColumns.map(col=>{
-    const sum = rawItems.reduce((s,item)=>s+(parseFloat((txSheetCells[item.id]||{})[col.id])||0),0);
-    return `<td style="padding:8px;border:1px solid var(--bd);text-align:center;font-weight:800;font-size:12px;background:var(--s2);color:${sum>0?'var(--green)':sum<0?'var(--red)':'var(--t1)'}">${sum}</td>`;
-  }).join('');
-  const grandSum = rawItems.reduce((s,item)=>{
-    return s + txSheetColumns.reduce((s2,col)=>s2+(parseFloat((txSheetCells[item.id]||{})[col.id])||0),0);
-  },0);
-
   content.innerHTML = `
-    <table style="border-collapse:collapse;width:100%;min-width:max-content">
-      <thead>
-        <tr>
-          <th style="padding:8px 12px;font-size:11px;font-weight:700;background:var(--s2);border:1px solid var(--bd);white-space:nowrap;position:sticky;left:0;z-index:2;text-align:left">원재료 품명</th>
-          <th style="padding:8px 12px;font-size:11px;font-weight:700;background:var(--s2);border:1px solid var(--bd);white-space:nowrap;text-align:right">현재재고</th>
-          ${colHeaders}
-          <th style="padding:8px 12px;font-size:11px;font-weight:700;background:var(--s2);border:1px solid var(--bd);white-space:nowrap;text-align:right">행 합계</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${bodyRows}
-        <tr>
-          <td style="padding:8px 12px;border:1px solid var(--bd);font-weight:800;font-size:12px;background:var(--s2);position:sticky;left:0;z-index:1">열 합계</td>
-          <td style="border:1px solid var(--bd);background:var(--s2)"></td>
-          ${colTotals}
-          <td style="padding:8px 12px;border:1px solid var(--bd);text-align:right;font-weight:800;color:var(--accent);background:var(--al)">${grandSum}</td>
-        </tr>
-      </tbody>
-    </table>`;
+    <div style="font-size:12px;color:var(--t3);margin-bottom:8px">💡 셀을 클릭해 수량을 직접 입력·수정할 수 있습니다. 입고는 양수(+, 초록), 출고는 음수(-, 빨강). 자동 저장됩니다.</div>
+    <div style="overflow:auto;max-height:70vh;border:1px solid var(--bd);border-radius:8px">
+      <table style="border-collapse:collapse;min-width:max-content">
+        <thead style="position:sticky;top:0;z-index:3">
+          <tr>
+            <th rowspan="4" style="padding:8px 10px;font-size:11px;font-weight:700;background:var(--s2);border:1px solid var(--bd);white-space:nowrap;position:sticky;left:0;z-index:4;text-align:left">품 명</th>
+            <th rowspan="4" style="padding:8px;font-size:10px;font-weight:700;background:var(--s2);border:1px solid var(--bd);white-space:nowrap;text-align:center">재고<br>~6/30</th>
+            <th rowspan="4" style="padding:8px;font-size:10px;font-weight:700;background:var(--s2);border:1px solid var(--bd);white-space:nowrap;text-align:center">현재<br>(7월)</th>
+            <th style="padding:4px 8px;font-size:10px;font-weight:700;background:#fde8d7;border:1px solid var(--bd);white-space:nowrap;text-align:center;position:sticky;left:0;z-index:4">고객사</th>
+            ${colHeadName}
+            <th rowspan="4" style="padding:8px;font-size:10px;font-weight:800;background:#fff9c4;border:1px solid var(--bd);white-space:nowrap;text-align:center">7월<br>입고</th>
+            <th rowspan="4" style="padding:8px;font-size:10px;font-weight:800;background:#c8e6c9;border:1px solid var(--bd);white-space:nowrap;text-align:center">7월<br>출고</th>
+          </tr>
+          <tr>
+            <th style="padding:4px 8px;font-size:10px;font-weight:700;background:#fef3e9;border:1px solid var(--bd);text-align:center;color:var(--t2)">제품</th>
+            ${colHeadProduct}
+          </tr>
+          <tr>
+            <th style="padding:4px 8px;font-size:10px;font-weight:700;background:#eef4fb;border:1px solid var(--bd);text-align:center;color:var(--red)">출고</th>
+            ${colHeadOut}
+          </tr>
+          <tr>
+            <th style="padding:4px 8px;font-size:10px;font-weight:700;background:#eafaf0;border:1px solid var(--bd);text-align:center;color:var(--green)">입고</th>
+            ${colHeadIn}
+          </tr>
+        </thead>
+        <tbody>${bodyRows}</tbody>
+      </table>
+    </div>`;
 }
 
 async function addTxSheetColumn() {
-  const name = prompt('추가할 열 이름을 입력하세요 (예: 다인테크, 빙그레, 자재입고)');
+  const name = prompt('추가할 열(업체/작업) 이름');
   if(!name || !name.trim()) return;
   const maxSort = txSheetColumns.reduce((m,c)=>Math.max(m,c.sort_order||0), 0);
   try {
     const {data, error} = await sb.from('tx_sheet_columns').insert([{name:name.trim(), sort_order:maxSort+10}]).select().single();
     if(error) throw error;
-    txSheetColumns.push(data);
     showToast('열이 추가됐습니다');
     renderTxSheet();
   } catch(e) { console.error(e); showToast('열 추가 실패: '+e.message,'error'); }
-}
-
-async function renameTxSheetColumn(colId) {
-  const col = txSheetColumns.find(c=>c.id===colId); if(!col) return;
-  const name = prompt('열 이름 수정', col.name);
-  if(!name || !name.trim() || name.trim()===col.name) return;
-  try {
-    await sb.from('tx_sheet_columns').update({name:name.trim()}).eq('id', colId);
-    col.name = name.trim();
-    showToast('수정됐습니다');
-    renderTxSheet();
-  } catch(e) { console.error(e); showToast('수정 실패','error'); }
 }
 
 async function deleteTxSheetColumn(colId) {
   const col = txSheetColumns.find(c=>c.id===colId); if(!col) return;
   if(!confirm(`'${col.name}' 열을 삭제하시겠습니까?\n이 열의 모든 셀 값이 함께 삭제됩니다.`)) return;
   try {
+    await sb.from('tx_sheet_cells').delete().eq('column_id', colId);
     await sb.from('tx_sheet_columns').delete().eq('id', colId);
-    txSheetColumns = txSheetColumns.filter(c=>c.id!==colId);
-    Object.keys(txSheetCells).forEach(itemId=>{ delete txSheetCells[itemId][colId]; });
     showToast('열이 삭제됐습니다');
     renderTxSheet();
   } catch(e) { console.error(e); showToast('삭제 실패','error'); }
 }
 
-async function saveTxSheetCell(itemId, colId, value) {
+async function saveTxSheetCell(rowId, colId, value) {
   const qty = value===''||value===null ? 0 : parseFloat(value);
   if(isNaN(qty)) return;
-  if(!txSheetCells[itemId]) txSheetCells[itemId] = {};
-  txSheetCells[itemId][colId] = qty;
+  if(!txSheetCells[rowId]) txSheetCells[rowId] = {};
+  txSheetCells[rowId][colId] = qty;
   try {
-    // upsert (있으면 업데이트, 없으면 삽입)
-    await sb.from('tx_sheet_cells').upsert(
-      {raw_item_id:itemId, column_id:colId, qty, updated_at:new Date().toISOString()},
-      {onConflict:'raw_item_id,column_id'}
-    );
-    // 행/열 합계만 갱신하기 위해 전체 재렌더 (가벼움)
-    renderTxSheet();
+    // 기존 셀 있으면 업데이트, 없으면 삽입
+    const {data: existing} = await sb.from('tx_sheet_cells').select('id').eq('sheet_row_id', rowId).eq('column_id', colId).maybeSingle();
+    if(existing) {
+      await sb.from('tx_sheet_cells').update({qty, updated_at:new Date().toISOString()}).eq('id', existing.id);
+    } else {
+      await sb.from('tx_sheet_cells').insert([{sheet_row_id:rowId, raw_item_id:rowId, column_id:colId, qty}]);
+    }
   } catch(e) { console.error('saveTxSheetCell:', e); showToast('저장 실패','error'); }
 }
+
+// 입출고 시트 엑셀 다운로드 (엑셀 원본 형태로)
+function exportTxSheetExcel() {
+  if(typeof XLSX === 'undefined') { showToast('엑셀 모듈 로딩 실패. 새로고침 후 재시도','error'); return; }
+  if(!txSheetColumns.length) { showToast('데이터가 없습니다','warn'); return; }
+  // 헤더 4행: 업체명 / 제품 / 출고일 / 입고일
+  const head1 = ['품 명','재고(~6/30)','현재(7월)', ...txSheetColumns.map(c=>c.name), '7월 입고', '7월 출고'];
+  const head2 = ['','','', ...txSheetColumns.map(c=>c.product||''), '', ''];
+  const head3 = ['','','', ...txSheetColumns.map(c=>c.out_date?('출고 '+c.out_date):''), '', ''];
+  const head4 = ['','','', ...txSheetColumns.map(c=>c.in_date?('입고 '+c.in_date):''), '', ''];
+  const aoa = [head1, head2, head3, head4];
+  txSheetRows.forEach(row=>{
+    const rowCells = txSheetCells[row.id]||{};
+    let inSum=0, outSum=0;
+    txSheetColumns.forEach(c=>{ const n=parseFloat(rowCells[c.id]); if(!isNaN(n)){ if(c.is_inbound===true)inSum+=n; else if(c.is_inbound===false)outSum+=n; } });
+    aoa.push([
+      row.name,
+      row.stock_prev??'',
+      row.stock_now??'',
+      ...txSheetColumns.map(c=>{ const v=rowCells[c.id]; return (v===undefined||v===null)?'':v; }),
+      inSum||'', outSum||''
+    ]);
+  });
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [{wch:24},{wch:11},{wch:10}, ...txSheetColumns.map(()=>({wch:12})), {wch:10},{wch:10}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '입출고 현황');
+  const dateTag = new Date().toISOString().slice(0,10).replace(/-/g,'');
+  XLSX.writeFile(wb, `슈어포인트_입출고현황_${dateTag}.xlsx`);
+  showToast('엑셀 파일이 다운로드됐습니다');
+}
+
+
 
 // 탭 2: 완제품 출고 — 피벗 표 (완제품=행, 업체=열)
 // ══════════════════════════════════════════════════════════
@@ -6883,14 +6922,35 @@ async function loadCompanyTx() {
 
 async function renderCompanyTx(kind) {
   await loadCompanyTx();
-  const contentId = kind==='in' ? 'cin-content' : kind==='out' ? 'cout-content' : 'cgs-content';
-  const content = document.getElementById(contentId);
+  const content = document.getElementById('company-content');
   if(!content) return;
 
-  const rows = companyTxData.filter(r => r.kind===kind);
-  const companyLabel = kind==='in' ? '입고처' : '납품처';
-  const productLabel = kind==='in' ? '입고품' : '출고품';
-  const qtyColor = kind==='in' ? 'var(--green)' : 'var(--red)';
+  const tab = companyTxTabs.find(t=>t.kind_key===kind);
+  const isInbound = tab ? tab.is_inbound : (kind==='in');
+  const companyLabel = isInbound ? '입고처' : '납품처';
+  const productLabel = isInbound ? '입고품' : '출고품';
+  const qtyColor = isInbound ? 'var(--green)' : 'var(--red)';
+
+  // 설명 + 삭제버튼 표시
+  const descEl = document.getElementById('ctx-desc');
+  if(descEl) descEl.textContent = isInbound ? '업체로부터 받은 입고 내역을 기록합니다' : `${tab?tab.name:''} 내역을 기록합니다`;
+  const delBtn = document.getElementById('ctx-delete-tab');
+  if(delBtn) delBtn.style.display = (tab && tab.deletable) ? '' : 'none';
+
+  let rows = companyTxData.filter(r => r.kind===kind);
+
+  // 월 필터 옵션 채우기 (데이터에 존재하는 월)
+  const monthFilter = document.getElementById('ctx-month-filter');
+  const monthsInData = [...new Set(rows.map(r=>r.tx_date?r.tx_date.slice(0,7):'').filter(Boolean))].sort().reverse();
+  if(monthFilter) {
+    const cur = monthFilter.value;
+    monthFilter.innerHTML = '<option value="">전체 월</option>' + monthsInData.map(m=>{
+      const [y,mo] = m.split('-');
+      return `<option value="${m}"${m===cur?' selected':''}>${y}년 ${parseInt(mo)}월</option>`;
+    }).join('');
+  }
+  const selMonth = monthFilter ? monthFilter.value : '';
+  if(selMonth) rows = rows.filter(r => r.tx_date && r.tx_date.startsWith(selMonth));
 
   const bodyRows = rows.length ? rows.map(r => {
     const d = r.tx_date || '';
@@ -6904,7 +6964,7 @@ async function renderCompanyTx(kind) {
       <td style="padding:0;border:1px solid var(--bd)"><input type="text" value="${(r.memo||'').replace(/"/g,'&quot;')}" onchange="saveCompanyTxField(${r.id},'memo',this.value)" placeholder="메모" style="width:100%;border:none;background:none;padding:6px 8px;font-size:12px;color:var(--t3);outline:none"></td>
       <td style="padding:4px 8px;border:1px solid var(--bd);text-align:center;width:40px"><button onclick="deleteCompanyTxRow(${r.id})" title="삭제" style="border:none;background:none;cursor:pointer;color:var(--red);font-size:14px">×</button></td>
     </tr>`;
-  }).join('') : `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--t3);border:1px solid var(--bd)">아직 기록이 없습니다. 위 '+ 추가' 버튼으로 입력하세요.</td></tr>`;
+  }).join('') : `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--t3);border:1px solid var(--bd)">기록이 없습니다. 위 '+ 행 추가' 버튼으로 입력하세요.</td></tr>`;
 
   const totalQty = rows.reduce((s,r)=>s+(parseFloat(r.qty)||0),0);
 
@@ -6924,7 +6984,7 @@ async function renderCompanyTx(kind) {
       <tbody>${bodyRows}</tbody>
       <tfoot>
         <tr>
-          <td colspan="4" style="padding:8px 12px;border:1px solid var(--bd);text-align:right;font-weight:700;font-size:12px;background:var(--s2)">합계</td>
+          <td colspan="4" style="padding:8px 12px;border:1px solid var(--bd);text-align:right;font-weight:700;font-size:12px;background:var(--s2)">합계${selMonth?' ('+selMonth.split('-')[1]+'월)':''}</td>
           <td style="padding:8px;border:1px solid var(--bd);text-align:right;font-weight:800;color:${qtyColor};background:var(--al)">${totalQty}</td>
           <td colspan="2" style="border:1px solid var(--bd);background:var(--s2)"></td>
         </tr>
@@ -6938,7 +6998,6 @@ async function addCompanyTxRow(kind) {
     const {data, error} = await sb.from('company_tx').insert([{kind, tx_date:today, company:'', product:'', qty:0}]).select().single();
     if(error) throw error;
     companyTxData.unshift(data);
-    const tab = kind==='in' ? 'cin' : kind==='out' ? 'cout' : 'cgs';
     renderCompanyTx(kind);
   } catch(e) { console.error(e); showToast('추가 실패: '+e.message,'error'); }
 }
@@ -6950,8 +7009,7 @@ async function saveCompanyTxField(id, field, value) {
   row[field] = v;
   try {
     await sb.from('company_tx').update({[field]:v}).eq('id', id);
-    // 합계 갱신 위해 현재 kind만 재렌더 (포커스 잃을 수 있어 최소화: 합계만 갱신하려면 별도 처리 필요하나 단순화)
-    if(field==='qty') renderCompanyTx(row.kind);
+    if(field==='qty' || field==='tx_date') renderCompanyTx(row.kind);
   } catch(e) { console.error('saveCompanyTxField:', e); showToast('저장 실패','error'); }
 }
 
@@ -6964,6 +7022,114 @@ async function deleteCompanyTxRow(id) {
     renderCompanyTx(row.kind);
     showToast('삭제됐습니다');
   } catch(e) { console.error(e); showToast('삭제 실패','error'); }
+}
+
+// 탭 추가 모달 열기
+function addCompanyTxTab() {
+  document.getElementById('addTabOv')?.remove();
+  const ov = document.createElement('div');
+  ov.id = 'addTabOv';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:4000;display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.onclick = (e)=>{ if(e.target===ov) ov.remove(); };
+  ov.innerHTML = `
+    <div style="background:var(--surface);border-radius:var(--r-xl);width:100%;max-width:420px;box-shadow:var(--sh-lg)">
+      <div style="padding:18px 22px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:15px;font-weight:800">새 탭 추가</div>
+        <button onclick="document.getElementById('addTabOv').remove()" style="width:28px;height:28px;border-radius:50%;background:var(--s2);border:none;cursor:pointer;font-size:18px">×</button>
+      </div>
+      <div style="padding:18px 22px;display:flex;flex-direction:column;gap:16px">
+        <div>
+          <label class="form-label">탭 이름</label>
+          <input class="form-input" id="new-tab-name" placeholder="예: 정부과제 출고, ○○업체 출고" style="margin-top:4px" onkeydown="if(event.key==='Enter')document.getElementById('new-tab-type-out').click()">
+        </div>
+        <div>
+          <label class="form-label">유형 선택</label>
+          <div style="display:flex;gap:10px;margin-top:6px">
+            <button id="new-tab-type-in" onclick="confirmAddCompanyTxTab(true)"
+              style="flex:1;padding:14px;border:2px solid #22c55e;border-radius:10px;background:#22c55e18;color:#16a34a;font-weight:800;font-size:14px;cursor:pointer">
+              📥 입고<br><span style="font-size:11px;font-weight:500;color:var(--t3)">물건이 들어옴 (초록)</span>
+            </button>
+            <button id="new-tab-type-out" onclick="confirmAddCompanyTxTab(false)"
+              style="flex:1;padding:14px;border:2px solid #ef4444;border-radius:10px;background:#ef444418;color:#dc2626;font-weight:800;font-size:14px;cursor:pointer">
+              📤 출고<br><span style="font-size:11px;font-weight:500;color:var(--t3)">물건이 나감 (빨강)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  setTimeout(()=>document.getElementById('new-tab-name')?.focus(), 60);
+}
+
+async function confirmAddCompanyTxTab(inbound) {
+  const nameEl = document.getElementById('new-tab-name');
+  const name = nameEl ? nameEl.value.trim() : '';
+  if(!name) { showToast('탭 이름을 입력해주세요','warn'); nameEl?.focus(); return; }
+  const key = 'custom_' + Date.now();
+  const maxSort = companyTxTabs.reduce((m,t)=>Math.max(m,t.sort_order||0),0);
+  try {
+    const {data, error} = await sb.from('company_tx_tabs').insert([{
+      name, kind_key:key, is_inbound:inbound, deletable:true, sort_order:maxSort+10
+    }]).select().single();
+    if(error) throw error;
+    companyTxTabs.push(data);
+    document.getElementById('addTabOv')?.remove();
+    showToast('탭이 추가됐습니다');
+    switchTxTab('company:'+key);
+  } catch(e) { console.error(e); showToast('탭 추가 실패: '+e.message,'error'); }
+}
+
+async function deleteCompanyTxTab(kind) {
+  const tab = companyTxTabs.find(t=>t.kind_key===kind);
+  if(!tab) return;
+  if(!tab.deletable) { showToast('기본 탭은 삭제할 수 없습니다','warn'); return; }
+  const cnt = companyTxData.filter(r=>r.kind===kind).length;
+  if(!confirm(`'${tab.name}' 탭을 삭제하시겠습니까?\n\n이 탭의 기록 ${cnt}건이 함께 삭제됩니다.\n되돌릴 수 없습니다.`)) return;
+  try {
+    await sb.from('company_tx').delete().eq('kind', kind);
+    await sb.from('company_tx_tabs').delete().eq('id', tab.id);
+    companyTxTabs = companyTxTabs.filter(t=>t.id!==tab.id);
+    companyTxData = companyTxData.filter(r=>r.kind!==kind);
+    showToast('탭이 삭제됐습니다');
+    // 첫 번째 탭으로 이동
+    if(companyTxTabs.length) switchTxTab('company:'+companyTxTabs[0].kind_key);
+    else switchTxTab('log');
+  } catch(e) { console.error(e); showToast('탭 삭제 실패: '+e.message,'error'); }
+}
+
+// ── 엑셀 다운로드 ──
+function exportCompanyTxExcel(kind) {
+  const tab = companyTxTabs.find(t=>t.kind_key===kind);
+  const isInbound = tab ? tab.is_inbound : (kind==='in');
+  const companyLabel = isInbound ? '입고처' : '납품처';
+  const productLabel = isInbound ? '입고품' : '출고품';
+
+  let rows = companyTxData.filter(r => r.kind===kind);
+  const selMonth = document.getElementById('ctx-month-filter')?.value || '';
+  if(selMonth) rows = rows.filter(r => r.tx_date && r.tx_date.startsWith(selMonth));
+
+  if(rows.length === 0) { showToast('내보낼 데이터가 없습니다','warn'); return; }
+  if(typeof XLSX === 'undefined') { showToast('엑셀 모듈 로딩 실패. 새로고침 후 재시도','error'); return; }
+
+  const aoa = [
+    ['월','일자',companyLabel,productLabel,'수량','메모'],
+    ...rows.map(r=>[
+      r.tx_date ? parseInt(r.tx_date.slice(5,7))+'월' : '',
+      r.tx_date||'', r.company||'', r.product||'', parseFloat(r.qty)||0, r.memo||''
+    ])
+  ];
+  const totalQty = rows.reduce((s,r)=>s+(parseFloat(r.qty)||0),0);
+  aoa.push(['','','','합계',totalQty,'']);
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [{wch:8},{wch:14},{wch:20},{wch:24},{wch:10},{wch:20}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, (tab?tab.name:'입출고').slice(0,30));
+  const tabName = tab ? tab.name : kind;
+  const monthTag = selMonth ? '_'+selMonth : '';
+  const dateTag = new Date().toISOString().slice(0,10).replace(/-/g,'');
+  XLSX.writeFile(wb, `슈어포인트_${tabName}${monthTag}_${dateTag}.xlsx`);
+  showToast('엑셀 파일이 다운로드됐습니다');
 }
 
 
