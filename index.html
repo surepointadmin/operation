@@ -4034,12 +4034,14 @@ function buildDealInfo(d) {
         ${d.contactEmail?`<a href="mailto:${d.contactEmail}" style="font-size:13px;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:4px">✉️ ${d.contactEmail}</a>`:''}
       </div>
     </div>`:''}
+    ${d.memo?`<div class="det-item" style="grid-column:1/-1"><div class="det-label">📝 메모</div><div style="font-size:13px;line-height:1.6;margin-top:4px;white-space:pre-wrap">${d.memo}</div></div>`:''}
     ${['설치중','설치완료'].includes(d.stage) ? renderInstallScheduleBox(d) : ''}`;
   const pi=document.getElementById('dealProdInfo');
   if(d.prod){
     pi.style.display='block';
     pi.innerHTML=`<div style="background:var(--s2);border-radius:var(--r);padding:14px 16px;display:flex;gap:20px;flex-wrap:wrap">
       <div><div class="det-label">제품</div><div style="font-weight:700;font-size:15px;margin-top:3px">${d.prod}</div></div>
+      ${d.powerType?`<div><div class="det-label">동력</div><div style="font-weight:600;margin-top:3px">${d.powerType}</div></div>`:''}
       ${d.option?`<div><div class="det-label">옵션 품목</div><div style="font-weight:600;color:var(--purple);margin-top:3px">${d.option}</div></div>`:''}
       <div><div class="det-label">수량</div><div style="font-weight:600;margin-top:3px">${d.qty}대</div></div>
       <div><div class="det-label">대당 단가</div><div style="font-weight:600;margin-top:3px">${d.unit?fmt(d.unit):'–'}</div></div>
@@ -4049,6 +4051,32 @@ function buildDealInfo(d) {
   } else { pi.style.display='none'; }
   // 합계 초기 계산
   setTimeout(calcDeTotal, 0);
+}
+// ── 동력 타입 (전동/디젤/전동, 디젤/가스 + 직접 입력) — 수정 탭 제품 행에서만 입력 ──
+const DEAL_POWER_TYPES = ['전동','디젤','전동, 디젤','가스'];
+function deProdPowerCellHtml(power){
+  const isCustom = power && !DEAL_POWER_TYPES.includes(power);
+  return `<div>
+    <label class="form-label" style="font-size:10px;margin-bottom:2px">동력</label>
+    <select class="form-select de-prod-power" onchange="onDeProdPowerChange(this)" style="font-size:13px">
+      <option value="">선택</option>
+      ${DEAL_POWER_TYPES.map(t=>`<option value="${t}"${t===power?' selected':''}>${t}</option>`).join('')}
+      <option value="__custom__"${isCustom?' selected':''}>✏️ 직접 입력</option>
+    </select>
+    <input class="form-input de-prod-power-custom" placeholder="직접 입력" value="${isCustom?power:''}" style="font-size:12px;margin-top:4px;display:${isCustom?'block':'none'}">
+  </div>`;
+}
+function onDeProdPowerChange(sel){
+  const inp = sel.parentElement.querySelector('.de-prod-power-custom');
+  if(!inp) return;
+  if(sel.value==='__custom__'){ inp.style.display='block'; inp.focus(); }
+  else { inp.style.display='none'; }
+}
+function getDeProdPower(row){
+  const sel = row.querySelector('.de-prod-power');
+  if(!sel) return '';
+  if(sel.value==='__custom__') return (row.querySelector('.de-prod-power-custom')?.value||'').trim();
+  return sel.value||'';
 }
 function switchMTab(ctx,name,el){
   const tabs=el.closest('.modal-tabs').querySelectorAll('.mtab');
@@ -4065,16 +4093,17 @@ function buildDealEdit(id){
   // deal_products에서 기존 제품 목록 불러오기 (비동기)
   const existingProducts = dealProductsCache[id] || [];
   // 제품 행 HTML 생성
-  function deProdRowHtml(prod, qty, unitPrice, installFee) {
+  function deProdRowHtml(prod, qty, unitPrice, installFee, power) {
     const opts = prods.map(p=>`<option value="${p}"${p===prod?' selected':''}>${p}</option>`).join('');
     return `<div class="de-prod-row" style="background:var(--s2);border-radius:var(--r);padding:10px 12px;display:flex;flex-direction:column;gap:8px;margin-bottom:8px">
-      <div style="display:grid;grid-template-columns:2fr 70px 1fr 1fr auto;gap:8px;align-items:end">
+      <div style="display:grid;grid-template-columns:2fr 105px 70px 1fr 1fr auto;gap:8px;align-items:end">
         <div>
           <label class="form-label" style="font-size:10px;margin-bottom:2px">제품</label>
           <select class="form-select de-prod-sel" onchange="calcDeTotal()" style="font-size:13px">
             ${opts}
           </select>
         </div>
+        ${deProdPowerCellHtml(power||'')}
         <div>
           <label class="form-label" style="font-size:10px;margin-bottom:2px">수량</label>
           <input class="form-input de-prod-qty" type="number" min="1" value="${qty||1}" oninput="calcDeTotal()" style="font-size:13px;text-align:center">
@@ -4097,12 +4126,12 @@ function buildDealEdit(id){
   let initialRows = '';
   if(existingProducts.length > 0) {
     // deal_products에 저장된 제품들
-    initialRows = existingProducts.map(p => deProdRowHtml(p.prod, p.qty, p.unit_price, p.install_fee||0)).join('');
+    initialRows = existingProducts.map(p => deProdRowHtml(p.prod, p.qty, p.unit_price, p.install_fee||0, p.power_type||d.powerType||'')).join('');
   } else if(d.prod) {
     // 기존 단일 제품 (합쳐진 경우 파싱 시도)
-    initialRows = deProdRowHtml(d.prod, d.qty, d.unit);
+    initialRows = deProdRowHtml(d.prod, d.qty, d.unit, 0, d.powerType||'');
   } else {
-    initialRows = deProdRowHtml('', 1, 0);
+    initialRows = deProdRowHtml('', 1, 0, 0, '');
   }
   document.getElementById('dealEditGrid').innerHTML = `
     <div class="form-field full"><label class="form-label">딜명</label><input class="form-input" id="de-name" value="${d.name}"></div>
@@ -4133,6 +4162,7 @@ function buildDealEdit(id){
     </div>
     <div class="form-field"><label class="form-label">우선순위</label><select class="form-select" id="de-pri"><option value="0"${!d.priority?' selected':''}>보통</option><option value="1"${d.priority?' selected':''}>중요</option></select></div>
     <div class="form-field full"><label class="form-label">유입 경로</label><div id="de-inflow-btns" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"></div><input type="hidden" id="de-inflow" value="${d.inflow||'direct'}"></div>
+    <div class="form-field full"><label class="form-label">메모 <span style="font-weight:400;color:var(--t3);font-size:10px">(미팅 내용, 특이사항 등)</span></label><textarea class="form-textarea" id="de-memo" rows="3" placeholder="메모를 입력하세요">${d.memo||''}</textarea></div>
     <input type="hidden" id="de-amt">
     <input type="hidden" id="de-prod">
     <input type="hidden" id="de-qty">
@@ -4149,7 +4179,7 @@ function buildDealEdit(id){
         if(products.length > 0) {
           const wrap = document.getElementById('de-product-rows');
           if(wrap) {
-            wrap.innerHTML = products.map(p => deProdRowHtml(p.prod, p.qty, p.unit_price, p.install_fee||0)).join('');
+            wrap.innerHTML = products.map(p => deProdRowHtml(p.prod, p.qty, p.unit_price, p.install_fee||0, p.power_type||d.powerType||'')).join('');
             calcDeTotal();
           }
         }
@@ -4165,11 +4195,12 @@ function addDeProdRow() {
   if(!wrap) return;
   const div = document.createElement('div');
   div.innerHTML = `<div class="de-prod-row" style="background:var(--s2);border-radius:var(--r);padding:10px 12px;display:flex;flex-direction:column;gap:8px;margin-bottom:8px">
-    <div style="display:grid;grid-template-columns:2fr 70px 1fr auto;gap:8px;align-items:end">
+    <div style="display:grid;grid-template-columns:2fr 105px 70px 1fr auto;gap:8px;align-items:end">
       <div>
         <label class="form-label" style="font-size:10px;margin-bottom:2px">제품</label>
         <select class="form-select de-prod-sel" onchange="calcDeTotal()" style="font-size:13px"><option value="">선택</option>${opts}</select>
       </div>
+      ${deProdPowerCellHtml('')}
       <div>
         <label class="form-label" style="font-size:10px;margin-bottom:2px">수량</label>
         <input class="form-input de-prod-qty" type="number" min="1" value="1" oninput="calcDeTotal()" style="font-size:13px;text-align:center">
@@ -4233,6 +4264,7 @@ async function saveDealEdit(){
     qty:        parseInt(row.querySelector('.de-prod-qty')?.value)||1,
     unitPrice:  parseInt(row.querySelector('.de-prod-unit')?.value)||0,
     installFee: parseInt(row.querySelector('.de-prod-install')?.value)||0,
+    power:      getDeProdPower(row),
   })).filter(p=>p.prod);
   if(deProducts.length > 0) {
     const prodLabel = deProducts.map(p=>`${p.prod} ${p.qty}대`).join(', ');
@@ -4240,6 +4272,7 @@ async function saveDealEdit(){
     d.qty   = deProducts.reduce((s,p)=>s+p.qty, 0);
     d.unit  = deProducts[0].unitPrice;
     d.amt   = deProducts.reduce((s,p)=>s+p.qty*(p.unitPrice+(p.installFee||0)), 0);
+    d.powerType = [...new Set(deProducts.map(p=>p.power).filter(Boolean))].join(' / ');
   }
   d.option=document.getElementById('de-option')?.value.trim()||'';
   d.person=document.getElementById('de-person').value;
@@ -4248,6 +4281,7 @@ async function saveDealEdit(){
   d.deliveryDate=document.getElementById('de-delivery')?.value||'';
   d.priority=document.getElementById('de-pri').value==='1';
   d.inflow=document.getElementById('de-inflow')?.value||d.inflow||'direct';
+  d.memo=document.getElementById('de-memo')?.value.trim()||'';
   if(os!==d.stage){
     if(d.stage==='설치중' && !POST_INSTALL_STAGES.includes(os)){
       // 수정 탭에서 설치중으로 변경 시에도 수금기일 팝업
@@ -4267,11 +4301,15 @@ async function saveDealEdit(){
   updateDealInDB(d);
   // deal_products 업데이트
   if(sb && typeof deProducts !== 'undefined' && deProducts.length > 0) {
-    sb.from('deal_products').delete().eq('deal_id', d.id).then(() => {
-      const rows = deProducts.map(p=>({deal_id:d.id, prod:p.prod, qty:p.qty, unit_price:p.unitPrice, install_fee:p.installFee||0}));
-      sb.from('deal_products').insert(rows).select().then(({data}) => {
-        dealProductsCache[d.id] = data || [];
-      });
+    sb.from('deal_products').delete().eq('deal_id', d.id).then(async () => {
+      let rows = deProducts.map(p=>({deal_id:d.id, prod:p.prod, qty:p.qty, unit_price:p.unitPrice, install_fee:p.installFee||0, power_type:p.power||null}));
+      let {data, error} = await sb.from('deal_products').insert(rows).select();
+      // deal_products에 power_type 컬럼이 없으면 제외 후 재시도
+      if(error && (error.code==='42703'||error.message?.includes('column'))){
+        rows = rows.map(({power_type, ...rest})=>rest);
+        ({data} = await sb.from('deal_products').insert(rows).select());
+      }
+      dealProductsCache[d.id] = data || [];
     });
   }
   showToast('저장됐습니다 ✓');
@@ -5300,6 +5338,8 @@ async function loadDealsFromDB(){
       name: d.name,
       co: d.co,
       prod: d.prod||'',
+      powerType: d.power_type||'',
+      memo: d.memo||'',
       option: d.option_items||'',
       inflow: d.inflow||'direct',
       inquiryPath: d.inquiry_path||'',
@@ -5424,9 +5464,16 @@ async function updateDealInDB(deal){
       tax_invoice_issued: deal.taxInvoiceIssued||false,
       priority: deal.priority,
       linked_project: deal.linkedProject||null,
+      power_type: deal.powerType||null,
+      memo: deal.memo||null,
       updated_at: new Date().toISOString()
     };
     let {error} = await sb.from('deals').update(updatePayload).eq('id', deal.id);
+    // deals에 power_type/memo 컬럼이 없으면 제외 후 재시도
+    if(error && (error.code==='42703'||error.message?.includes('column'))){
+      const {power_type, memo, ...safePayload} = updatePayload;
+      ({error} = await sb.from('deals').update(safePayload).eq('id', deal.id));
+    }
     if(error) throw error;
   } catch(e){
     console.error('updateDealInDB:', e);
