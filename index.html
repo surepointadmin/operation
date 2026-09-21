@@ -392,6 +392,102 @@ tbody tr:hover{background:var(--s2)}
 .dc-person{font-size:11px;color:var(--t2);flex:1}
 .dc-date{font-size:11px;color:var(--t3)}
 .tag{display:inline-flex;align-items:center;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px}
+/* ── A1-AIR 박스형 파이프라인 ── */
+.pj-air{background:linear-gradient(180deg,#fafbff 0%,#f6f7f4 100%);border:1px solid var(--bd);border-radius:var(--r-lg);padding:14px 14px 16px}
+.pj-scroll{overflow-x:auto;padding-bottom:4px}
+.pj-scroll::-webkit-scrollbar{height:6px}
+.pj-scroll::-webkit-scrollbar-track{background:transparent}
+.pj-scroll::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:3px}
+.pj-inner{min-width:860px}
+.pj-journey{position:relative;margin:2px 4px 6px}
+.pj-jline{position:absolute;top:15px;left:60px;right:60px;height:3px;border-radius:2px;opacity:.35}
+.pj-jnodes{display:flex}
+.pj-jnode{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;position:relative;cursor:pointer}
+.pj-jdot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.18);border:3px solid #fff;position:relative;z-index:2;transition:transform .15s}
+.pj-jnode:hover .pj-jdot{transform:scale(1.1)}
+.pj-jdot.big{width:38px;height:38px;margin-top:-4px}
+.pj-jnm{font-size:11px;font-weight:800;white-space:nowrap}
+.pj-jamt{font-size:9.5px;color:var(--t3);font-weight:700;margin-top:-2px;white-space:nowrap}
+.pj-jconv{position:absolute;top:8px;right:-13px;font-size:8.5px;font-weight:800;color:var(--t3);background:var(--surface);border:1px solid var(--bd);border-radius:10px;padding:1px 5px;z-index:3}
+.pj-jrow{display:flex;gap:9px;margin:2px 0 0}
+.pj-jcell{flex:1;min-width:0;position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer}
+.pj-jcell:hover .pj-jdot{transform:scale(1.1)}
+.pj-jseg{position:absolute;top:15px;height:3px;border-radius:2px;opacity:.35;z-index:0}
+.pj-jspacer{flex:0 0 36px}
+.pj-cols{display:flex;gap:9px;margin-top:12px;align-items:flex-start}
+.pj-box{flex:1;min-width:0;border-radius:13px;padding:7px;display:flex;flex-direction:column;gap:6px;border:1px solid transparent}
+.pj-boxhd{display:flex;align-items:center;gap:6px;padding:2px 4px 1px}
+.pj-boxhd .bn{font-size:10.5px;font-weight:800;flex:1;white-space:nowrap;overflow:hidden}
+.pj-boxhd .bs{font-size:9px;font-weight:700;opacity:.75;white-space:nowrap}
+.pj-card{background:rgba(255,255,255,.93);border-radius:10px;padding:9px 11px;box-shadow:0 2px 8px rgba(30,27,75,.06);cursor:pointer;transition:transform .12s, box-shadow .12s;border:1px solid rgba(255,255,255,.9)}
+.pj-card:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(30,27,75,.12)}
+.pj-card.hot{box-shadow:0 0 0 1.5px #fca5a5,0 4px 14px rgba(220,38,38,.12)}
+.pj-r1{display:flex;align-items:center;gap:5px}
+.pj-nm{font-size:12px;font-weight:750;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.2px}
+.pj-co{font-size:9.5px;color:var(--t3);margin:2px 0 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pj-ft{display:flex;align-items:center;gap:5px;padding-top:6px;border-top:1px dashed var(--bd)}
+.pj-ps{font-size:9.5px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pj-amt{margin-left:auto;font-size:12px;font-weight:800;letter-spacing:-.3px;white-space:nowrap}
+.pj-pill{display:inline-flex;align-items:center;font-size:9px;font-weight:800;padding:1.5px 7px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.pj-add{border:1.5px dashed rgba(0,0,0,.13);border-radius:10px;padding:6px;text-align:center;font-size:10.5px;font-weight:700;color:var(--t3);cursor:pointer;background:rgba(255,255,255,.45);transition:all .12s}
+.pj-add:hover{color:var(--accent);border-color:var(--accent);background:var(--al)}
+.pj-more{border:none;border-radius:10px;padding:6px;text-align:center;font-size:10.5px;font-weight:800;color:var(--at);cursor:pointer;background:rgba(255,255,255,.78);font-family:var(--font)}
+.pj-closedrow{display:flex;justify-content:center;gap:8px;margin-top:14px;padding-top:12px;border-top:1px dashed var(--bd2);flex-wrap:wrap}
+.pj-cap{display:flex;align-items:center;gap:6px;border-radius:20px;padding:6px 13px;font-size:11px;font-weight:800;cursor:pointer;box-shadow:var(--sh);border:1px solid transparent;transition:transform .12s}
+.pj-cap:hover{transform:translateY(-1px)}
+.pj-cap b{font-size:10.5px;background:rgba(255,255,255,.65);border-radius:10px;padding:1px 7px}
+.pj-closedsec{margin-top:10px;border-radius:13px;padding:10px}
+.pj-closedsec .cshd{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.pj-closedsec .cshd .n{font-size:12px;font-weight:800;flex:1}
+.pj-closedsec .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:7px}
+.pj-vbar{width:36px;flex:0 0 36px;border-radius:12px;border:1px solid transparent;display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:8px;cursor:pointer;align-self:flex-start;height:170px;transition:transform .12s, box-shadow .12s}
+.pj-vbar:hover{transform:translateY(-2px);box-shadow:var(--sh-md)}
+.pj-vbar .vtxt{writing-mode:vertical-rl;font-size:10.5px;font-weight:800;letter-spacing:2px;white-space:nowrap}
+.pj-vbar .cnt{font-size:10px;font-weight:800;background:rgba(255,255,255,.75);border-radius:10px;padding:1px 6px}
+.pj-fold{font-size:9px;font-weight:800;cursor:pointer;white-space:nowrap;opacity:.85;flex-shrink:0}
+.pj-fold:hover{opacity:1;text-decoration:underline}
+/* ── 활동 기록 타임라인 ── */
+.act-fchip{font-size:11px;font-weight:700;padding:4px 11px;border-radius:16px;border:1px solid var(--bd2);color:var(--t2);cursor:pointer;background:var(--surface);font-family:var(--font)}
+.act-fchip.on{background:var(--t1);color:#fff;border-color:var(--t1)}
+.act-day{display:flex;align-items:center;gap:10px;margin:16px 0 9px}
+.act-day .d{font-size:12px;font-weight:800;white-space:nowrap}
+.act-day .ln{flex:1;height:1px;background:var(--bd)}
+.act-item{display:flex;gap:11px;margin-bottom:11px}
+.act-ic{width:34px;height:34px;border-radius:10px;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.act-bd{flex:1;background:var(--surface);border:1px solid var(--bd);border-radius:12px;padding:11px 13px;box-shadow:var(--sh);min-width:0}
+.act-bd .r1{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.act-bd .ty{font-size:12.5px;font-weight:800}
+.act-bd .meta{font-size:11px;color:var(--t3)}
+.act-pill{display:inline-flex;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;white-space:nowrap}
+.act-blk{margin-top:8px;padding-left:10px;border-left:2.5px solid var(--s3)}
+.act-blk .bl{font-size:10px;font-weight:800;color:var(--t3)}
+.act-blk .bt{font-size:12.5px;line-height:1.6;margin-top:1px;white-space:pre-wrap}
+.act-next{margin-top:9px;background:var(--aml);border-radius:9px;padding:7px 11px;display:flex;align-items:center;gap:8px}
+.act-next input{width:15px;height:15px;accent-color:var(--amber);cursor:pointer;flex-shrink:0}
+.act-next .nt{font-size:12px;font-weight:700;color:var(--amt);flex:1}
+.act-next .nd{font-size:10.5px;font-weight:800;color:var(--amt);white-space:nowrap}
+.act-next.done{opacity:.55}
+.act-next.done .nt{text-decoration:line-through}
+.act-sys{font-size:11px;color:var(--t3);padding:2px 0 2px 45px;margin-bottom:6px}
+.act-sys span{margin-left:6px;font-size:10px}
+/* 현재 상황 위젯 */
+.deal-statw{background:linear-gradient(135deg,#eff4ff,#f5f3ff);border:1px solid #dbe4ff;border-radius:13px;padding:12px 14px;margin-bottom:14px}
+.deal-statw .h{display:flex;align-items:center;gap:6px;margin-bottom:7px;flex-wrap:wrap}
+.deal-statw .h b{font-size:12px}
+.deal-statw .h span:last-child{font-size:10.5px;color:var(--t3);margin-left:auto}
+.deal-statw .txt{font-size:13px;line-height:1.6}
+/* 현장 정보 탭 */
+.site-shead{display:flex;align-items:center;gap:8px;margin:14px 0 8px}
+.site-shead .t{font-size:12px;font-weight:800}
+.site-shead .ln{flex:1;height:1px;background:var(--bd)}
+.site-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.site-item{background:var(--s2);border-radius:10px;padding:10px 12px}
+.site-item.full{grid-column:1/-1}
+.site-item .sl{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.04em}
+.site-item .sv{font-size:13px;font-weight:700;margin-top:3px;line-height:1.5;word-break:break-all}
+.site-item .sv.muted{color:var(--t3);font-weight:400;font-style:italic;font-size:12px}
+@media(max-width:600px){.site-grid{grid-template-columns:1fr}}
+@media(max-width:768px){ .pj-inner{min-width:720px} }
 /* ════════════════════════════════════════
    PROJECTS
 ════════════════════════════════════════ */
@@ -1351,7 +1447,7 @@ tbody tr:hover{background:var(--s2)}
           <select class="f-select" id="pipePersonF" onchange="renderPipeline()"><option value="">전체 담당자</option></select>
           <button class="btn btn-s btn-sm" onclick="document.getElementById('pipeSearch').value='';document.getElementById('pipePersonF').value='';renderPipeline()" style="flex-shrink:0">↺ 초기화</button>
         </div>
-        <div class="kanban-wrap" id="kanbanWrap"><div class="kanban-board" id="kanbanBoard"></div></div>
+        <div id="pipeAirWrap"></div>
       </div>
       <!-- DEALS -->
       <div class="view" id="view-deals">
@@ -1913,9 +2009,11 @@ tbody tr:hover{background:var(--s2)}
       <div class="modal-tabs">
         <div class="mtab on" onclick="switchMTab('deal','info',this)">딜 정보</div>
         <div class="mtab" onclick="switchMTab('deal','edit',this)">수정</div>
-        <div class="mtab" onclick="switchMTab('deal','log',this)">활동 로그</div>
+        <div class="mtab" onclick="switchMTab('deal','log',this)">활동 기록</div>
+        <div class="mtab" onclick="switchMTab('deal','site',this)">현장 정보</div>
       </div>
       <div class="mtc on" id="deal-tab-info">
+        <div id="dealStatusWidget"></div>
         <div class="stepper" id="dealStepper"></div>
         <div class="det-grid" id="dealDetGrid"></div>
         <div id="dealProdInfo"></div>
@@ -1929,15 +2027,56 @@ tbody tr:hover{background:var(--s2)}
         </div>
       </div>
       <div class="mtc" id="deal-tab-log">
-        <div class="tline" id="dealLog"></div>
-        <div class="note-form">
-          <textarea class="note-ta" id="dealNoteText" rows="3" placeholder="메모, 통화, 카톡 내용 기록..."></textarea>
-          <div style="display:flex;gap:8px">
-            <button class="btn btn-p" style="flex:1" onclick="addDealNote()">기록 추가</button>
-            <select class="f-select" id="dealNoteType" style="flex:1"><option>메모</option><option>통화</option><option>미팅</option><option>카톡</option><option>이메일</option></select>
-          </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+          <div id="actFilterChips" style="display:flex;gap:5px;flex-wrap:wrap;flex:1"></div>
+          <button class="btn btn-p btn-sm" onclick="openActModal()" style="flex-shrink:0">＋ 활동 기록 추가</button>
+        </div>
+        <div id="dealActTimeline"></div>
+      </div>
+      <div class="mtc" id="deal-tab-site">
+        <div id="dealSiteBody"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Activity Record Modal (활동 기록 추가) -->
+<div class="overlay" id="actModal">
+  <div class="modal modal-md">
+    <div class="modal-hd">
+      <div class="modal-hd-info"><div class="modal-title">＋ 활동 기록 추가</div><div class="modal-sub">현장방문·미팅·통화 등 영업 활동을 기록합니다</div></div>
+      <button class="modal-close" onclick="closeModal('actModal')"><svg viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="act-type" value="현장방문">
+      <input type="hidden" id="act-outcome-status" value="">
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px;background:var(--s2);border-radius:var(--r);padding:8px 12px">
+        <span style="font-size:10.5px;font-weight:800;color:var(--t3)">⚡ 빠른 기록</span>
+        <div id="act-quick-chips" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+        <span style="font-size:10px;color:var(--t3)">← 누르면 바로 저장</span>
+      </div>
+      <div class="form-field full" style="margin-bottom:12px">
+        <label class="form-label">활동 유형 *</label>
+        <div id="act-type-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:5px"></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-field"><label class="form-label">활동 날짜</label><input class="form-input" id="act-date" type="date"></div>
+        <div class="form-field" id="act-place-wrap"><label class="form-label">장소</label><input class="form-input" id="act-place" placeholder="예: 전주공장 3동"></div>
+        <div class="form-field full"><label class="form-label">만난 사람</label><input class="form-input" id="act-people" placeholder="예: 김부장 (물류팀), 박과장 (안전관리)"></div>
+        <div class="form-field full"><label class="form-label">목적</label><input class="form-input" id="act-purpose" placeholder="예: 지게차 20대 실측 및 설치 위치 협의"></div>
+        <div class="form-field full"><label class="form-label">논의 내용</label><textarea class="form-textarea" id="act-discussion" rows="2"></textarea></div>
+        <div class="form-field full">
+          <label class="form-label">결과·결론</label>
+          <div id="act-out-chips" style="display:flex;gap:5px;margin:5px 0 7px"></div>
+          <textarea class="form-textarea" id="act-outcome" rows="2"></textarea>
+        </div>
+        <div class="form-field"><label class="form-label">다음 액션</label><input class="form-input" id="act-next" placeholder="예: LED 포함 재견적 발송"></div>
+        <div class="form-field"><label class="form-label">액션 예정일</label><input class="form-input" id="act-next-date" type="date"></div>
+        <div class="form-field full" style="flex-direction:row;align-items:center;gap:7px">
+          <input type="checkbox" id="act-cal-check" checked style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer">
+          <label for="act-cal-check" style="font-size:12px;color:var(--t2);cursor:pointer">다음 액션을 <b>캘린더에 자동 등록</b></label>
         </div>
       </div>
+      <button class="btn btn-p" style="width:100%;justify-content:center;padding:12px;margin-top:14px" onclick="saveActivity()">기록 저장</button>
     </div>
   </div>
 </div>
@@ -3613,14 +3752,66 @@ function renderDashboard() {
 // ══════════════════════════════════════════════
 // PIPELINE
 // ══════════════════════════════════════════════
-const PIPE_MAX_CARDS = 10; // 칸반 열당 기본 표시 카드 수
-let _pipeExpanded = new Set(); // 더보기로 펼친 열 인덱스
-function togglePipeMore(i){
-  if(_pipeExpanded.has(i)) _pipeExpanded.delete(i);
-  else _pipeExpanded.add(i);
+const PIPE_MAX_CARDS = 10; // 열당 기본 표시 카드 수
+let _pipeExpanded = new Set(); // 더보기로 펼친 단계명
+function togglePipeMore(s){
+  if(_pipeExpanded.has(s)) _pipeExpanded.delete(s);
+  else _pipeExpanded.add(s);
   renderPipeline();
 }
+// ══ A1-AIR 박스형 파이프라인 설정 ══
+const PIPE_ACTIVE_STAGES = ['잠재 발굴','미팅·접촉','제안·견적','구두합의','설치중','설치완료'];
+const PIPE_CLOSED_STAGES = ['세금계산서발행 전','세금계산서발행 완료','실패·보류'];
+const PIPE_COLOR = {'잠재 발굴':'#6b7280','미팅·접촉':'#3b82f6','제안·견적':'#d97706','구두합의':'#c026d3','설치중':'#a855f7','설치완료':'#0891b2','세금계산서발행 전':'#6366f1','세금계산서발행 완료':'#16a34a','실패·보류':'#ef4444'};
+let _pipeOpenClosed = new Set(JSON.parse(localStorage.getItem('sp_pipe_closed_open')||'[]'));
+function togglePipeClosed(s){
+  if(_pipeOpenClosed.has(s)) _pipeOpenClosed.delete(s);
+  else _pipeOpenClosed.add(s);
+  try{ localStorage.setItem('sp_pipe_closed_open', JSON.stringify([..._pipeOpenClosed])); }catch(e){}
+  renderPipeline();
+}
+function pipeJumpTo(i){ document.getElementById('pipe-box-'+i)?.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'}); }
+// D-day 배지 (영업 단계=계약목표일, 설치 단계=납품기한)
+function pipeDdayPill(d){
+  const stage = dispStage(d);
+  const dd = ds => Math.round((new Date(ds)-new Date())/864e5);
+  if(['설치중','설치완료'].includes(stage) && d.deliveryDate){
+    const n=dd(d.deliveryDate);
+    return n<0 ? `<span class="pj-pill" style="background:var(--rl);color:var(--rt)">납기 D+${-n}</span>`
+               : `<span class="pj-pill" style="background:var(--al);color:var(--at)">납기 D-${n}</span>`;
+  }
+  if(PRE_INSTALL_STAGES.includes(stage) && d.closeDate){
+    const n=dd(d.closeDate);
+    if(n<0)  return `<span class="pj-pill" style="background:var(--rl);color:var(--rt)">D+${-n}</span>`;
+    if(n<=3) return `<span class="pj-pill" style="background:var(--rl);color:var(--rt)">D-${n}</span>`;
+    if(n<=7) return `<span class="pj-pill" style="background:var(--aml);color:var(--amt)">D-${n}</span>`;
+    return `<span class="pj-pill" style="background:#f3f4f6;color:#6b7280">D-${n}</span>`;
+  }
+  return '';
+}
+// 무활동 14일+ 배지 (영업 단계만)
+function pipeStalePill(d){
+  try{
+    if(typeof dealLastActivity!=='function') return '';
+    if(!PRE_INSTALL_STAGES.includes(dispStage(d))) return '';
+    const la=dealLastActivity(d); if(!la) return '';
+    const days=Math.floor((Date.now()-la.getTime())/864e5);
+    return days>=14 ? `<span class="pj-pill" style="background:var(--aml);color:var(--amt)">⏰ ${days}일</span>` : '';
+  }catch(e){ return ''; }
+}
+function pipeCardHtml(d){
+  const u=memberByName(d.person); const idx=u?u.idx%12:0;
+  const stage=dispStage(d);
+  const hot=isUrgent(d.closeDate)&&PRE_INSTALL_STAGES.includes(stage);
+  const sub=[d.prod, d.powerType, d.option?`[${d.option}]`:'', d.site?`📍${d.site}`:''].filter(Boolean).join(' · ');
+  return `<div class="pj-card${hot?' hot':''}" onclick="openDeal(${d.id})">
+    <div class="pj-r1"><div class="pj-nm">${d.name}</div>${d.priority?'<span class="pj-pill" style="background:#fef9c3;color:#854d0e">중요</span>':''}${pipeDdayPill(d)}</div>
+    <div class="pj-co">${sub||d.co||'&nbsp;'}</div>
+    <div class="pj-ft"><div class="av av${idx}" style="width:18px;height:18px;font-size:8px">${(d.person||'').slice(-2)}</div><div class="pj-ps">${d.person||''}</div>${pipeStalePill(d)}<div class="pj-amt"${hot?' style="color:var(--accent)"':''}>${fmt(d.amt)}</div></div>
+  </div>`;
+}
 function renderPipeline() {
+  const host=document.getElementById('pipeAirWrap'); if(!host) return;
   // 담당자 드롭다운 채우기 (최초 1회)
   const pSel=document.getElementById('pipePersonF');
   if(pSel && pSel.options.length<=1){
@@ -3632,22 +3823,79 @@ function renderPipeline() {
   const src=deals.filter(d=>
     (!q||(d.name||'').toLowerCase().includes(q)||(d.co||'').toLowerCase().includes(q)||(d.prod||'').toLowerCase().includes(q)||(d.site||'').toLowerCase().includes(q)||(d.option||'').toLowerCase().includes(q))&&
     (!pf||d.person===pf));
-  document.getElementById('kanbanBoard').innerHTML=STAGES.map((s,i)=>{
-    const cd=src.filter(d=>dispStage(d)===s);
-    const tot=cd.reduce((a,d)=>a+d.amt,0);
-    const desc=STAGE_DESC[s]||'';
-    const expanded=_pipeExpanded.has(i);
-    const shown=expanded?cd:cd.slice(0,PIPE_MAX_CARDS);
-    const hiddenCnt=cd.length-PIPE_MAX_CARDS;
-    const moreBtn=cd.length>PIPE_MAX_CARDS
-      ? `<button class="add-btn" style="border-style:solid;border-color:var(--accent);color:var(--accent);background:var(--al);font-weight:600" onclick="togglePipeMore(${i})">${expanded?'접기 ▲':`더보기 (+${hiddenCnt}건) ▼`}</button>`
-      : '';
-    return`<div class="kanban-col">
-      <div class="col-hd"><div class="col-dot d-${STAGE_KEYS[i]}"></div><div style="flex:1;min-width:0"><div class="col-name">${s}</div>${desc?`<div style="font-size:10.5px;color:var(--t3);margin-top:2px;line-height:1.4;font-weight:400">${desc}</div>`:''}</div><div class="col-meta" style="flex-shrink:0;align-self:flex-start;margin-top:2px">${cd.length} · ${tot>0?fmt(tot):'₩0'}</div></div>
-      <div class="col-body">${shown.map(d=>dealCardHtml(d)).join('')}${moreBtn}</div>
-      ${!['세금계산서발행 전','세금계산서발행 완료','실패·보류'].includes(s)?`<div class="col-foot"><button class="add-btn" onclick="openNewDealModal('${s}')">+ 딜 추가</button></div>`:''}
+  const by = s => src.filter(d=>dispStage(d)===s);
+  // ── 저니 라인 (아래 박스와 동일한 플렉스 구조 → 단차 정렬) ──
+  const counts = PIPE_ACTIVE_STAGES.map(s=>by(s).length);
+  const sums   = PIPE_ACTIVE_STAGES.map(s=>by(s).reduce((a,d)=>a+d.amt,0));
+  const maxSum = Math.max(...sums,1);
+  const lastA  = PIPE_ACTIVE_STAGES.length-1;
+  const jcellsActive = PIPE_ACTIVE_STAGES.map((s,i)=>{
+    const big = sums[i]===maxSum && sums[i]>0;
+    const c = PIPE_COLOR[s];
+    const prevC = i>0 ? PIPE_COLOR[PIPE_ACTIVE_STAGES[i-1]] : c;
+    const seg = `<div class="pj-jseg" style="background:linear-gradient(90deg,${prevC},${c});left:${i===0?'50%':'-9px'};right:${i===lastA?'50%':'0'}"></div>`;
+    return `<div class="pj-jcell" onclick="pipeJumpTo(${i})" title="${STAGE_DESC[s]||s}">
+      ${seg}
+      <div class="pj-jdot${big?' big':''}" style="background:${c}">${i+1}</div>
+      <div class="pj-jnm">${s}</div>
+      <div class="pj-jamt"${big?` style="font-weight:800;color:${c}"`:''}>${sums[i]>0?fmt(sums[i]):'–'}${counts[i]?` · ${counts[i]}건`:''}</div>
     </div>`;
   }).join('');
+  // 종료 단계 자리 맞춤 셀 — 접힘: 세로 바 폭 스페이서 / 펼침: 미니 노드
+  const closedTheme={'세금계산서발행 전':{short:'발행 전',ic:'🧾'},'세금계산서발행 완료':{short:'발행 완료',ic:'✅'},'실패·보류':{short:'실패·보류',ic:'⏸'}};
+  const jcellsClosed = PIPE_CLOSED_STAGES.map((s,ci)=>{
+    if(!_pipeOpenClosed.has(s)) return `<div class="pj-jspacer"></div>`;
+    const cd=by(s); const c=PIPE_COLOR[s];
+    const tot=cd.reduce((a,d)=>a+d.amt,0);
+    return `<div class="pj-jcell" title="${s}">
+      <div class="pj-jdot" style="background:${c}">${STAGES.indexOf(s)+1}</div>
+      <div class="pj-jnm">${closedTheme[s]?.short||s}</div>
+      <div class="pj-jamt">${tot>0?fmt(tot):'–'}${cd.length?` · ${cd.length}건`:''}</div>
+    </div>`;
+  }).join('');
+  // ── 단계 색 박스 ──
+  const boxes = PIPE_ACTIVE_STAGES.map((s,i)=>{
+    const cd=by(s);
+    const expanded=_pipeExpanded.has(s);
+    const shown=expanded?cd:cd.slice(0,PIPE_MAX_CARDS);
+    const hid=cd.length-PIPE_MAX_CARDS;
+    const more=cd.length>PIPE_MAX_CARDS?`<button class="pj-more" onclick="togglePipeMore('${s}')">${expanded?'접기 ▲':`더보기 (+${hid}건) ▼`}</button>`:'';
+    const c=PIPE_COLOR[s];
+    return `<div class="pj-box" id="pipe-box-${i}" style="background:${c}14;border-color:${c}2e">
+      <div class="pj-boxhd" style="color:${c}"><div class="bn">${s}</div><div class="bs">${cd.length} · ${cd.length?fmt(sums[i]):'₩0'}</div></div>
+      ${shown.map(pipeCardHtml).join('')}
+      ${more}
+      <div class="pj-add" onclick="openNewDealModal('${s}')">＋ 딜 추가</div>
+    </div>`;
+  }).join('');
+  // ── 종료 단계: 오른쪽 세로 바 ↔ 제자리 펼침 ──
+  const closedCols = PIPE_CLOSED_STAGES.map((s,ci)=>{
+    const cd=by(s); const c=PIPE_COLOR[s];
+    const t=closedTheme[s]||{short:s,ic:''};
+    // 접힌 상태: 좁은 세로 바 (색 + 건수)
+    if(!_pipeOpenClosed.has(s)){
+      return `<div class="pj-vbar" style="background:${c}16;border-color:${c}45;color:${c}" onclick="togglePipeClosed('${s}')" title="${s} 펼치기">
+        <span class="cnt">${cd.length}</span><span class="vtxt">${t.short}</span>
+      </div>`;
+    }
+    // 펼친 상태: 같은 줄 안에서 일반 박스로 확장
+    const expanded=_pipeExpanded.has(s);
+    const shown=expanded?cd:cd.slice(0,PIPE_MAX_CARDS);
+    const hid=cd.length-PIPE_MAX_CARDS;
+    const more=cd.length>PIPE_MAX_CARDS?`<button class="pj-more" onclick="togglePipeMore('${s}')">${expanded?'접기 ▲':`더보기 (+${hid}건) ▼`}</button>`:'';
+    const tot=cd.reduce((a,d)=>a+d.amt,0);
+    return `<div class="pj-box" id="pipe-box-closed-${ci}" style="background:${c}12;border-color:${c}45;outline:1.5px solid ${c}55">
+      <div class="pj-boxhd" style="color:${c}"><div class="bn" title="${s}">${t.ic} ${t.short}</div><div class="bs">${cd.length} · ${tot>0?fmt(tot):'₩0'}</div><div class="pj-fold" style="color:${c}" onclick="togglePipeClosed('${s}')" title="접기">◀ 접기</div></div>
+      ${shown.map(pipeCardHtml).join('')||'<div style="font-size:11px;color:var(--t3);text-align:center;padding:10px 0">딜 없음</div>'}
+      ${more}
+    </div>`;
+  }).join('');
+  host.innerHTML = `<div class="pj-air">
+    <div class="pj-scroll"><div class="pj-inner">
+      <div class="pj-jrow">${jcellsActive}${jcellsClosed}</div>
+      <div class="pj-cols">${boxes}${closedCols}</div>
+    </div></div>
+  </div>`;
 }
 function dealCardHtml(d) {
   const urgent=isUrgent(d.closeDate)&&!['실패·보류','구두합의'].includes(d.stage);
@@ -4049,6 +4297,7 @@ function buildDealInfo(d) {
       ${d.linkedProject?`<div><div class="det-label">연결 프로젝트</div><div style="font-weight:600;color:var(--accent);margin-top:3px;cursor:pointer" onclick="openProjectDetail(${d.linkedProject});closeModal('dealModal')">프로젝트 보기 →</div></div>`:''}
     </div>`;
   } else { pi.style.display='none'; }
+  fillDealStatusWidget(d);
   // 합계 초기 계산
   setTimeout(calcDeTotal, 0);
 }
@@ -4085,6 +4334,7 @@ function switchMTab(ctx,name,el){
   el.classList.add('on');document.getElementById(`${ctx}-tab-${name}`).classList.add('on');
   if(ctx==='deal'&&name==='edit')buildDealEdit(curDealId);
   if(ctx==='deal'&&name==='log')buildDealLog(curDealId);
+  if(ctx==='deal'&&name==='site'){_siteEdit=false;buildDealSite(curDealId);}
 }
 function buildDealEdit(id){
   const d = deals.find(x=>x.id===id); if(!d) return;
@@ -4377,33 +4627,234 @@ function _doChangeDealStage(d, os, stage){
   renderDashboard();
   if(document.getElementById('view-pipeline').classList.contains('active'))renderPipeline();
 }
+// ══════════════════════════════════════════════
+// 활동 기록 — 구조화 타임라인 + 팝업 입력
+// ══════════════════════════════════════════════
+const ACT_TYPES=[['현장방문','🏭'],['미팅','🤝'],['통화','📞'],['카톡','💬'],['이메일','✉️'],['시연·데모','🎥'],['메모','📝']];
+const ACT_ICON={'현장방문':'🏭','미팅':'🤝','통화':'📞','카톡':'💬','이메일':'✉️','시연·데모':'🎥','메모':'📝','제안':'📄','계약':'📄','단계변경':'🔀','수정':'✏️'};
+const ACT_OUT={positive:{label:'👍 긍정',bg:'var(--gl)',c:'var(--gt)'},hold:{label:'😐 보류',bg:'#f3f4f6',c:'#6b7280'},issue:{label:'⚠️ 이슈',bg:'var(--rl)',c:'var(--rt)'}};
+const ACT_QUICK=[['📤 견적 발송','메모','견적 발송'],['📞 통화 (부재중)','통화','통화 시도 — 부재중'],['⏳ 회신 대기','메모','회신 대기 중'],['📄 계약서 전달','메모','계약서 전달']];
+let _actFilter='';
+function actDateOf(l){
+  if(l.activityDate) return l.activityDate;
+  const m=(l.time||'').match(/(\d{4})[.\-\/]\s?(\d{1,2})[.\-\/]\s?(\d{1,2})/);
+  return m?`${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`:'';
+}
+function actDday(ds){ const n=Math.round((new Date(ds)-new Date())/864e5); if(isNaN(n)) return ''; return n<0?` (D+${-n})`:` (D-${n})`; }
+function setActFilter(t){ _actFilter=t; buildDealLog(curDealId); }
 function buildDealLog(id){
   const d=deals.find(x=>x.id===id); if(!d) return;
-  const logs=[...(d.logs||[])].reverse();
-  const tc={메모:'av6',통화:'av1',미팅:'av0',카톡:'av2',이메일:'av4',제안:'av3',계약:'av1',단계변경:'av4',수정:'av5'};
-  document.getElementById('dealLog').innerHTML=logs.length?logs.map(l=>`
-    <div class="tline-item">
-      <div class="tline-dot ${tc[l.type]||'av6'}">${l.type.slice(0,2)}</div>
-      <div class="tline-body">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
-          ${l.dept?`<span class="tline-dept ${ROLE_DEPT[l.dept]||'dept-sales'}">${{sales:'영업',rd:'R&D',install:'설치',admin:'관리자'}[l.dept]||l.dept}</span>`:''}
-          <span style="font-size:10px;color:var(--t3)">${l.time}</span>
-        </div>
-        <div class="tline-text">${l.text}</div>
-        ${l.person?`<div class="tline-meta">${l.person}</div>`:''}
-      </div>
-    </div>`).join(''):'<div style="color:var(--t3);font-size:13px;padding:8px 0">기록된 활동이 없습니다.</div>';
+  const host=document.getElementById('dealActTimeline'); if(!host) return;
+  const logs=(d.logs||[]).map((l,idx)=>({...l,_idx:idx}));
+  // 유형 필터 칩
+  const typesPresent=[...new Set(logs.map(l=>l.type))];
+  const chipsEl=document.getElementById('actFilterChips');
+  if(chipsEl) chipsEl.innerHTML=[
+    `<button class="act-fchip${!_actFilter?' on':''}" onclick="setActFilter('')">전체 ${logs.length}</button>`,
+    ...ACT_TYPES.filter(([t])=>typesPresent.includes(t)).map(([t,ic])=>`<button class="act-fchip${_actFilter===t?' on':''}" onclick="setActFilter('${t}')">${ic} ${t} ${logs.filter(l=>l.type===t).length}</button>`)
+  ].join('');
+  let list=logs.filter(l=>!_actFilter||l.type===_actFilter);
+  // 활동일 최신순 정렬 (같은 날은 입력 역순)
+  list.sort((a,b)=>{ const da=actDateOf(a),db2=actDateOf(b); if(da!==db2) return db2.localeCompare(da); return b._idx-a._idx; });
+  if(!list.length){ host.innerHTML='<div style="color:var(--t3);font-size:13px;padding:20px 0;text-align:center">기록된 활동이 없습니다.<br>우측 상단 [＋ 활동 기록 추가]로 첫 기록을 남겨보세요.</div>'; return; }
+  const todayStr=new Date().toISOString().slice(0,10);
+  let html='', lastDay='__';
+  list.forEach(l=>{
+    const day=actDateOf(l)||'날짜 미상';
+    if(day!==lastDay){
+      lastDay=day;
+      let label=day;
+      if(/^\d{4}-\d{2}-\d{2}$/.test(day)){ const p=day.split('-'); label=`${parseInt(p[1])}월 ${parseInt(p[2])}일`+(day===todayStr?' (오늘)':''); }
+      html+=`<div class="act-day"><div class="d">${label}</div><div class="ln"></div></div>`;
+    }
+    // 시스템 기록(단계변경/수정)은 한 줄 컴팩트
+    if(['단계변경','수정'].includes(l.type)){
+      html+=`<div class="act-sys">${ACT_ICON[l.type]||'•'} ${l.type} — ${l.text} <span>${l.person||''}</span></div>`;
+      return;
+    }
+    const out=l.outcomeStatus&&ACT_OUT[l.outcomeStatus];
+    const meta=[l.place?`📍 ${l.place}`:'',l.attendees?`👤 ${l.attendees}`:'',l.person||''].filter(Boolean).join(' · ');
+    const blocks=[
+      l.purpose?`<div class="act-blk" style="border-color:#c7d2fe"><div class="bl">목적</div><div class="bt">${l.purpose}</div></div>`:'',
+      l.discussion?`<div class="act-blk" style="border-color:#e9d5ff"><div class="bl">논의 내용</div><div class="bt">${l.discussion}</div></div>`:'',
+      l.outcome?`<div class="act-blk" style="border-color:#bbf7d0"><div class="bl">결과·결론</div><div class="bt">${l.outcome}</div></div>`:'',
+      (!l.purpose&&!l.discussion&&!l.outcome&&l.text)?`<div class="act-blk" style="border-color:var(--s3)"><div class="bt">${l.text}</div></div>`:''
+    ].join('');
+    const next=l.nextAction?`<div class="act-next${l.nextActionDone?' done':''}"><input type="checkbox" ${l.nextActionDone?'checked':''} onchange="toggleActNext(${d.id},${l._idx})"><div class="nt">${l.nextAction}</div>${l.nextActionDate?`<div class="nd">📅 ${l.nextActionDate.slice(5).replace('-','/')}${l.nextActionDone?'':actDday(l.nextActionDate)}</div>`:''}</div>`:'';
+    html+=`<div class="act-item"><div class="act-ic">${ACT_ICON[l.type]||'📝'}</div>
+      <div class="act-bd">
+        <div class="r1"><span class="ty">${l.type}</span>${out?`<span class="act-pill" style="background:${out.bg};color:${out.c}">${out.label}</span>`:''}<span class="meta">${meta}</span></div>
+        ${blocks}${next}
+      </div></div>`;
+  });
+  host.innerHTML=html;
 }
-function addDealNote(){
-  const txt=document.getElementById('dealNoteText').value.trim();
-  const type=document.getElementById('dealNoteType').value;
-  if(!txt||!curDealId) return;
-  const d=deals.find(x=>x.id===curDealId);
-  const newLog = {type,text:txt,time:nowStr(),person:CU?.name||'',dept:CU?.role||'sales'};
-  d.logs.push(newLog);
-  addLogToDB(d.id, newLog);
-  document.getElementById('dealNoteText').value='';
-  buildDealLog(curDealId);
+async function toggleActNext(dealId, idx){
+  const d=deals.find(x=>x.id===dealId); const l=d?.logs?.[idx]; if(!l) return;
+  l.nextActionDone=!l.nextActionDone;
+  if(sb&&l.id){ try{ await sb.from('deal_logs').update({next_action_done:l.nextActionDone}).eq('id',l.id); }catch(e){} }
+  buildDealLog(dealId);
+  fillDealStatusWidget(d);
+}
+// ── 활동 기록 팝업 ──
+function openActModal(){
+  if(!curDealId) return;
+  const dt=document.getElementById('act-date'); if(dt) dt.value=new Date().toISOString().slice(0,10);
+  ['act-place','act-people','act-purpose','act-discussion','act-outcome','act-next','act-next-date'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+  document.getElementById('act-outcome-status').value='';
+  const cc=document.getElementById('act-cal-check'); if(cc) cc.checked=true;
+  renderActTypeChips('현장방문');
+  renderActOutChips('');
+  renderActQuickChips();
+  openModal('actModal');
+}
+function renderActTypeChips(sel){
+  document.getElementById('act-type').value=sel;
+  document.getElementById('act-type-chips').innerHTML=ACT_TYPES.map(([t,ic])=>`<button type="button" class="inflow-chip${t===sel?' selected':''}" style="${t===sel?'background:var(--al);border-color:var(--accent);color:var(--at)':''}" onclick="renderActTypeChips('${t}')">${ic} ${t}</button>`).join('');
+  const showPlace=['현장방문','미팅','시연·데모'].includes(sel);
+  const pw=document.getElementById('act-place-wrap'); if(pw) pw.style.display=showPlace?'':'none';
+}
+function renderActOutChips(sel){
+  document.getElementById('act-outcome-status').value=sel;
+  document.getElementById('act-out-chips').innerHTML=Object.entries(ACT_OUT).map(([k,v])=>`<button type="button" class="inflow-chip${k===sel?' selected':''}" style="${k===sel?`background:${v.bg};border-color:${v.c};color:${v.c}`:''}" onclick="renderActOutChips('${k===sel?'':k}')">${v.label}</button>`).join('');
+}
+function renderActQuickChips(){
+  document.getElementById('act-quick-chips').innerHTML=ACT_QUICK.map((q,i)=>`<button type="button" class="inflow-chip" style="padding:4px 11px;font-size:11px" onclick="quickActivity(${i})">${q[0]}</button>`).join('');
+}
+async function quickActivity(i){
+  const q=ACT_QUICK[i]; const d=deals.find(x=>x.id===curDealId); if(!q||!d) return;
+  const log={type:q[1],text:q[2],person:CU?.name||'',dept:CU?.role||'sales',time:nowStr(),activityDate:new Date().toISOString().slice(0,10),nextActionDone:false};
+  d.logs.push(log);
+  await saveActLogToDB(d, log);
+  closeModal('actModal');
+  showToast(`기록됨: ${q[2]} ✓`);
+  buildDealLog(d.id); fillDealStatusWidget(d);
+}
+async function saveActLogToDB(d, log){
+  if(!sb) return;
+  const payload={deal_id:d.id,type:log.type,text:log.text||'',person:log.person,dept:log.dept,
+    activity_date:log.activityDate||null,place:log.place||null,attendees:log.attendees||null,
+    purpose:log.purpose||null,discussion:log.discussion||null,outcome:log.outcome||null,outcome_status:log.outcomeStatus||null,
+    next_action:log.nextAction||null,next_action_date:log.nextActionDate||null,next_action_done:false};
+  try{
+    let {data,error}=await sb.from('deal_logs').insert([payload]).select().single();
+    if(error&&(error.code==='42703'||error.message?.includes('column'))){
+      // 새 컬럼이 없으면 레거시 한 줄 형식으로 합쳐 저장
+      const legacy=[log.place?`📍${log.place}`:'',log.attendees?`👤${log.attendees}`:'',log.purpose?`목적: ${log.purpose}`:'',log.discussion?`논의: ${log.discussion}`:'',log.outcome?`결과: ${log.outcome}`:'',log.nextAction?`다음 액션: ${log.nextAction}${log.nextActionDate?` (${log.nextActionDate})`:''}`:''].filter(Boolean).join(' / ')||log.text||'';
+      ({data,error}=await sb.from('deal_logs').insert([{deal_id:d.id,type:log.type,text:legacy,person:log.person,dept:log.dept}]).select().single());
+      showToast('deal_logs에 활동 컬럼이 없어 간단 형식으로 저장했습니다. 안내드린 SQL 실행 후 전체 기능이 켜집니다','warn');
+    }
+    if(data) log.id=data.id;
+  }catch(e){ console.error('saveActLogToDB:', e); }
+}
+async function saveActivity(){
+  const d=deals.find(x=>x.id===curDealId); if(!d) return;
+  const g=id=>document.getElementById(id)?.value.trim()||'';
+  const log={type:document.getElementById('act-type').value||'메모',
+    activityDate:document.getElementById('act-date')?.value||new Date().toISOString().slice(0,10),
+    place:g('act-place'),attendees:g('act-people'),purpose:g('act-purpose'),discussion:g('act-discussion'),outcome:g('act-outcome'),
+    outcomeStatus:document.getElementById('act-outcome-status').value||'',
+    nextAction:g('act-next'),nextActionDate:document.getElementById('act-next-date')?.value||'',nextActionDone:false,
+    person:CU?.name||'',dept:CU?.role||'sales',time:nowStr()};
+  if(!log.purpose&&!log.discussion&&!log.outcome){ showToast('목적·논의 내용·결과 중 한 가지는 입력해주세요','warn'); return; }
+  log.text=log.outcome||log.discussion||log.purpose;
+  d.logs.push(log);
+  await saveActLogToDB(d, log);
+  // 다음 액션 → 캘린더 자동 등록
+  if(log.nextAction&&log.nextActionDate&&document.getElementById('act-cal-check')?.checked){
+    try{
+      const ev={title:`[액션] ${log.nextAction} — ${d.name}`,event_date:log.nextActionDate,category:'other',source:'manual',linked_id:d.id,company_name:d.co,person:CU?.name||null,description:'딜 활동 다음 액션',created_by:CU?.name||null};
+      const saved=await saveCalendarEventToDB(ev);
+      if(saved&&typeof calEvents!=='undefined'&&Array.isArray(calEvents)) calEvents.push(saved);
+    }catch(e){}
+  }
+  closeModal('actModal');
+  showToast('활동이 기록됐습니다 ✓');
+  buildDealLog(d.id);
+  fillDealStatusWidget(d);
+}
+// ── 현재 상황 위젯 (딜 정보 탭 상단) ──
+function fillDealStatusWidget(d){
+  const w=document.getElementById('dealStatusWidget'); if(!w||!d) return;
+  const all=(d.logs||[]).map((l,idx)=>({...l,_idx:idx}));
+  const rich=all.filter(l=>!['단계변경','수정'].includes(l.type)&&(l.outcome||l.discussion||l.purpose||l.text));
+  let last=null;
+  rich.forEach(l=>{ if(!last){last=l;return;} const da=actDateOf(last),db2=actDateOf(l); if(db2>da||(db2===da&&l._idx>last._idx)) last=l; });
+  const pending=all.filter(l=>l.nextAction&&!l.nextActionDone);
+  if(!last&&!pending.length){ w.innerHTML=''; return; }
+  const out=last?.outcomeStatus&&ACT_OUT[last.outcomeStatus];
+  const dayLabel=last?actDateOf(last):'';
+  w.innerHTML=`<div class="deal-statw">
+    <div class="h">⚡ <b>현재 상황</b>${out?`<span class="act-pill" style="background:${out.bg};color:${out.c};margin-left:4px">${out.label}</span>`:''}<span>${last?`마지막 활동 ${dayLabel} · ${ACT_ICON[last.type]||''} ${last.type}`:''}</span></div>
+    ${last?`<div class="txt">${last.outcome||last.discussion||last.purpose||last.text||''}</div>`:''}
+    ${pending.map(p=>`<div class="act-next" style="margin-top:8px"><input type="checkbox" onchange="toggleActNext(${d.id},${p._idx})"><div class="nt">${p.nextAction}</div>${p.nextActionDate?`<div class="nd">📅 ${p.nextActionDate.slice(5).replace('-','/')}${actDday(p.nextActionDate)}</div>`:''}</div>`).join('')}
+  </div>`;
+}
+// ══════════════════════════════════════════════
+// 현장·설치 정보 탭
+// ══════════════════════════════════════════════
+const SITE_SECTIONS=[
+  {t:'📍 현장',fs:[['addr','설치 현장 주소',1],['mgr','현장 담당자',0],['env','현장 환경',0],['access','출입 절차',0],['worktime','작업 가능 시간',0]]},
+  {t:'🚜 대상 장비',fs:[['truck','지게차 기종·대수',0],['power','동력',0],['product','설치 제품',0],['optionEq','옵션',0]]},
+  {t:'🔧 설치 사양',fs:[['camPos','카메라 위치',0],['monPos','모니터 위치',0],['wiring','배선·전원',0],['bracket','브라켓',0],['notes','고객 요청·특이사항',1]]},
+];
+let _siteEdit=false;
+function siteDefaults(d){
+  const si={...(d.siteInfo||{})};
+  if(!si.addr&&d.site) si.addr=d.site;
+  if(!si.power&&d.powerType) si.power=d.powerType;
+  if(!si.product&&d.prod) si.product=d.prod;
+  return si;
+}
+function buildDealSite(id){
+  const d=deals.find(x=>x.id===id); if(!d) return;
+  const host=document.getElementById('dealSiteBody'); if(!host) return;
+  const si=siteDefaults(d);
+  const secHtml=SITE_SECTIONS.map(sec=>`
+    <div class="site-shead"><div class="t">${sec.t}</div><div class="ln"></div></div>
+    <div class="site-grid">${sec.fs.map(f=>{
+      const k=f[0],label=f[1],full=f[2];
+      const v=si[k]||'';
+      if(_siteEdit) return `<div class="site-item${full?' full':''}"><div class="sl">${label}</div><input class="form-input site-in" data-k="${k}" value="${(v+'').replace(/"/g,'&quot;')}" style="margin-top:4px;font-size:13px"></div>`;
+      return `<div class="site-item${full?' full':''}"><div class="sl">${label}</div><div class="sv${v?'':' muted'}">${v||'미정'}</div></div>`;
+    }).join('')}</div>`).join('');
+  host.innerHTML=`
+    <div style="display:flex;gap:6px;justify-content:flex-end;margin-bottom:4px;flex-wrap:wrap">
+      ${_siteEdit
+        ? `<button class="btn btn-p btn-sm" onclick="saveDealSite(${d.id})">저장</button><button class="btn btn-s btn-sm" onclick="_siteEdit=false;buildDealSite(${d.id})">취소</button>`
+        : `<button class="btn btn-s btn-sm" onclick="_siteEdit=true;buildDealSite(${d.id})">✏️ 수정</button><button class="btn btn-s btn-sm" onclick="copySiteInfo(${d.id})">📋 설치팀에 공유 (복사)</button>`}
+    </div>
+    ${secHtml}`;
+}
+async function saveDealSite(id){
+  const d=deals.find(x=>x.id===id); if(!d) return;
+  const si={...(d.siteInfo||{})};
+  document.querySelectorAll('#dealSiteBody .site-in').forEach(inp=>{ si[inp.dataset.k]=inp.value.trim(); });
+  d.siteInfo=si;
+  if(sb){
+    const {error}=await sb.from('deals').update({site_info:si}).eq('id',id);
+    if(error){
+      if(error.code==='42703'||error.message?.includes('column')){
+        showToast('deals에 site_info 컬럼이 없습니다. Supabase SQL 실행: ALTER TABLE deals ADD COLUMN site_info jsonb;','error');
+      } else showToast('저장 실패: '+error.message,'error');
+      _siteEdit=false; buildDealSite(id); return;
+    }
+  }
+  _siteEdit=false;
+  showToast('현장 정보가 저장됐습니다 ✓');
+  buildDealSite(id);
+}
+function copySiteInfo(id){
+  const d=deals.find(x=>x.id===id); if(!d) return;
+  const si=siteDefaults(d);
+  const lines=[`■ ${d.name} — 현장·설치 정보`,''];
+  SITE_SECTIONS.forEach(sec=>{
+    const secLines=sec.fs.filter(f=>si[f[0]]).map(f=>`- ${f[1]}: ${si[f[0]]}`);
+    if(secLines.length){ lines.push(`[${sec.t}]`); lines.push(...secLines); lines.push(''); }
+  });
+  const txt=lines.join('\n');
+  try{ navigator.clipboard.writeText(txt).then(()=>showToast('현장 정보가 복사됐습니다 — 카톡·문자에 붙여넣으세요 ✓')); }
+  catch(e){ showToast('복사에 실패했습니다','warn'); }
 }
 function createProjectFromDeal(){
   const d=deals.find(x=>x.id===curDealId); if(!d) return;
@@ -5362,12 +5813,24 @@ async function loadDealsFromDB(){
       recvExpectedDate: d.recv_expected_date||'',
       taxInvoiceDate: d.tax_invoice_date||'',
       taxInvoiceIssued: d.tax_invoice_issued||false,
+      siteInfo: d.site_info||{},
       logs: dbLogs.filter(l=>l.deal_id===d.id).map(l=>({
+        id: l.id,
         type: l.type,
         text: l.text,
         person: l.person||'',
         dept: l.dept||'sales',
-        time: new Date(l.created_at).toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})
+        time: new Date(l.created_at).toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}),
+        activityDate: l.activity_date||'',
+        place: l.place||'',
+        attendees: l.attendees||'',
+        purpose: l.purpose||'',
+        discussion: l.discussion||'',
+        outcome: l.outcome||'',
+        outcomeStatus: l.outcome_status||'',
+        nextAction: l.next_action||'',
+        nextActionDate: l.next_action_date||'',
+        nextActionDone: l.next_action_done||false
       }))
     }));
     dealIdCnt = Math.max(...deals.map(d=>d.id), 0) + 1;
