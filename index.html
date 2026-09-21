@@ -470,6 +470,9 @@ tbody tr:hover{background:var(--s2)}
 .act-next.done .nt{text-decoration:line-through}
 .act-sys{font-size:11px;color:var(--t3);padding:2px 0 2px 45px;margin-bottom:6px}
 .act-sys span{margin-left:6px;font-size:10px}
+.act-photos{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.act-photos img{width:76px;height:76px;object-fit:cover;border-radius:8px;border:1px solid var(--bd);cursor:zoom-in;transition:transform .12s}
+.act-photos img:hover{transform:scale(1.04)}
 /* 현재 상황 위젯 */
 .deal-statw{background:linear-gradient(135deg,#eff4ff,#f5f3ff);border:1px solid #dbe4ff;border-radius:13px;padding:12px 14px;margin-bottom:14px}
 .deal-statw .h{display:flex;align-items:center;gap:6px;margin-bottom:7px;flex-wrap:wrap}
@@ -2068,6 +2071,11 @@ tbody tr:hover{background:var(--s2)}
           <label class="form-label">결과·결론</label>
           <div id="act-out-chips" style="display:flex;gap:5px;margin:5px 0 7px"></div>
           <textarea class="form-textarea" id="act-outcome" rows="2"></textarea>
+        </div>
+        <div class="form-field full">
+          <label class="form-label">사진 첨부</label>
+          <input type="file" id="act-photo-input" accept="image/*" multiple style="display:none" onchange="handleActPhotos(this)">
+          <div id="act-photo-previews" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:5px"></div>
         </div>
         <div class="form-field"><label class="form-label">다음 액션</label><input class="form-input" id="act-next" placeholder="예: LED 포함 재견적 발송"></div>
         <div class="form-field"><label class="form-label">액션 예정일</label><input class="form-input" id="act-next-date" type="date"></div>
@@ -4681,10 +4689,11 @@ function buildDealLog(id){
       (!l.purpose&&!l.discussion&&!l.outcome&&l.text)?`<div class="act-blk" style="border-color:var(--s3)"><div class="bt">${l.text}</div></div>`:''
     ].join('');
     const next=l.nextAction?`<div class="act-next${l.nextActionDone?' done':''}"><input type="checkbox" ${l.nextActionDone?'checked':''} onchange="toggleActNext(${d.id},${l._idx})"><div class="nt">${l.nextAction}</div>${l.nextActionDate?`<div class="nd">📅 ${l.nextActionDate.slice(5).replace('-','/')}${l.nextActionDone?'':actDday(l.nextActionDate)}</div>`:''}</div>`:'';
+    const photos=(l.photos&&l.photos.length)?`<div class="act-photos">${l.photos.map(u=>`<img src="${u}" loading="lazy" onclick="openPhotoView('${u}')">`).join('')}</div>`:'';
     html+=`<div class="act-item"><div class="act-ic">${ACT_ICON[l.type]||'📝'}</div>
       <div class="act-bd">
         <div class="r1"><span class="ty">${l.type}</span>${out?`<span class="act-pill" style="background:${out.bg};color:${out.c}">${out.label}</span>`:''}<span class="meta">${meta}</span></div>
-        ${blocks}${next}
+        ${blocks}${photos}${next}
       </div></div>`;
   });
   host.innerHTML=html;
@@ -4703,10 +4712,78 @@ function openActModal(){
   ['act-place','act-people','act-purpose','act-discussion','act-outcome','act-next','act-next-date'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
   document.getElementById('act-outcome-status').value='';
   const cc=document.getElementById('act-cal-check'); if(cc) cc.checked=true;
+  _actPhotos.forEach(p=>URL.revokeObjectURL(p.preview)); _actPhotos=[];
+  renderActPhotoPreviews();
   renderActTypeChips('현장방문');
   renderActOutChips('');
   renderActQuickChips();
   openModal('actModal');
+}
+// ── 사진 첨부 ──
+const ACT_PHOTO_BUCKET='activity-photos';
+let _actPhotos=[]; // {blob, preview}
+function compressActImage(file){
+  return new Promise(res=>{
+    const img=new Image();
+    img.onload=()=>{
+      const MAX=1600;
+      let w=img.width,h=img.height;
+      if(w>MAX||h>MAX){ const r=Math.min(MAX/w,MAX/h); w=Math.round(w*r); h=Math.round(h*r); }
+      const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      cv.toBlob(b=>res(b||file),'image/jpeg',0.85);
+      URL.revokeObjectURL(img.src);
+    };
+    img.onerror=()=>res(file);
+    img.src=URL.createObjectURL(file);
+  });
+}
+async function handleActPhotos(input){
+  const files=[...(input.files||[])].filter(f=>f.type.startsWith('image/'));
+  input.value='';
+  for(const f of files){
+    if(_actPhotos.length>=8){ showToast('사진은 최대 8장까지 첨부할 수 있습니다','warn'); break; }
+    const blob=await compressActImage(f);
+    _actPhotos.push({blob, preview:URL.createObjectURL(blob)});
+  }
+  renderActPhotoPreviews();
+}
+function removeActPhoto(i){
+  const p=_actPhotos[i]; if(p) URL.revokeObjectURL(p.preview);
+  _actPhotos.splice(i,1);
+  renderActPhotoPreviews();
+}
+function renderActPhotoPreviews(){
+  const host=document.getElementById('act-photo-previews'); if(!host) return;
+  host.innerHTML=_actPhotos.map((p,i)=>`<div style="position:relative;width:64px;height:64px">
+    <img src="${p.preview}" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--bd)">
+    <button type="button" onclick="removeActPhoto(${i})" style="position:absolute;top:-6px;right:-6px;width:19px;height:19px;border-radius:50%;border:none;background:#111;color:#fff;font-size:11px;line-height:1;cursor:pointer">✕</button>
+  </div>`).join('')
+  +`<button type="button" onclick="document.getElementById('act-photo-input').click()" style="width:64px;height:64px;border:1.5px dashed var(--bd);border-radius:8px;background:var(--s2);color:var(--t3);font-size:11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px"><span style="font-size:17px">📷</span>추가</button>`;
+}
+async function uploadActPhotos(dealId){
+  if(!_actPhotos.length) return [];
+  if(!sb){ showToast('DB 미연결 상태라 사진은 저장되지 않습니다','warn'); return []; }
+  const urls=[];
+  for(let i=0;i<_actPhotos.length;i++){
+    const path=`deal${dealId}/${Date.now()}_${i}.jpg`;
+    const {error}=await sb.storage.from(ACT_PHOTO_BUCKET).upload(path,_actPhotos[i].blob,{contentType:'image/jpeg'});
+    if(error){
+      console.error('photo upload:',error);
+      showToast('사진 업로드 실패 — Storage 버킷(activity-photos) 설정을 확인해주세요','warn');
+      return urls;
+    }
+    const {data}=sb.storage.from(ACT_PHOTO_BUCKET).getPublicUrl(path);
+    if(data?.publicUrl) urls.push(data.publicUrl);
+  }
+  return urls;
+}
+function openPhotoView(url){
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out;padding:24px';
+  ov.innerHTML=`<img src="${url}" style="max-width:94%;max-height:94%;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.5)">`;
+  ov.onclick=()=>ov.remove();
+  document.body.appendChild(ov);
 }
 function renderActTypeChips(sel){
   document.getElementById('act-type').value=sel;
@@ -4735,9 +4812,16 @@ async function saveActLogToDB(d, log){
   const payload={deal_id:d.id,type:log.type,text:log.text||'',person:log.person,dept:log.dept,
     activity_date:log.activityDate||null,place:log.place||null,attendees:log.attendees||null,
     purpose:log.purpose||null,discussion:log.discussion||null,outcome:log.outcome||null,outcome_status:log.outcomeStatus||null,
-    next_action:log.nextAction||null,next_action_date:log.nextActionDate||null,next_action_done:false};
+    next_action:log.nextAction||null,next_action_date:log.nextActionDate||null,next_action_done:false,
+    photos:(log.photos&&log.photos.length)?log.photos:null};
   try{
     let {data,error}=await sb.from('deal_logs').insert([payload]).select().single();
+    if(error&&(error.code==='42703'||error.message?.includes('column'))&&payload.photos){
+      // photos 컬럼만 없는 경우 → 사진 제외하고 재시도
+      const {photos:_p,...noPhoto}=payload;
+      ({data,error}=await sb.from('deal_logs').insert([noPhoto]).select().single());
+      if(!error) showToast('deal_logs에 photos 컬럼이 없어 사진 링크는 저장되지 않았습니다. SQL 실행 후 켜집니다','warn');
+    }
     if(error&&(error.code==='42703'||error.message?.includes('column'))){
       // 새 컬럼이 없으면 레거시 한 줄 형식으로 합쳐 저장
       const legacy=[log.place?`📍${log.place}`:'',log.attendees?`👤${log.attendees}`:'',log.purpose?`목적: ${log.purpose}`:'',log.discussion?`논의: ${log.discussion}`:'',log.outcome?`결과: ${log.outcome}`:'',log.nextAction?`다음 액션: ${log.nextAction}${log.nextActionDate?` (${log.nextActionDate})`:''}`:''].filter(Boolean).join(' / ')||log.text||'';
@@ -4756,8 +4840,11 @@ async function saveActivity(){
     outcomeStatus:document.getElementById('act-outcome-status').value||'',
     nextAction:g('act-next'),nextActionDate:document.getElementById('act-next-date')?.value||'',nextActionDone:false,
     person:CU?.name||'',dept:CU?.role||'sales',time:nowStr()};
-  if(!log.purpose&&!log.discussion&&!log.outcome){ showToast('목적·논의 내용·결과 중 한 가지는 입력해주세요','warn'); return; }
-  log.text=log.outcome||log.discussion||log.purpose;
+  if(!log.purpose&&!log.discussion&&!log.outcome&&!_actPhotos.length){ showToast('목적·논의 내용·결과 중 한 가지는 입력해주세요','warn'); return; }
+  log.text=log.outcome||log.discussion||log.purpose||'사진 기록';
+  if(_actPhotos.length) showToast(`사진 ${_actPhotos.length}장 업로드 중...`);
+  log.photos=await uploadActPhotos(d.id);
+  _actPhotos.forEach(p=>URL.revokeObjectURL(p.preview)); _actPhotos=[];
   d.logs.push(log);
   await saveActLogToDB(d, log);
   // 다음 액션 → 캘린더 자동 등록
@@ -5830,7 +5917,8 @@ async function loadDealsFromDB(){
         outcomeStatus: l.outcome_status||'',
         nextAction: l.next_action||'',
         nextActionDate: l.next_action_date||'',
-        nextActionDone: l.next_action_done||false
+        nextActionDone: l.next_action_done||false,
+        photos: Array.isArray(l.photos)?l.photos:[]
       }))
     }));
     dealIdCnt = Math.max(...deals.map(d=>d.id), 0) + 1;
