@@ -470,6 +470,22 @@ tbody tr:hover{background:var(--s2)}
 .act-next.done .nt{text-decoration:line-through}
 .act-sys{font-size:11px;color:var(--t3);padding:2px 0 2px 45px;margin-bottom:6px}
 .act-sys span{margin-left:6px;font-size:10px}
+.act-tools{margin-left:auto;display:flex;gap:2px;opacity:.35;transition:opacity .12s}
+.act-item:hover .act-tools{opacity:1}
+.act-tools button{border:none;background:transparent;cursor:pointer;font-size:12px;padding:2px 4px;border-radius:6px}
+.act-tools button:hover{background:var(--s2)}
+/* ── 오늘 할 일 브리핑 ── */
+.tb-sec{margin-bottom:16px}
+.tb-sec:last-child{margin-bottom:4px}
+.tb-sh{font-size:11.5px;font-weight:800;margin-bottom:7px;display:flex;align-items:center;gap:5px}
+.tb-sh b{font-size:10.5px;background:var(--s2);color:var(--t2);border-radius:10px;padding:1px 7px}
+.tb-row{display:flex;align-items:center;gap:11px;background:var(--s2);border-radius:var(--r);padding:10px 13px;margin-bottom:6px;cursor:pointer;transition:background .12s}
+.tb-row:hover{background:var(--s3)}
+.tb-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--green);cursor:pointer;flex-shrink:0}
+.tb-main{flex:1;min-width:0}
+.tb-act{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-deal{font-size:11px;color:var(--t3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-date{font-size:11px;font-weight:800;color:var(--t2);white-space:nowrap}
 .act-photos{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
 .act-photos img{width:76px;height:76px;object-fit:cover;border-radius:8px;border:1px solid var(--bd);cursor:zoom-in;transition:transform .12s}
 .act-photos img:hover{transform:scale(1.04)}
@@ -1152,6 +1168,10 @@ tbody tr:hover{background:var(--s2)}
           <span>🏠</span><span class="sw-label">홈</span>
         </button>
       </div>
+      <button class="cal-topbar-btn" id="todayBriefBtn" onclick="openTodayBrief()" title="오늘 할 일">
+        <span style="font-size:13px">☀️</span>
+        <span class="cal-btn-label">오늘 할 일</span>
+      </button>
       <button class="deal-alert-btn" id="dealAlertBtn" onclick="toggleDealAlert()" title="딜 알람" style="display:none">
         <svg viewBox="0 0 16 16" fill="none" style="width:14px;height:14px;flex-shrink:0"><path d="M8 2a5 5 0 00-5 5v2l-1 2h12l-1-2V7a5 5 0 00-5-5z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M6.5 13a1.5 1.5 0 003 0" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
         <span class="cal-btn-label">알람</span>
@@ -2084,7 +2104,7 @@ tbody tr:hover{background:var(--s2)}
           <label for="act-cal-check" style="font-size:12px;color:var(--t2);cursor:pointer">다음 액션을 <b>캘린더에 자동 등록</b></label>
         </div>
       </div>
-      <button class="btn btn-p" style="width:100%;justify-content:center;padding:12px;margin-top:14px" onclick="saveActivity()">기록 저장</button>
+      <button class="btn btn-p" id="act-save-btn" style="width:100%;justify-content:center;padding:12px;margin-top:14px" onclick="saveActivity()">기록 저장</button>
     </div>
   </div>
 </div>
@@ -3059,7 +3079,7 @@ async function doLogin() {
   initHistory();
   renderHome();
   setTimeout(initDealAlerts, 500);
-  setTimeout(checkStaleDeals, 2000);
+  setTimeout(autoTodayBrief, 1500);
 }
 function doLogout() {
   CU=null;
@@ -4654,12 +4674,13 @@ function buildDealLog(id){
   const d=deals.find(x=>x.id===id); if(!d) return;
   const host=document.getElementById('dealActTimeline'); if(!host) return;
   const logs=(d.logs||[]).map((l,idx)=>({...l,_idx:idx}));
-  // 유형 필터 칩
-  const typesPresent=[...new Set(logs.map(l=>l.type))];
+  // 유형 필터 칩 (시스템 기록 제외한 실제 활동 수만 카운트)
+  const actsOnly=logs.filter(l=>!['단계변경','수정'].includes(l.type));
+  const typesPresent=[...new Set(actsOnly.map(l=>l.type))];
   const chipsEl=document.getElementById('actFilterChips');
   if(chipsEl) chipsEl.innerHTML=[
-    `<button class="act-fchip${!_actFilter?' on':''}" onclick="setActFilter('')">전체 ${logs.length}</button>`,
-    ...ACT_TYPES.filter(([t])=>typesPresent.includes(t)).map(([t,ic])=>`<button class="act-fchip${_actFilter===t?' on':''}" onclick="setActFilter('${t}')">${ic} ${t} ${logs.filter(l=>l.type===t).length}</button>`)
+    `<button class="act-fchip${!_actFilter?' on':''}" onclick="setActFilter('')">전체 ${actsOnly.length}</button>`,
+    ...ACT_TYPES.filter(([t])=>typesPresent.includes(t)).map(([t,ic])=>`<button class="act-fchip${_actFilter===t?' on':''}" onclick="setActFilter('${t}')">${ic} ${t} ${actsOnly.filter(l=>l.type===t).length}</button>`)
   ].join('');
   let list=logs.filter(l=>!_actFilter||l.type===_actFilter);
   // 활동일 최신순 정렬 (같은 날은 입력 역순)
@@ -4692,7 +4713,7 @@ function buildDealLog(id){
     const photos=(l.photos&&l.photos.length)?`<div class="act-photos">${l.photos.map(u=>`<img src="${u}" loading="lazy" onclick="openPhotoView('${u}')">`).join('')}</div>`:'';
     html+=`<div class="act-item"><div class="act-ic">${ACT_ICON[l.type]||'📝'}</div>
       <div class="act-bd">
-        <div class="r1"><span class="ty">${l.type}</span>${out?`<span class="act-pill" style="background:${out.bg};color:${out.c}">${out.label}</span>`:''}<span class="meta">${meta}</span></div>
+        <div class="r1"><span class="ty">${l.type}</span>${out?`<span class="act-pill" style="background:${out.bg};color:${out.c}">${out.label}</span>`:''}<span class="meta">${meta}</span><span class="act-tools"><button onclick="event.stopPropagation();editActivity(${d.id},${l._idx})" title="수정">✏️</button><button onclick="event.stopPropagation();deleteActivity(${d.id},${l._idx})" title="삭제">🗑</button></span></div>
         ${blocks}${photos}${next}
       </div></div>`;
   });
@@ -4708,6 +4729,7 @@ async function toggleActNext(dealId, idx){
 // ── 활동 기록 팝업 ──
 function openActModal(){
   if(!curDealId) return;
+  _actEditIdx=null; _actPhotosKeep=[];
   const dt=document.getElementById('act-date'); if(dt) dt.value=new Date().toISOString().slice(0,10);
   ['act-place','act-people','act-purpose','act-discussion','act-outcome','act-next','act-next-date'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
   document.getElementById('act-outcome-status').value='';
@@ -4717,7 +4739,53 @@ function openActModal(){
   renderActTypeChips('현장방문');
   renderActOutChips('');
   renderActQuickChips();
+  const ttl=document.querySelector('#actModal .modal-title'); if(ttl) ttl.textContent='＋ 활동 기록 추가';
+  const btn=document.getElementById('act-save-btn'); if(btn){ btn.disabled=false; btn.textContent='기록 저장'; }
   openModal('actModal');
+}
+// ── 기록 수정·삭제 ──
+let _actEditIdx=null;      // 수정 중인 로그 인덱스
+let _actPhotosKeep=[];     // 수정 시 유지할 기존 사진 URL
+function editActivity(dealId, idx){
+  const d=deals.find(x=>x.id===dealId); const l=d?.logs?.[idx]; if(!l) return;
+  openActModal();
+  _actEditIdx=idx;
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v||'';};
+  set('act-date', l.activityDate||actDateOf(l));
+  set('act-place', l.place); set('act-people', l.attendees);
+  set('act-purpose', l.purpose); set('act-discussion', l.discussion); set('act-outcome', l.outcome);
+  set('act-next', l.nextAction); set('act-next-date', l.nextActionDate);
+  const cc=document.getElementById('act-cal-check'); if(cc) cc.checked=false; // 수정 시 캘린더 중복 등록 방지
+  renderActTypeChips(ACT_TYPES.some(([t])=>t===l.type)?l.type:'메모');
+  renderActOutChips(l.outcomeStatus||'');
+  _actPhotosKeep=[...(l.photos||[])];
+  renderActPhotoPreviews();
+  const ttl=document.querySelector('#actModal .modal-title'); if(ttl) ttl.textContent='✏️ 활동 기록 수정';
+  const btn=document.getElementById('act-save-btn'); if(btn) btn.textContent='수정 내용 저장';
+}
+async function deleteActivity(dealId, idx){
+  const d=deals.find(x=>x.id===dealId); const l=d?.logs?.[idx]; if(!l) return;
+  if(!confirm('이 활동 기록을 삭제할까요?')) return;
+  if(sb&&l.id){ try{ await sb.from('deal_logs').delete().eq('id',l.id); }catch(e){ console.error('deleteActivity:',e); } }
+  d.logs.splice(idx,1);
+  buildDealLog(dealId); fillDealStatusWidget(d);
+  showToast('활동 기록이 삭제됐습니다');
+}
+async function updateActLogInDB(l){
+  if(!sb||!l.id) return;
+  const payload={type:l.type,text:l.text||'',
+    activity_date:l.activityDate||null,place:l.place||null,attendees:l.attendees||null,
+    purpose:l.purpose||null,discussion:l.discussion||null,outcome:l.outcome||null,outcome_status:l.outcomeStatus||null,
+    next_action:l.nextAction||null,next_action_date:l.nextActionDate||null,
+    photos:(l.photos&&l.photos.length)?l.photos:null};
+  try{
+    let {error}=await sb.from('deal_logs').update(payload).eq('id',l.id);
+    if(error&&(error.code==='42703'||error.message?.includes('column'))){
+      const {photos:_p,...np}=payload;
+      ({error}=await sb.from('deal_logs').update(np).eq('id',l.id));
+      if(error) await sb.from('deal_logs').update({type:l.type,text:l.text||''}).eq('id',l.id);
+    }
+  }catch(e){ console.error('updateActLogInDB:', e); }
 }
 // ── 사진 첨부 ──
 const ACT_PHOTO_BUCKET='activity-photos';
@@ -4753,9 +4821,14 @@ function removeActPhoto(i){
   _actPhotos.splice(i,1);
   renderActPhotoPreviews();
 }
+function removeActKeepPhoto(i){ _actPhotosKeep.splice(i,1); renderActPhotoPreviews(); }
 function renderActPhotoPreviews(){
   const host=document.getElementById('act-photo-previews'); if(!host) return;
-  host.innerHTML=_actPhotos.map((p,i)=>`<div style="position:relative;width:64px;height:64px">
+  host.innerHTML=_actPhotosKeep.map((u,i)=>`<div style="position:relative;width:64px;height:64px">
+    <img src="${u}" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--bd)">
+    <button type="button" onclick="removeActKeepPhoto(${i})" style="position:absolute;top:-6px;right:-6px;width:19px;height:19px;border-radius:50%;border:none;background:#111;color:#fff;font-size:11px;line-height:1;cursor:pointer">✕</button>
+  </div>`).join('')
+  +_actPhotos.map((p,i)=>`<div style="position:relative;width:64px;height:64px">
     <img src="${p.preview}" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--bd)">
     <button type="button" onclick="removeActPhoto(${i})" style="position:absolute;top:-6px;right:-6px;width:19px;height:19px;border-radius:50%;border:none;background:#111;color:#fff;font-size:11px;line-height:1;cursor:pointer">✕</button>
   </div>`).join('')
@@ -4831,34 +4904,54 @@ async function saveActLogToDB(d, log){
     if(data) log.id=data.id;
   }catch(e){ console.error('saveActLogToDB:', e); }
 }
+let _actSaving=false;
 async function saveActivity(){
   const d=deals.find(x=>x.id===curDealId); if(!d) return;
   const g=id=>document.getElementById(id)?.value.trim()||'';
+  const isEdit=_actEditIdx!=null;
   const log={type:document.getElementById('act-type').value||'메모',
     activityDate:document.getElementById('act-date')?.value||new Date().toISOString().slice(0,10),
     place:g('act-place'),attendees:g('act-people'),purpose:g('act-purpose'),discussion:g('act-discussion'),outcome:g('act-outcome'),
     outcomeStatus:document.getElementById('act-outcome-status').value||'',
     nextAction:g('act-next'),nextActionDate:document.getElementById('act-next-date')?.value||'',nextActionDone:false,
     person:CU?.name||'',dept:CU?.role||'sales',time:nowStr()};
-  if(!log.purpose&&!log.discussion&&!log.outcome&&!_actPhotos.length){ showToast('목적·논의 내용·결과 중 한 가지는 입력해주세요','warn'); return; }
-  log.text=log.outcome||log.discussion||log.purpose||'사진 기록';
-  if(_actPhotos.length) showToast(`사진 ${_actPhotos.length}장 업로드 중...`);
-  log.photos=await uploadActPhotos(d.id);
-  _actPhotos.forEach(p=>URL.revokeObjectURL(p.preview)); _actPhotos=[];
-  d.logs.push(log);
-  await saveActLogToDB(d, log);
-  // 다음 액션 → 캘린더 자동 등록
-  if(log.nextAction&&log.nextActionDate&&document.getElementById('act-cal-check')?.checked){
-    try{
-      const ev={title:`[액션] ${log.nextAction} — ${d.name}`,event_date:log.nextActionDate,category:'other',source:'manual',linked_id:d.id,company_name:d.co,person:CU?.name||null,description:'딜 활동 다음 액션',created_by:CU?.name||null};
-      const saved=await saveCalendarEventToDB(ev);
-      if(saved&&typeof calEvents!=='undefined'&&Array.isArray(calEvents)) calEvents.push(saved);
-    }catch(e){}
+  if(!log.purpose&&!log.discussion&&!log.outcome&&!_actPhotos.length&&!_actPhotosKeep.length){ showToast('목적·논의 내용·결과 중 한 가지는 입력해주세요','warn'); return; }
+  if(_actSaving) return; _actSaving=true;
+  const btn=document.getElementById('act-save-btn'); if(btn){ btn.disabled=true; btn.textContent=_actPhotos.length?'사진 업로드 중...':'저장 중...'; }
+  try{
+    log.text=log.outcome||log.discussion||log.purpose||'사진 기록';
+    const newUrls=await uploadActPhotos(d.id);
+    log.photos=[..._actPhotosKeep, ...newUrls];
+    _actPhotos.forEach(p=>URL.revokeObjectURL(p.preview)); _actPhotos=[]; _actPhotosKeep=[];
+    if(isEdit){
+      const orig=d.logs[_actEditIdx];
+      if(orig){
+        Object.assign(orig,{type:log.type,activityDate:log.activityDate,place:log.place,attendees:log.attendees,
+          purpose:log.purpose,discussion:log.discussion,outcome:log.outcome,outcomeStatus:log.outcomeStatus,
+          nextAction:log.nextAction,nextActionDate:log.nextActionDate,text:log.text,photos:log.photos});
+        await updateActLogInDB(orig);
+      }
+      _actEditIdx=null;
+    } else {
+      d.logs.push(log);
+      await saveActLogToDB(d, log);
+    }
+    // 다음 액션 → 캘린더 자동 등록
+    if(log.nextAction&&log.nextActionDate&&document.getElementById('act-cal-check')?.checked){
+      try{
+        const ev={title:`[액션] ${log.nextAction} — ${d.name}`,event_date:log.nextActionDate,category:'other',source:'manual',linked_id:d.id,company_name:d.co,person:CU?.name||null,description:'딜 활동 다음 액션',created_by:CU?.name||null};
+        const saved=await saveCalendarEventToDB(ev);
+        if(saved&&typeof calEvents!=='undefined'&&Array.isArray(calEvents)) calEvents.push(saved);
+      }catch(e){}
+    }
+    closeModal('actModal');
+    showToast(isEdit?'수정됐습니다 ✓':'활동이 기록됐습니다 ✓');
+    buildDealLog(d.id);
+    fillDealStatusWidget(d);
+  } finally {
+    _actSaving=false;
+    if(btn){ btn.disabled=false; btn.textContent='기록 저장'; }
   }
-  closeModal('actModal');
-  showToast('활동이 기록됐습니다 ✓');
-  buildDealLog(d.id);
-  fillDealStatusWidget(d);
 }
 // ── 현재 상황 위젯 (딜 정보 탭 상단) ──
 function fillDealStatusWidget(d){
@@ -10043,6 +10136,96 @@ function checkStaleDeals() {
     setTimeout(() => showStaleDealsModal(stale), 1500);
   }
 }
+// ══════════════════════════════════════════════
+// ☀️ 오늘 할 일 브리핑 — 로그인 시 팝업
+// ══════════════════════════════════════════════
+const TODAY_SKIP_KEY='sp_today_skip';
+function _tbVisibleDeals(){
+  return deals.filter(d=>['superadmin','admin'].includes(CU?.role)||d.person===CU?.name);
+}
+function buildTodayBrief(){
+  const todayStr=new Date().toISOString().slice(0,10);
+  const soonStr=new Date(Date.now()+3*864e5).toISOString().slice(0,10);
+  const vis=_tbVisibleDeals();
+  const overdue=[],today=[],soon=[],nodate=[];
+  vis.forEach(d=>{
+    (d.logs||[]).forEach((l,idx)=>{
+      if(!l.nextAction||l.nextActionDone) return;
+      const it={deal:d,log:l,idx};
+      if(!l.nextActionDate){ nodate.push(it); return; }
+      if(l.nextActionDate<todayStr) overdue.push(it);
+      else if(l.nextActionDate===todayStr) today.push(it);
+      else if(l.nextActionDate<=soonStr) soon.push(it);
+    });
+  });
+  overdue.sort((a,b)=>a.log.nextActionDate.localeCompare(b.log.nextActionDate));
+  soon.sort((a,b)=>a.log.nextActionDate.localeCompare(b.log.nextActionDate));
+  // 다음 액션이 하나도 안 잡힌 영업 진행 딜
+  const actionDealIds=new Set([...overdue,...today,...soon,...nodate].map(x=>x.deal.id));
+  const noAction=vis.filter(d=>PRE_INSTALL_STAGES.includes(dispStage(d))&&!actionDealIds.has(d.id));
+  const stale=(typeof getStaleDeals==='function')?getStaleDeals():[];
+  const staleIds=new Set(stale.map(d=>d.id));
+  return {overdue,today,soon,nodate,noAction:noAction.filter(d=>!staleIds.has(d.id)),stale};
+}
+function autoTodayBrief(){
+  try{ if(localStorage.getItem(TODAY_SKIP_KEY)===new Date().toISOString().slice(0,10)) return; }catch(e){}
+  const b=buildTodayBrief();
+  if(!b.overdue.length&&!b.today.length&&!b.soon.length&&!b.nodate.length&&!b.noAction.length&&!b.stale.length) return;
+  openTodayBrief(b);
+}
+function tbActRow(it){
+  const d=it.deal,l=it.log;
+  const dd=l.nextActionDate?actDday(l.nextActionDate):'';
+  return `<div class="tb-row" onclick="closeTodayBrief();openDeal(${d.id})">
+    <input type="checkbox" title="완료 처리" onclick="event.stopPropagation()" onchange="tbDoneAction(${d.id},${it.idx})">
+    <div class="tb-main"><div class="tb-act">${l.nextAction}</div><div class="tb-deal">${d.name}${d.co?` · ${d.co}`:''}</div></div>
+    <div class="tb-date">${l.nextActionDate? l.nextActionDate.slice(5).replace('-','/')+dd : '날짜 미정'}</div>
+  </div>`;
+}
+async function tbDoneAction(dealId,idx){
+  const d=deals.find(x=>x.id===dealId); const l=d?.logs?.[idx]; if(!l) return;
+  l.nextActionDone=true;
+  if(sb&&l.id){ try{ await sb.from('deal_logs').update({next_action_done:true}).eq('id',l.id); }catch(e){} }
+  showToast('완료 처리됐습니다 ✓');
+  openTodayBrief(buildTodayBrief());
+}
+function tbDealRow(d,extra){
+  return `<div class="tb-row" onclick="closeTodayBrief();openDeal(${d.id})">
+    <div class="tb-main"><div class="tb-act">${d.name}</div><div class="tb-deal">${d.co?`${d.co} · `:''}${dispStage(d)} · ${fmt(d.amt)}</div></div>
+    <div class="tb-date">${extra||''}</div>
+  </div>`;
+}
+function openTodayBrief(b){
+  b=b||buildTodayBrief();
+  closeTodayBrief();
+  const sec=(title,color,rows)=>rows.length?`<div class="tb-sec"><div class="tb-sh" style="color:${color}">${title} <b>${rows.length}</b></div>${rows.join('')}</div>`:'';
+  const total=b.overdue.length+b.today.length;
+  const body=[
+    sec('🔥 기한 지난 액션','var(--red)',b.overdue.map(tbActRow)),
+    sec('📌 오늘 예정','var(--accent)',b.today.map(tbActRow)),
+    sec('🗓 3일 내 예정','var(--t2)',b.soon.map(tbActRow)),
+    sec('📎 날짜 미정 액션','var(--t3)',b.nodate.map(tbActRow)),
+    sec('⚠️ 다음 액션 없는 진행 딜','var(--amt)',b.noAction.map(d=>tbDealRow(d,'액션을 잡아주세요'))),
+    sec(`💤 ${STALE_DAYS}일+ 무활동 딜`,'var(--t3)',b.stale.map(d=>tbDealRow(d,staleDaysAgo(d)+' 방치')))
+  ].join('')||'<div style="text-align:center;color:var(--t2);font-size:13px;padding:30px 0">오늘 처리할 액션이 없습니다 👍<br><span style="font-size:11.5px;color:var(--t3)">활동 기록에서 다음 액션을 잡으면 여기에 모입니다</span></div>';
+  const ov=document.createElement('div');
+  ov.id='todayBriefOverlay';
+  ov.className='overlay open';
+  ov.innerHTML=`<div class="modal" style="max-width:560px;width:94%">
+    <div class="modal-hd">
+      <div class="modal-hd-info"><div class="modal-title">☀️ 오늘 할 일</div><div class="modal-sub">${new Date().toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'long'})} · ${CU?.name||''}님${total?` · 지금 처리할 액션 ${total}건`:''}</div></div>
+      <button class="modal-close" onclick="closeTodayBrief()"><svg viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+    </div>
+    <div class="modal-body" style="max-height:60vh;overflow-y:auto">${body}</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 22px;border-top:1px solid var(--bd)">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t3);cursor:pointer"><input type="checkbox" style="accent-color:var(--accent)" onchange="tbSkipToday(this.checked)">오늘 하루 보지 않기</label>
+      <button class="btn btn-p btn-sm" onclick="closeTodayBrief()">확인</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+}
+function closeTodayBrief(){ document.getElementById('todayBriefOverlay')?.remove(); }
+function tbSkipToday(on){ try{ if(on) localStorage.setItem(TODAY_SKIP_KEY,new Date().toISOString().slice(0,10)); else localStorage.removeItem(TODAY_SKIP_KEY); }catch(e){} }
 </script>
 <script>
 // ══════════════════════════════════════════════════════════════════
