@@ -3063,7 +3063,10 @@ const STAGE_KEYS = ['lead','contact','needs','demo','proposal','verbal','install
 const STAGE_SP   = ['sp-lead','sp-contact','sp-contact','sp-contact','sp-proposal','sp-verbal','sp-install','sp-delivered','sp-tax','sp-taxdone','sp-lost'];
 const BAR_CLS    = ['b-lead','b-contact','b-contact','b-contact','b-proposal','b-verbal','b-install','b-delivered','b-tax','b-taxdone'];
 // 구 단계명 → 신 단계명 매핑 (기존 DB 데이터 호환)
-const LEGACY_STAGE = {'계약 완료':'설치중','설치':'설치중','납품 완료':'설치완료','세금계산서':'세금계산서발행 전'};
+const LEGACY_STAGE = {'계약 완료':'설치중','설치':'설치중','납품 완료':'설치완료','세금계산서':'세금계산서발행 전',
+  // 프로젝트 대시보드·접수 시스템 표기 (가운뎃점/공백 없음) → 운영툴 표준 단계
+  '잠재발굴':'잠재 발굴','잠재':'잠재 발굴','미팅접촉':'미팅·접촉','제안견적':'제안·견적','실패보류':'실패·보류',
+  '계약완료':'설치중','납품완료':'설치완료','설치 완료':'설치완료','세금계산서발행전':'세금계산서발행 전','세금계산서발행완료':'세금계산서발행 완료'};
 // 설치중 이후(수금정보 입력 완료) 단계들 — 이 단계에서 설치중으로 되돌릴 땐 팝업 생략
 const POST_INSTALL_STAGES = ['설치중','설치완료','세금계산서발행 전','세금계산서발행 완료'];
 const PRE_INSTALL_STAGES = ['잠재 발굴','미팅·접촉','니즈·현장실사','데모·PoC','제안·견적','구두합의'];
@@ -15082,6 +15085,7 @@ function crmRenderDeal(){
       <div><div class="k">계약 목표일</div><div class="v">${d.closeDate||'-'}</div></div>
       <div><div class="k">납품 기한</div><div class="v">${d.deliveryDate||'-'}</div></div>
       <div><div class="k">도입 / 전체</div><div class="v">${iq||'-'}대 / ${m.totalFleet||'-'}대</div></div>
+      ${crmIsWon(cur)?`<div title="프로젝트 대시보드와 같은 기준"><div class="k">실매출 (설치분)</div><div class="v" style="color:${crmRealized(d)<(d.amt||0)?'var(--c-warn)':'var(--c-okt)'}">${fmt(crmRealized(d))}${crmRealized(d)<(d.amt||0)?` <span style="font-size:11px;color:var(--c-t3);font-weight:600">/ ${fmt(d.amt)}</span>`:''}</div></div>`:''}
     </div>
   </div>
   <div style="display:flex;gap:8px;align-items:flex-start">
@@ -15725,6 +15729,7 @@ function crmRenderHome(){
     <div class="crm-stat click" onclick="showView('crm-tasks')"><div class="l">지난·오늘 다음 액션</div><div class="v">${T.overdue.length}<small>건</small></div><div class="s ${T.overdue.length?'dn':''}">${T.overdue.length?'바로 처리 필요':'모두 처리됨'}</div></div>
     <div class="crm-stat click" onclick="showView('crm-tasks')"><div class="l">단계 체류 기준 초과</div><div class="v">${T.sla.length}<small>건</small></div><div class="s">플레이북 SLA 기준</div></div>
     <div class="crm-stat click" onclick="showView('crm-tasks')"><div class="l">관문 미충족</div><div class="v">${T.gate.length}<small>건</small></div><div class="s">다음 단계 필수 입력 누락</div></div>
+    ${(()=>{ const R=crmRealBox(); return `<div class="crm-stat" title="프로젝트 대시보드와 같은 기준 — 설치된 만큼만 매출 인정"><div class="l">${R.yearN}년 실매출 (설치분)</div><div class="v">${fmt(R.year)}</div><div class="s">수주 계약 ${fmt(R.won)} 중 미설치 ${fmt(R.pending)}</div></div>`; })()}
     <div class="crm-stat click" onclick="showView('crm-expand')"><div class="l">확장 대상 고객</div><div class="v">${deals.filter(d=>crmPotQty(d)>0&&dispStage(d)!==CRM_LOST).length}<small>곳</small></div><div class="s">잠재 대수 보유 딜</div></div>
   </div>
   <div class="crm-g2">
@@ -15819,7 +15824,7 @@ function crmRenderDeals(refocus){
     <select class="crm-sel" onchange="CRM.sort=this.value;crmRenderDeals()">${[['recent','최신 등록순'],['amt','금액순'],['pot','잠재 매출순'],['close','계약 목표일순'],['idle','오래 방치된 순']].map(([v,l])=>`<option value="${v}"${CRM.sort===v?' selected':''}>${l}</option>`).join('')}</select>`;
   const tot=list.reduce((s,d)=>s+crmRev(d),0), pot=list.reduce((s,d)=>s+crmPotRev(d),0);
   host.innerHTML=`
-  <div class="crm-ph"><div><div class="crm-ph-t">딜 목록</div><div class="crm-ph-s">${list.length}건 · 금액 ${fmt(tot)} · 잠재 ${fmt(pot)}</div></div>
+  <div class="crm-ph"><div><div class="crm-ph-t">딜 목록</div><div class="crm-ph-s">${list.length}건 · 금액 ${fmt(tot)} · 실매출(설치분) ${fmt(list.reduce((s,d)=>s+crmRealized(d),0))} · 잠재 ${fmt(pot)}</div></div>
     <div class="crm-ph-a"><div class="crm-seg"><button onclick="showView('pipeline')">보드</button><button class="on">리스트</button></div><button class="crm-btn crm-btn-s" onclick="crmExportDeals()">⬇ CSV</button></div></div>
   ${crmFilterBar('crmRenderDeals',{extra})}
   <div class="crm-tw"><table class="crm-tb"><thead><tr><th>딜 / 고객사·현장</th><th>단계</th><th class="num">금액</th><th class="num">도입/잠재</th><th>담당자</th><th>고객 담당자</th><th>마지막 활동</th><th>다음 액션</th><th>목표일</th></tr></thead><tbody>
@@ -15839,8 +15844,8 @@ function crmCsv(rows, name){
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'})); a.download=name; document.body.appendChild(a); a.click(); a.remove();
 }
 function crmExportDeals(){
-  const rows=[['딜명','고객사','도입현장','단계','담당자','고객담당자','연락처','이메일','금액(원)','전체대수','도입대수','잠재대수','대당단가','잠재매출(원)','고객유형','리드온도','결정권자','예산','마지막활동','계약목표일','납품기한']];
-  crmApplyF(deals).forEach(d=>{ const m=crmMeta(d.id); rows.push([d.name,d.co,d.site,crmLabel(dispStage(d)),d.person,d.contactName,d.contactPhone,d.contactEmail,crmRev(d),m.totalFleet||'',crmInstallQty(d),crmPotQty(d),crmUnit(d),crmPotRev(d),m.ctype||'',m.temp?CRM_TEMP[m.temp].label:'',m.decisionMaker||'',m.budget||'',crmLastActDate(d),d.closeDate,d.deliveryDate]); });
+  const rows=[['딜명','고객사','도입현장','단계','담당자','고객담당자','연락처','이메일','금액(원)','실매출(설치분,원)','전체대수','도입대수','잠재대수','대당단가','잠재매출(원)','고객유형','리드온도','결정권자','예산','마지막활동','계약목표일','납품기한']];
+  crmApplyF(deals).forEach(d=>{ const m=crmMeta(d.id); rows.push([d.name,d.co,d.site,crmLabel(dispStage(d)),d.person,d.contactName,d.contactPhone,d.contactEmail,crmRev(d),crmRealized(d),m.totalFleet||'',crmInstallQty(d),crmPotQty(d),crmUnit(d),crmPotRev(d),m.ctype||'',m.temp?CRM_TEMP[m.temp].label:'',m.decisionMaker||'',m.budget||'',crmLastActDate(d),d.closeDate,d.deliveryDate]); });
   crmCsv(rows, `딜목록_${crmToday()}.csv`);
 }
 
@@ -15912,7 +15917,7 @@ function crmRenderAccounts(refocus){
       <div style="min-width:0;flex:1"><div style="font-size:15.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${crmEsc(a.co)}</div><div style="display:flex;gap:5px;margin-top:3px;flex-wrap:wrap">${a.type?`<span class="crm-b sm crm-b-gray">${crmEsc(a.type)}</span>`:''}${a.info.unitPrice?`<span class="crm-b sm crm-b-blue">단가 ${fmt(a.info.unitPrice)}</span>`:''}</div></div></div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;background:var(--c-bg);border-radius:12px;padding:10px 4px">
       <div><div style="font-size:16px;font-weight:800">${a.act.length}<small style="font-size:11px;color:var(--c-t3)"> / ${a.won.length}</small></div><div class="crm-hint">진행 / 수주</div></div>
-      <div><div style="font-size:16px;font-weight:800">${fmt(a.wonAmt)}</div><div class="crm-hint">수주 금액</div></div>
+      <div><div style="font-size:16px;font-weight:800">${fmt(a.wonAmt)}</div><div class="crm-hint">수주 · 실매출 ${fmt(a.deals.reduce((s,d)=>s+crmRealized(d),0))}</div></div>
       <div><div style="font-size:16px;font-weight:800;color:#7c3aed">${fmt(a.pot)}</div><div class="crm-hint">잠재 매출</div></div></div>
     <div style="margin-top:10px;font-size:12px;color:var(--c-t2)">📍 ${a.siteList.slice(0,3).map(s=>crmEsc(s.site)).join(' · ')}${a.siteList.length>3?` 외 ${a.siteList.length-3}곳`:''}</div>
     <div style="margin-top:4px;font-size:12px;color:var(--c-t2)">👤 ${a.contactList.slice(0,3).map(c=>crmEsc(c.name)+(c.role?`(${crmEsc(c.role)})`:'')).join(' · ')||'<span style="color:var(--c-crit)">담당자 없음</span>'}${a.contactList.length>3?` 외 ${a.contactList.length-3}명`:''}</div>
@@ -16227,8 +16232,8 @@ async function crmAfterCreate(d){
 const CRM_PROB = {'잠재 발굴':.05,'미팅·접촉':.15,'니즈·현장실사':.3,'데모·PoC':.45,'제안·견적':.5,'구두합의':.8};
 const CRM_JR_PURPOSE = ['첫 접촉','니즈 파악','현장실사','데모·시연','제안·견적 설명','협상','계약','설치 협의','사후관리','확장 제안','기타'];
 const CRM_JR_METHOD = ['방문','미팅','통화','화상','이메일','카톡','데모','기타'];
-const CRM_PD_KEYS = ['deal_forklift','forklift_manual','forklift_models','forklift_makers','deal_batches','customer_terms','activity_log'];
-CRM.pd = {batches:{}, terms:{}, acts:{}, at:0};
+const CRM_PD_KEYS = ['deal_forklift','forklift_manual','forklift_models','forklift_makers','deal_batches','customer_terms','activity_log','deal_items'];
+CRM.pd = {batches:{}, terms:{}, acts:{}, items:{}, at:0};
 if(typeof ACT_ICON!=='undefined') ACT_ICON['영업여정']='🧭';
 
 // ── 로드 ──
@@ -16279,6 +16284,7 @@ async function crmPdRefresh(force){
       if(row.k==='deal_batches') CRM.pd.batches = v||{};
       if(row.k==='customer_terms') CRM.pd.terms = v||{};
       if(row.k==='activity_log') CRM.pd.acts = v||{};
+      if(row.k==='deal_items') CRM.pd.items = v||{};
     });
     crmCacheLocal();
     return true;
@@ -16385,7 +16391,7 @@ function crmBatchEdit(id, bid){
     {k:'memo',l:'메모 (설치팀·현장 특이사항)',t:'textarea',v:x.memo||'',full:true},
   ], async vals=>{
     if(!(parseInt(vals.qty)>0) || !vals.start){ showToast('대수와 시작일을 입력해주세요','warn'); return false; }
-    const rec={id:bid||('b'+Date.now().toString(36)), qty:parseInt(vals.qty)||0, start:vals.start, end:vals.end||vals.start, status:vals.status, memo:vals.memo};
+    const rec={...x, id:bid||('b'+Date.now().toString(36)), qty:parseInt(vals.qty)||0, start:vals.start, end:vals.end||vals.start, status:vals.status, memo:vals.memo};
     const next=await crmPdPatch('deal_batches', cur=>{ const arr=Array.isArray(cur[id])?cur[id].filter(b=>b.id!==rec.id):[]; arr.push(rec); cur[id]=arr; return cur; });
     CRM.pd.batches=next;
     const log={type:'메모',text:`설치 일정 ${bid?'수정':'등록'} — ${rec.qty}대 · ${rec.start}${rec.end!==rec.start?' ~ '+rec.end:''} (${rec.status==='done'?'완료':'예정'})`,time:nowStr(),person:CU?.name||'',dept:CU?.role||'sales',activityDate:crmToday()};
@@ -16718,6 +16724,7 @@ function crmRenderAnalytics(){
     <div class="bk"><div><div class="bk-k">실패·보류</div><div class="bk-v">${lost.length}건</div><div class="bk-k" style="margin:3px 0 0">${fmt(lostAmt)}</div></div><div><div class="bk-k">가중 예측 (현재)</div><div class="bk-v">${fmt(weighted)}</div><div class="bk-k" style="margin:3px 0 0">진행 ${open.length}건</div></div><div><div class="bk-k">잠재 매출 (현재)</div><div class="bk-v">${fmt(pot)}</div></div></div></div>
   <div class="crm-stats">
     <div class="crm-stat"><div class="l">신규 리드</div><div class="v">${cohort.length}<small>건</small></div></div>
+    <div class="crm-stat" title="프로젝트 대시보드와 같은 기준 — 설치 완료일(없으면 계약목표일) 기준, 설치된 만큼만"><div class="l">기간 실매출 (설치분)</div><div class="v">${fmt(base.filter(d=>inP(String(crmRevDate(d)).slice(0,10))).reduce((s,d)=>s+crmRealized(d),0))}</div><div class="s">프로젝트 대시보드 기준</div></div>
     <div class="crm-stat"><div class="l">리드 → 수주 전환율</div><div class="v">${pct(cohort.filter(d=>crmIsWon(dispStage(d))).length,cohort.length)}</div><div class="s">기간 내 등록 리드 기준</div></div>
     <div class="crm-stat"><div class="l">평균 수주 기간</div><div class="v">${avgCyc??'-'}<small>일</small></div><div class="s">리드 등록 → 수주</div></div>
     <div class="crm-stat"><div class="l">가장 많이 실패하는 구간</div><div class="v" style="font-size:19px">${worst?crmEsc(crmLabel(worst[0])):'-'}</div><div class="s ${worst?'dn':''}">${worst?`${worst[1].n}건 · ${fmt(worst[1].amt)}`:'기록 없음'}</div></div>
@@ -16745,5 +16752,27 @@ function crmRenderAnalytics(){
   </div>`;
 }
 
+
+// ══ 실매출(설치분) — 프로젝트 대시보드 dealRealizedWon과 같은 기준 ══
+//   설치완료·계산서 단계: 전액 − 해체·취소분 / 설치중: 설치 시작일(계약목표일) 지난 경우만, 분할 설치는 완료 수량 비율 / 그 외 0
+function crmTotalQty(d){ const a=CRM.pd.items[d.id]; if(Array.isArray(a)&&a.length) return a.reduce((s,p)=>s+(+p.qty||0),0); return +d.qty||0; }
+function crmBatchCancel(id){ const b=Array.isArray(CRM.pd.batches[id])?CRM.pd.batches[id]:[]; return b.reduce((s,x)=>x.status==='cancel'?s+(+x.qty||0):s+Math.min(+x.qty||0,+x.cancelQty||0),0); }
+function crmRealized(d){
+  const st=dispStage(d); if(st===CRM_LOST) return 0;
+  const amt=d.amt||0, total=crmTotalQty(d), cancel=crmBatchCancel(d.id);
+  const cw=total>0?Math.round(amt*Math.min(1,cancel/total)):0;
+  if(['설치완료','세금계산서발행 전','세금계산서발행 완료'].includes(st)) return Math.max(0,amt-cw);
+  if(st==='설치중'){
+    const start=(d.closeDate||'').slice(0,10); if(!start||start>crmToday()) return 0;
+    const b=Array.isArray(CRM.pd.batches[d.id])?CRM.pd.batches[d.id]:[];
+    if(b.length&&total>0){ const done=b.filter(x=>x.status==='done').reduce((s,x)=>s+(+x.qty||0),0); return Math.round(amt*Math.max(0,Math.min(1,(done-cancel)/total))); }
+    return Math.max(0,amt-cw);
+  }
+  return 0;
+}
+function crmRevDate(d){ return d.deliveryDate||d.closeDate||d.createdAt||''; }
+function crmRealizedYear(y, list){ return (list||deals).filter(d=>String(crmRevDate(d)).startsWith(String(y))).reduce((s,d)=>s+crmRealized(d),0); }
+function crmRealBox(){ const all=deals.reduce((s,d)=>s+crmRealized(d),0); const won=deals.filter(d=>crmIsWon(dispStage(d))).reduce((s,d)=>s+(d.amt||0),0); const y=new Date().getFullYear();
+  return {all, won, year:crmRealizedYear(y), yearN:y, pending:won-all}; }
 </script>
 
